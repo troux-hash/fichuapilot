@@ -1,0 +1,6 @@
+.venv
+tests
+docs
+design
+data/*.db
+.claude

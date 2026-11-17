@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Booking {{ booking.reference }} · {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="container narrow" style="padding-bottom:var(--space-8)">
+  {% if is_new %}
+  <div class="confirm-hero">
+    <div class="confirm-check" aria-hidden="true">✓</div>
+    <h1>You're going to {{ booking.city }}!</h1>
+    <p class="muted">Your room at {{ booking.hotel_name }} is confirmed. Bookmark this page — it's your booking.</p>
+  </div>
+  {% else %}
+  <h1 class="page-title" style="margin-top:var(--space-7)">Your booking</h1>
+  {% endif %}
+
+  {% if message %}<div class="alert {{ 'alert-success' if booking.status == 'cancelled' else 'alert-error' }}" role="status" style="margin-top:var(--space-4)">{{ message }}</div>{% endif %}
+
+  <article class="card booking-card">
+    <img src="{{ booking.image }}" alt="{{ booking.hotel_name }}">
+    <div class="card-pad">
+      <div class="row-between">
+        <div>
+          <div class="muted small">Booking reference</div>
+          <div class="reference" data-copy="{{ booking.reference }}">{{ booking.reference }}</div>
+        </div>
+        {% if booking.status == 'confirmed' %}<span class="badge badge--success">Confirmed</span>{% else %}<span class="badge badge--danger">Cancelled</span>{% endif %}
+      </div>
+      <h2 style="font-size:var(--text-2xl);margin-top:var(--space-5)">{{ booking.hotel_name }}</h2>
+      <p class="muted">{{ booking.room_name }} · {{ booking.address or booking.city }}{% if booking.country %}, {{ booking.country }}{% endif %}</p>
+      <dl class="detail-grid">
+        <div><dt>Check-in</dt><dd>{{ booking.check_in|nice_date('%a %d %b') }}</dd><span class="muted small">from {{ booking.check_in_time or '14:00' }}</span></div>
+        <div><dt>Check-out</dt><dd>{{ booking.check_out|nice_date('%a %d %b') }}</dd><span class="muted small">until {{ booking.check_out_time or '11:00' }}</span></div>
+        <div><dt>Guests</dt><dd>{{ booking.guests }}</dd><span class="muted small">{{ booking.nights }} night{{ 's' if booking.nights != 1 }}</span></div>
+        <div><dt>Total</dt><dd>{{ booking.total_price|money(booking.currency, true) }}</dd><span class="muted small">pay at hotel</span></div>
+      </dl>
+      <p class="small"><strong>Lead guest:</strong> {{ booking.guest_name }} · {{ booking.guest_email }}{% if booking.guest_phone %} · {{ booking.guest_phone }}{% endif %}</p>
+      {% if booking.special_requests %}<p class="small"><strong>Requests:</strong> {{ booking.special_requests }}</p>{% endif %}
+
+      <div class="row" style="flex-wrap:wrap;margin-top:var(--space-5)">
+        <button type="button" class="btn btn-secondary" onclick="window.print()">Print</button>
+        <a class="btn btn-ghost" href="/">Find another stay</a>
+        {% if booking.can_cancel %}
+        <form method="post" action="/bookings/{{ booking.reference }}/cancel" data-confirm="Cancel this booking? This can't be undone." style="margin-left:auto">
+          <input type="hidden" name="t" value="{{ token }}">
+          <button class="btn btn-danger" type="submit">Cancel booking</button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+  </article>
+</div>
+{% endblock %}

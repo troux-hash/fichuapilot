@@ -1,0 +1,6 @@
+# Production dependencies (installed by Vercel). Keep this list short.
+fastapi==0.163.1          # web framework (brings starlette + pydantic)
+jinja2==3.1.6             # HTML templates
+python-multipart==0.0.34  # form posts & Excel uploads
+openpyxl==3.1.5           # read/write .xlsx (pure Python)
+psycopg[binary]==3.3.9    # Postgres driver (Supabase / AWS RDS)

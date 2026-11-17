@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% import "components/ui.html" as ui %}
+
+{% block title %}{{ hotel.name }}, {{ hotel.city }} · {{ app_name }}{% endblock %}
+{% block body_class %}has-sticky-cta{% endblock %}
+
+{% block content %}
+{% set available = rooms|selectattr('available')|list %}
+{% set cheapest = available[0] if available else none %}
+<div class="container">
+  <a class="back-link" href="/search?{{ back_qs }}">← All stays</a>
+  <header class="hotel-head">
+    <h1>{{ hotel.name }}</h1>
+    <div class="meta">
+      {{ ui.stars(hotel.star_rating) }}
+      {{ ui.rating_line(hotel) }}
+      <span>{{ hotel.address or hotel.city }}{% if hotel.country %}, {{ hotel.country }}{% endif %}</span>
+    </div>
+  </header>
+
+  <div class="gallery">
+    {% for img in hotel.images[:5] %}<img src="{{ img }}" alt="{{ hotel.name }} photo {{ loop.index }}" {% if not loop.first %}loading="lazy"{% endif %}>{% endfor %}
+  </div>
+
+  <div class="hotel-layout">
+    <div class="hotel-main">
+      <section>
+        <h2>About this stay</h2>
+        <p>{{ hotel.description or 'A comfortable stay in ' ~ hotel.city ~ '.' }}</p>
+        <p class="muted small">Check-in from {{ hotel.check_in_time or '14:00' }} · Check-out until {{ hotel.check_out_time or '11:00' }}</p>
+      </section>
+
+      {% if hotel.amenities %}
+      <section>
+        <h2>What this place offers</h2>
+        <ul class="amenity-grid">{% for a in hotel.amenities %}<li>{{ a }}</li>{% endfor %}</ul>
+      </section>
+      {% endif %}
+
+      <section id="rooms">
+        <h2>Choose your room</h2>
+        <form class="stay-form" method="get" action="/hotels/{{ hotel.id }}" data-stay-form>
+          <div class="field"><label for="ci">Check-in</label><input class="input" id="ci" type="date" name="check_in" value="{{ stay.check_in }}" data-check-in></div>
+          <div class="field"><label for="co">Check-out</label><input class="input" id="co" type="date" name="check_out" value="{{ stay.check_out }}" data-check-out></div>
+          <div class="field"><label for="g">Guests</label><input class="input" id="g" type="number" name="guests" min="1" max="12" value="{{ stay.guests }}"></div>
+          <button class="btn btn-secondary" type="submit">Update</button>
+        </form>
+
+        {% for r in rooms %}
+        <article class="card room{% if not r.available %} is-unavailable{% endif %}">
+          <img class="room__img" src="{{ r.images[0] }}" alt="{{ r.name }}" loading="lazy">
+          <div class="room__body">
+            <h3>{{ r.name }}</h3>
+            <p class="muted small" style="margin:0">
+              {% if r.bed_type %}{{ r.bed_type }} · {% endif %}{% if r.size_sqm %}{{ r.size_sqm }} m² · {% endif %}Sleeps {{ r.max_guests }}
+            </p>
+            <div class="row" style="flex-wrap:wrap; gap:6px">
+              {% if r.free_cancellation %}<span class="badge badge--success">Free cancellation</span>{% else %}<span class="badge badge--muted">Non-refundable</span>{% endif %}
+              {% if r.breakfast_included %}<span class="badge badge--info">Breakfast included</span>{% endif %}
+            </div>
+            {% if r.amenities %}<ul class="tags">{% for a in r.amenities[:4] %}<li>{{ a }}</li>{% endfor %}</ul>{% endif %}
+          </div>
+          <div class="room__buy">
+            {% if r.available %}
+              <div class="price">
+                <span class="price__total">{{ r.total_price|money(hotel.currency) }}</span>
+                <span class="price__meta">{{ stay.nights }} night{{ 's' if stay.nights != 1 }} · {{ r.per_night|money(hotel.currency) }}/night</span>
+                {% if r.rooms_left <= 3 %}<span class="scarcity">Only {{ r.rooms_left }} left</span>{% endif %}
+              </div>
+              <a class="btn btn-primary" href="/book?{{ qs(stay.as_params(), room=r.id) }}">Reserve</a>
+            {% elif not r.fits_party %}
+              <span class="muted small">Sleeps up to {{ r.max_guests }} — not enough for {{ stay.guests }} guests</span>
+            {% else %}
+              <span class="muted small">Sold out for these dates</span>
+            {% endif %}
+          </div>
+        </article>
+        {% endfor %}
+        {% if not available %}
+          <div class="alert alert-info">No rooms available for {{ ui.stay_summary(stay) }}. Try different dates above.</div>
+        {% endif %}
+      </section>
+    </div>
+
+    <aside class="hotel-aside">
+      <div class="card card-pad booking-box">
+        {% if cheapest %}
+          <div class="muted small">From</div>
+          <div class="from">{{ cheapest.per_night|money(hotel.currency) }} <span class="muted small" style="font-weight:400">/ night</span></div>
+          <dl class="summary-rows">
+            <div><dt>Dates</dt><dd>{{ stay.check_in|nice_date }} – {{ stay.check_out|nice_date }}</dd></div>
+            <div><dt>Guests</dt><dd>{{ stay.guests }}</dd></div>
+            <div class="total"><dt>Total ({{ stay.nights }} night{{ 's' if stay.nights != 1 }})</dt><dd>{{ cheapest.total_price|money(hotel.currency) }}</dd></div>
+          </dl>
+          <a class="btn btn-primary btn-block" href="#rooms">See rooms</a>
+        {% else %}
+          <h3>Not available</h3>
+          <p class="muted small">for {{ ui.stay_summary(stay) }}</p>
+          <a class="btn btn-secondary btn-block" href="#rooms">Change dates</a>
+        {% endif %}
+        <ul class="trust-list">
+          <li>No payment needed today</li>
+          <li>Total price shown — no hidden fees</li>
+          <li>Instant confirmation</li>
+        </ul>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<div class="sticky-cta">
+  {% if cheapest %}
+  <div><strong>{{ cheapest.total_price|money(hotel.currency) }}</strong> <span class="muted small">total</span><div class="muted small">{{ stay.check_in|nice_date('%d %b') }} – {{ stay.check_out|nice_date('%d %b') }} · {{ stay.guests }} guests</div></div>
+  <a class="btn btn-primary" href="#rooms">See rooms</a>
+  {% else %}
+  <span class="muted small">Not available for these dates</span>
+  <a class="btn btn-secondary" href="#rooms">Change dates</a>
+  {% endif %}
+</div>
+{% endblock %}

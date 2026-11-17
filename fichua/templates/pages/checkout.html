@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% import "components/ui.html" as ui %}
+
+{% block title %}Confirm your stay · {{ app_name }}{% endblock %}
+
+{% block content %}
+{% macro field(name, label, type='text', autocomplete='', hint='', required=true) %}
+<div class="field{% if errors[name] %} has-error{% endif %}">
+  <label for="{{ name }}">{{ label }}{% if not required %} <span class="muted" style="font-weight:400">(optional)</span>{% endif %}</label>
+  {% if type == 'textarea' %}
+  <textarea id="{{ name }}" name="{{ name }}" maxlength="1000">{{ form.get(name, '') }}</textarea>
+  {% else %}
+  <input id="{{ name }}" name="{{ name }}" type="{{ type }}" value="{{ form.get(name, '') }}" {% if autocomplete %}autocomplete="{{ autocomplete }}"{% endif %} {% if required %}required{% endif %}>
+  {% endif %}
+  {% if errors[name] %}<span class="error">{{ errors[name] }}</span>{% elif hint %}<span class="hint">{{ hint }}</span>{% endif %}
+</div>
+{% endmacro %}
+<div class="container" style="padding-bottom:var(--space-8)">
+  <a class="back-link" href="/hotels/{{ hotel.id }}?{{ qs(stay.as_params()) }}#rooms">← Back to {{ hotel.name }}</a>
+  <h1 class="page-title">Confirm your stay</h1>
+  <p class="muted">One step. No account, no payment today.</p>
+
+  <div class="checkout-layout">
+    <form class="card card-pad stack" method="post" action="/book" novalidate data-checkout>
+      <input type="hidden" name="room" value="{{ room.id }}">
+      {% for k, v in stay.as_params().items() %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endfor %}
+      {% if errors.general %}<div class="alert alert-error" role="alert">{{ errors.general }}</div>{% endif %}
+      {% if not offer and not errors.general %}<div class="alert alert-error" role="alert">This room is no longer available for these dates. <a href="/hotels/{{ hotel.id }}?{{ qs(stay.as_params()) }}#rooms">Choose another room</a>.</div>{% endif %}
+
+      <h2 style="font-size:var(--text-xl)">Who's checking in?</h2>
+      <div class="form-grid">
+        {{ field('guest_name', 'Full name', autocomplete='name') }}
+        <div class="form-grid form-grid--2">
+          {{ field('guest_email', 'Email', 'email', 'email', "We'll use it to find your booking.") }}
+          {{ field('guest_phone', 'Phone', 'tel', 'tel', 'In case the hotel needs to reach you.', required=false) }}
+        </div>
+        {{ field('special_requests', 'Special requests', 'textarea', required=false) }}
+      </div>
+
+      <div class="pay-later"><span aria-hidden="true">✓</span><div><strong>No payment needed today.</strong> You'll pay {{ hotel.name }} during your stay.</div></div>
+
+      <button class="btn btn-primary btn-lg btn-block" type="submit" {% if not offer %}disabled{% endif %} data-submit>
+        Confirm booking{% if offer %} · {{ offer.total_price|money(hotel.currency) }}{% endif %}
+      </button>
+      <p class="muted small" style="text-align:center;margin:0">By confirming you agree to the hotel's policies. {% if room.free_cancellation %}Free cancellation until the day before check-in.{% else %}This rate is non-refundable.{% endif %}</p>
+    </form>
+
+    <aside class="card summary-card">
+      <img src="{{ hotel.images[0] }}" alt="{{ hotel.name }}">
+      <div class="card-pad">
+        <h3 class="display" style="font-size:var(--text-xl)">{{ hotel.name }}</h3>
+        <p class="muted small">{{ hotel.city }}{% if hotel.country %}, {{ hotel.country }}{% endif %}</p>
+        {{ ui.rating_line(hotel) }}
+        <dl class="summary-rows">
+          <div><dt>Room</dt><dd>{{ room.name }}</dd></div>
+          <div><dt>Check-in</dt><dd>{{ stay.check_in|nice_date('%a %d %b %Y') }}, from {{ hotel.check_in_time or '14:00' }}</dd></div>
+          <div><dt>Check-out</dt><dd>{{ stay.check_out|nice_date('%a %d %b %Y') }}, until {{ hotel.check_out_time or '11:00' }}</dd></div>
+          <div><dt>Guests</dt><dd>{{ stay.guests }}</dd></div>
+          {% if offer %}
+          <div><dt>{{ (offer.total_price / stay.nights)|money(hotel.currency, true) }} × {{ stay.nights }} night{{ 's' if stay.nights != 1 }}</dt><dd>{{ offer.total_price|money(hotel.currency, true) }}</dd></div>
+          <div class="total"><dt>Total</dt><dd>{{ offer.total_price|money(hotel.currency, true) }}</dd></div>
+          {% endif %}
+        </dl>
+        <div class="row" style="flex-wrap:wrap;gap:6px">
+          {% if room.free_cancellation %}<span class="badge badge--success">Free cancellation</span>{% endif %}
+          {% if room.breakfast_included %}<span class="badge badge--info">Breakfast included</span>{% endif %}
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+{% endblock %}

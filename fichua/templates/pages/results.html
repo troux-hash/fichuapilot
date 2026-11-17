@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% import "components/ui.html" as ui %}
+
+{% block title %}{{ results|length }} stays{% if destination %} in {{ destination }}{% endif %} · {{ app_name }}{% endblock %}
+
+{% block content %}
+<section class="results-head">
+  <div class="container">
+    <button type="button" class="search-summary" data-toggle-search aria-expanded="false">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <span><strong>{{ destination|title or 'Anywhere' }}</strong><br><span class="muted small">{{ stay.check_in|nice_date('%d %b') }} – {{ stay.check_out|nice_date('%d %b') }} · {{ stay.guests }} guest{{ 's' if stay.guests != 1 }}</span></span>
+      <span class="search-summary__edit">Edit</span>
+    </button>
+    <div class="search-collapsible" data-search-panel>{{ ui.search_form(stay, destination, presets, destinations, compact=true) }}</div>
+    <noscript><style>.search-collapsible{display:block!important}.search-summary{display:none!important}</style></noscript>
+  </div>
+</section>
+
+<div class="container results-layout">
+  <aside class="filters" id="filters" data-filters aria-label="Filters">
+    <form class="filters-form" id="filter-form" action="/search" method="get" data-filter-form>
+      <div class="filters__head">
+        <h2 style="font-size:var(--text-xl)">Filters</h2>
+        <button type="button" class="btn btn-ghost btn-sm" data-close-filters aria-label="Close filters">✕</button>
+      </div>
+      {% for k, v in base.items() %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endfor %}
+
+      <div class="filter-group">
+        <h3>Price per night</h3>
+        <input type="range" name="price_max" min="0" max="{{ facets.price_ceiling }}" step="5"
+               value="{{ filters.price_max|int if filters.price_max is not none else facets.price_ceiling }}"
+               data-range aria-label="Maximum price per night">
+        <div class="range-row"><span class="muted">Up to</span><strong data-range-label>{{ (filters.price_max if filters.price_max is not none else facets.price_ceiling)|money }}</strong></div>
+      </div>
+
+      <div class="filter-group">
+        <h3>Popular</h3>
+        <label class="check"><input type="checkbox" name="free_cancellation" value="1" {% if filters.free_cancellation %}checked{% endif %}> Free cancellation</label>
+        <label class="check"><input type="checkbox" name="breakfast" value="1" {% if filters.breakfast %}checked{% endif %}> Breakfast included</label>
+      </div>
+
+      <div class="filter-group">
+        <h3>Guest rating</h3>
+        <div class="chips">
+          {% for val, label in [('', 'Any'), ('7', '7+'), ('8', '8+'), ('9', '9+')] %}
+          <label class="chip"><input type="radio" name="rating_min" value="{{ val }}"
+            {% if (filters.rating_min is none and val == '') or (filters.rating_min is not none and val and filters.rating_min == val|float) %}checked{% endif %}>{{ label }}</label>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <h3>Stars</h3>
+        <div class="chips">
+          {% for s in [5, 4, 3, 2] %}
+          <label class="chip"><input type="checkbox" name="stars" value="{{ s }}" {% if s in filters.stars %}checked{% endif %}>{{ s }} ★</label>
+          {% endfor %}
+        </div>
+      </div>
+
+      {% if facets.property_types|length > 1 %}
+      <div class="filter-group">
+        <h3>Type of stay</h3>
+        {% for t in facets.property_types %}
+        <label class="check"><input type="checkbox" name="type" value="{{ t }}" {% if t in filters.property_types %}checked{% endif %}> {{ t }}</label>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      {% if facets.amenities %}
+      <div class="filter-group">
+        <h3>Amenities</h3>
+        {% for a in facets.amenities %}
+        <label class="check"><input type="checkbox" name="amenity" value="{{ a }}" {% if a in filters.amenities %}checked{% endif %}> {{ a }}</label>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <noscript><button class="btn btn-primary btn-block" type="submit">Apply filters</button></noscript>
+      <div class="filters__foot">
+        <a class="btn btn-ghost" href="/search?{{ qs(base) }}">Clear</a>
+        <button class="btn btn-primary" style="flex:1" type="submit">Show results</button>
+      </div>
+    </form>
+  </aside>
+  <div class="scrim" data-scrim></div>
+
+  <section aria-live="polite">
+    <div class="results-toolbar row-between">
+      <div>
+        <h1 class="results-title">{{ results|length }} stay{{ 's' if results|length != 1 }}{% if destination %} in {{ destination|title }}{% endif %}</h1>
+        <p class="muted small" style="margin:4px 0 0">{{ ui.stay_summary(stay) }}</p>
+      </div>
+      <div class="row">
+        <button type="button" class="btn btn-secondary btn-sm filters-toggle" data-open-filters>
+          Filters{% if filters.active_count %} · {{ filters.active_count }}{% endif %}
+        </button>
+        <label class="sort"><span class="sr-only">Sort by</span>
+          <select class="input" name="sort" form="filter-form" data-sort>
+            {% for key, label in sorts.items() %}<option value="{{ key }}" {% if filters.sort == key %}selected{% endif %}>{{ label }}</option>{% endfor %}
+          </select>
+        </label>
+      </div>
+    </div>
+
+    {% if results %}
+      <div class="results-grid">
+        {% for o in results %}{{ ui.hotel_card(o, stay, destination) }}{% endfor %}
+      </div>
+    {% else %}
+      <div class="card empty">
+        {% if facets.total and filters.active_count %}
+          <h2>No stays match those filters</h2>
+          <p class="muted">{{ facets.total }} stay{{ 's' if facets.total != 1 }} available if you loosen them.</p>
+          <a class="btn btn-primary" href="/search?{{ qs(base) }}">Clear filters</a>
+        {% else %}
+          <h2>Nothing available{% if destination %} in {{ destination|title }}{% endif %} for these dates</h2>
+          <p class="muted">Try other dates or one of these destinations.</p>
+          <div class="chips" style="justify-content:center">
+            {% for d in destinations[:6] %}<a class="chip" href="/search?{{ qs(stay.as_params(), destination=d.city) }}">{{ d.city }}</a>{% endfor %}
+          </div>
+        {% endif %}
+      </div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

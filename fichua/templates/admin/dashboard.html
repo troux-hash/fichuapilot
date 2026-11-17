@@ -1,0 +1,42 @@
+{% extends "admin/layout.html" %}
+{% block admin %}
+<h1 class="page-title">Dashboard</h1>
+<div class="stat-grid">
+  <div class="card stat"><strong>{{ stats.hotels }}</strong><span>Hotels</span></div>
+  <div class="card stat"><strong>{{ stats.rooms }}</strong><span>Room types</span></div>
+  <div class="card stat"><strong>{{ '{:,}'.format(stats.rate_nights or 0) }}</strong><span>Rate nights{% if stats.last_rate_date %} · until {{ stats.last_rate_date|nice_date('%d %b %Y') }}{% endif %}</span></div>
+  <div class="card stat"><strong>{{ stats.bookings }}</strong><span>Confirmed bookings</span></div>
+</div>
+
+{% if result %}
+  {% if result.ok %}
+  <div class="alert alert-success" role="status" style="margin-bottom:var(--space-5)">
+    <strong>Imported {{ filename }}.</strong> {{ result.hotels }} hotels, {{ result.rooms }} room types and {{ '{:,}'.format(result.rate_nights) }} rate nights saved. <a href="/" target="_blank">See it live ↗</a>
+  </div>
+  {% else %}
+  <div class="alert alert-error" role="alert" style="margin-bottom:var(--space-5)">
+    <strong>Nothing was imported from {{ filename }}.</strong> Fix {{ 'this' if result.errors|length == 1 else 'these ' ~ result.errors|length }} and upload again:
+    <ul>{% for e in result.errors[:50] %}<li>{{ e }}</li>{% endfor %}</ul>
+    {% if result.errors|length > 50 %}<p>…and {{ result.errors|length - 50 }} more.</p>{% endif %}
+  </div>
+  {% endif %}
+{% endif %}
+
+<div class="card card-pad stack">
+  <div class="row-between">
+    <div>
+      <h2 style="font-size:var(--text-xl)">Upload hotel data</h2>
+      <p class="muted small" style="margin:4px 0 0">One Excel file per hotel group: <strong>Hotels</strong>, <strong>Rooms</strong> and <strong>Rates</strong> sheets. Re-uploading updates existing codes.</p>
+    </div>
+    <a class="btn btn-secondary btn-sm" href="/admin/template.xlsx">Download template</a>
+  </div>
+  <form method="post" action="/admin/upload" enctype="multipart/form-data" class="stack">
+    <label class="dropzone" data-dropzone>
+      <strong data-file-label>Drop your .xlsx here or click to choose</strong>
+      <span class="muted small">Max {{ max_mb }} MB · validated before anything is saved</span>
+      <input type="file" name="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required>
+    </label>
+    <button class="btn btn-primary" type="submit">Upload & import</button>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,114 @@
+/* ==========================================================================
+   Fichua design tokens — THE file to edit to re-skin the product.
+   See design/DESIGN_PRINCIPLES.md. Components only ever use these variables.
+   ========================================================================== */
+
+:root {
+  /* Brand */
+  --color-ink: #0E1B33;            /* trust: text, header */
+  --color-ink-soft: #3B4760;
+  --color-muted: #6B7489;
+  --color-primary: #1F3A8A;        /* links, selection */
+  --color-primary-soft: #E8EDFB;
+  --color-accent: #FF5A3C;         /* the ONE call-to-action colour */
+  --color-accent-hover: #E8452A;
+  --color-accent-soft: #FFEDE8;
+  --color-success: #0F8A5F;
+  --color-success-soft: #E3F5EE;
+  --color-warning: #B45309;
+  --color-warning-soft: #FEF3E2;
+  --color-danger: #C2261D;
+  --color-danger-soft: #FDECEA;
+  --color-star: #F5A524;
+
+  /* Surfaces */
+  --color-bg: #F7F5F2;             /* warm off-white */
+  --color-surface: #FFFFFF;
+  --color-surface-2: #F1EEEA;
+  --color-border: #E4E0DA;
+  --color-border-strong: #CFC9C0;
+  --color-on-accent: #FFFFFF;
+  --hero-gradient: radial-gradient(1200px 500px at 85% -10%, #FFD9CC 0%, transparent 60%),
+                   radial-gradient(900px 500px at -10% 10%, #DCE4FF 0%, transparent 55%);
+
+  /* Typography */
+  --font-display: "Fraunces", Georgia, "Times New Roman", serif;
+  --font-body: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+  --text-3xl: clamp(2rem, 4.5vw, 3.25rem);
+  --text-hero: clamp(2.4rem, 6.5vw, 4.5rem);
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-bold: 700;
+  --leading-tight: 1.1;
+  --leading-normal: 1.55;
+
+  /* Spacing (4px scale) */
+  --space-1: 4px;  --space-2: 8px;  --space-3: 12px; --space-4: 16px; --space-5: 20px;
+  --space-6: 24px; --space-7: 32px; --space-8: 48px; --space-9: 72px;
+
+  /* Shape & depth */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 22px;
+  --radius-pill: 999px;
+  --shadow-sm: 0 1px 2px rgba(14, 27, 51, 0.06), 0 1px 1px rgba(14, 27, 51, 0.04);
+  --shadow-md: 0 6px 20px -6px rgba(14, 27, 51, 0.16), 0 2px 6px rgba(14, 27, 51, 0.06);
+  --shadow-lg: 0 24px 60px -18px rgba(14, 27, 51, 0.30);
+  --focus-ring: 0 0 0 3px rgba(31, 58, 138, 0.35);
+
+  /* Layout & motion */
+  --container: 1200px;
+  --header-h: 64px;
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --speed: 180ms;
+}
+
+/* Dark mode — automatic, follows the device */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-ink: #F2F0EC;
+    --color-ink-soft: #C9CDD8;
+    --color-muted: #98A0B3;
+    --color-primary: #8FA8FF;
+    --color-primary-soft: #1D2747;
+    --color-accent-soft: #3A1E17;
+    --color-success-soft: #10352A;
+    --color-warning-soft: #3A2A10;
+    --color-danger-soft: #3D1513;
+    --color-bg: #0B1222;
+    --color-surface: #131C30;
+    --color-surface-2: #1A2540;
+    --color-border: #26314B;
+    --color-border-strong: #36425F;
+    --hero-gradient: radial-gradient(1200px 500px at 85% -10%, #3A1E2A 0%, transparent 60%),
+                     radial-gradient(900px 500px at -10% 10%, #18264F 0%, transparent 55%);
+    --shadow-md: 0 6px 20px -6px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 24px 60px -18px rgba(0, 0, 0, 0.7);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Theme experiments: open any page with ?theme=<name> to preview.
+   -------------------------------------------------------------------------- */
+[data-theme="sunrise"] {
+  --color-accent: #F59E0B;
+  --color-accent-hover: #D97706;
+  --color-accent-soft: #FEF3C7;
+  --color-on-accent: #1F1300;
+  --color-primary: #0F766E;
+}
+
+[data-theme="savanna"] {
+  --color-ink: #1F2A1C;
+  --color-primary: #3F6212;
+  --color-accent: #C2410C;
+  --color-accent-hover: #9A3412;
+  --color-bg: #F6F3EA;
+  --font-display: "Plus Jakarta Sans", system-ui, sans-serif;
+}

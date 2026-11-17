@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% import "components/ui.html" as ui %}
+
+{% block content %}
+<section class="hero">
+  <div class="container">
+    <h1>Your next stay, <em>found in seconds.</em></h1>
+    <p class="lede">Where, when, who — that's it. Real availability, the total price up front, and no payment needed today.</p>
+    {{ ui.search_form(stay, '', presets, destinations) }}
+    <div class="recent" data-recent>
+      <span class="label">Pick up where you left off</span>
+      <div class="chips" data-recent-list></div>
+    </div>
+    <div class="trust-strip">
+      <span>Total price, no surprises</span>
+      <span>Free cancellation on most rooms</span>
+      <span>Pay at the hotel</span>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    {% if destinations %}
+    <div class="section-head">
+      <h2>One tap to this weekend</h2>
+      <span class="muted small">{{ ui.stay_summary(stay) }}</span>
+    </div>
+    <div class="destinations">
+      {% for d in destinations[:6] %}
+      <a class="destination" href="/search?{{ qs(stay.as_params(), destination=d.city) }}">
+        <img src="{{ d.image }}" alt="" loading="lazy">
+        <span class="destination__text"><strong>{{ d.city }}</strong><span>{{ d.country }} · {{ d.hotels }} stays</span></span>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="card empty">
+      <h2>No hotels yet</h2>
+      <p class="muted">Upload your first Excel file in the admin and they'll appear here instantly.</p>
+      <a class="btn btn-primary" href="/admin">Go to admin</a>
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+<section class="section" style="padding-top:0">
+  <div class="container value-props">
+    <div class="card card-pad"><div class="icon" aria-hidden="true">⚡</div><h3>Results in seconds</h3><p class="muted">Dates and guests are pre-filled. Tap a city and you're looking at real prices.</p></div>
+    <div class="card card-pad"><div class="icon" aria-hidden="true">🛡️</div><h3>Prices you can trust</h3><p class="muted">Every price is the total for your stay. What you see is what you pay at the hotel.</p></div>
+    <div class="card card-pad"><div class="icon" aria-hidden="true">✓</div><h3>Book in one step</h3><p class="muted">No account, no card. Four fields and you're confirmed.</p></div>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Admin login · {{ app_name }}{% endblock %}
+{% block nav %}<a href="/">← Back to site</a>{% endblock %}
+{% block content %}
+<div class="container narrow" style="max-width:440px;padding:var(--space-9) var(--space-4)">
+  <h1 class="page-title">Partner admin</h1>
+  <p class="muted">Upload and manage hotel inventory.</p>
+  <form class="card card-pad stack" method="post" action="/admin/login" style="margin-top:var(--space-5)">
+    {% if disabled %}<div class="alert alert-info">Admin is disabled until the <code>ADMIN_PASSWORD</code> environment variable is set.</div>{% endif %}
+    {% if error %}<div class="alert alert-error" role="alert">{{ error }}</div>{% endif %}
+    <div class="field"><label for="password">Password</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required autofocus></div>
+    <button class="btn btn-primary btn-block" type="submit">Sign in</button>
+  </form>
+</div>
+{% endblock %}
