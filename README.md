@@ -20,11 +20,12 @@ python -m venv .venv
 .venv\Scripts\python scripts\import_excel.py data\samples\all_hotels_synthetic.xlsx
 ```
 ```bash
-.venv\Scripts\uvicorn fichua.main:app --reload
+.venv\Scripts\python scripts\dev.py
 ```
 
-Open http://localhost:8000 · Admin at http://localhost:8000/admin (local password: `admin`) · API docs at `/api/docs`.
-Locally the data lives in `data/fichua.db` (SQLite). Set `DATABASE_URL` in `.env` to use Supabase instead.
+Open http://localhost:8000 · Admin at http://localhost:8000/admin · API docs at `/api/docs`.
+The dev server always uses the local SQLite copy in `data/fichua.db`, even though `.env` holds the live
+Supabase `DATABASE_URL` (add `--prod` to point it at the live database on purpose).
 
 Run tests: `.venv\Scripts\python -m pytest -q`
 

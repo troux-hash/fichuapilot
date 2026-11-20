@@ -18,36 +18,39 @@
 
 {% macro search_form(stay, destination='', presets=[], destinations=[], compact=false) %}
 <form class="search{% if compact %} search--compact{% endif %}" action="/search" method="get" data-search role="search">
-  <div class="search__field">
-    <label for="destination">Where</label>
-    <input id="destination" name="destination" list="destination-list" placeholder="City or hotel name"
-           value="{{ destination }}" autocomplete="off" enterkeyhint="search">
-    <datalist id="destination-list">
-      {% for d in destinations %}<option value="{{ d.city }}">{{ d.country }} · {{ d.hotels }} stays</option>{% endfor %}
-    </datalist>
-  </div>
-  <div class="search__field">
-    <span class="label">When</span>
-    <div class="search__dates">
-      <input type="date" name="check_in" value="{{ stay.check_in }}" aria-label="Check-in date"
-             {% if presets %}min="{{ presets[0].check_in }}"{% endif %} data-check-in required>
-      <span aria-hidden="true">→</span>
-      <input type="date" name="check_out" value="{{ stay.check_out }}" aria-label="Check-out date" data-check-out required>
+  {# The white bar holds only the fields + button; quick-date chips sit below it. #}
+  <div class="search__bar">
+    <div class="search__field">
+      <label for="destination">Where</label>
+      <input id="destination" name="destination" list="destination-list" placeholder="City or hotel name"
+             value="{{ destination }}" autocomplete="off" enterkeyhint="search">
+      <datalist id="destination-list">
+        {% for d in destinations %}<option value="{{ d.city }}">{{ d.country }} · {{ d.hotels }} stays</option>{% endfor %}
+      </datalist>
     </div>
-  </div>
-  <div class="search__field">
-    <span class="label" id="guests-label">Who</span>
-    <div class="stepper" data-stepper>
-      <button type="button" class="stepper__btn" data-step="-1" aria-label="Fewer guests">−</button>
-      <input type="number" name="guests" value="{{ stay.guests }}" min="1" max="12" inputmode="numeric" aria-labelledby="guests-label">
-      <button type="button" class="stepper__btn" data-step="1" aria-label="More guests">+</button>
-      <span class="stepper__unit">guests</span>
+    <div class="search__field">
+      <span class="label">When</span>
+      <div class="search__dates">
+        <input type="date" name="check_in" value="{{ stay.check_in }}" aria-label="Check-in date"
+               {% if presets %}min="{{ presets[0].check_in }}"{% endif %} data-check-in required>
+        <span aria-hidden="true">→</span>
+        <input type="date" name="check_out" value="{{ stay.check_out }}" aria-label="Check-out date" data-check-out required>
+      </div>
     </div>
+    <div class="search__field">
+      <span class="label" id="guests-label">Who</span>
+      <div class="stepper" data-stepper>
+        <button type="button" class="stepper__btn" data-step="-1" aria-label="Fewer guests">−</button>
+        <input type="number" name="guests" value="{{ stay.guests }}" min="1" max="12" inputmode="numeric" aria-labelledby="guests-label">
+        <button type="button" class="stepper__btn" data-step="1" aria-label="More guests">+</button>
+        <span class="stepper__unit">guests</span>
+      </div>
+    </div>
+    <button class="btn btn-primary btn-lg search__submit" type="submit">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <span>Search</span>
+    </button>
   </div>
-  <button class="btn btn-primary btn-lg search__submit" type="submit">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-    <span>Search</span>
-  </button>
   {% if presets %}
   <div class="chips search__presets" role="group" aria-label="Quick dates">
     {% for p in presets %}

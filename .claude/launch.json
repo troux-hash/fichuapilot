@@ -4,7 +4,7 @@
     {
       "name": "fichua",
       "runtimeExecutable": ".venv\\Scripts\\python.exe",
-      "runtimeArgs": ["-m", "uvicorn", "fichua.main:app", "--port", "8000", "--reload"],
+      "runtimeArgs": ["scripts/dev.py"],
       "port": 8000
     }
   ]

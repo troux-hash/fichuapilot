@@ -48,15 +48,19 @@
 /* ---------- Hero (home) ---------- */
 .hero { background: var(--hero-gradient); padding: var(--space-8) 0 var(--space-7); }
 @media (min-width: 720px) { .hero { padding: var(--space-9) 0 var(--space-8); } }
-.hero h1 { font-size: var(--text-hero); max-width: 14ch; }
+.hero h1 { font-size: var(--text-hero); max-width: 14ch; margin-bottom: var(--space-7); }
 .hero h1 em { font-style: italic; color: var(--color-accent); }
-.hero .lede { font-size: var(--text-lg); color: var(--color-ink-soft); max-width: 46ch; margin: var(--space-4) 0 var(--space-7); }
 .trust-strip { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-6); margin-top: var(--space-6);
   color: var(--color-ink-soft); font-size: var(--text-sm); font-weight: var(--weight-medium); }
 .trust-strip span::before { content: "●"; color: var(--color-success); margin-right: var(--space-2); font-size: 0.6em; vertical-align: middle; }
 
-/* ---------- Search ---------- */
-.search {
+/* ---------- Search ----------
+   Phone (<768): stacked card · Tablet (768–1023): 2×2 card · Laptop (1024+): one-row pill.
+   The white bar (.search__bar) holds only the fields + button; quick-date chips sit below it.
+   In the pill, the gap around the full-height pill button equals the bar's own padding, so
+   both curves are concentric and the button can never poke outside the bar. */
+.search { --search-row: 60px; display: grid; gap: var(--space-3); }
+.search__bar {
   display: grid; gap: var(--space-2);
   background: var(--color-surface); border: 1px solid var(--color-border);
   border-radius: var(--radius-lg); padding: var(--space-3); box-shadow: var(--shadow-lg);
@@ -78,7 +82,7 @@
 .search__dates span { color: var(--color-muted); }
 .search__dates input { min-width: 0; }
 .search__submit { width: 100%; }
-.search__presets { grid-column: 1 / -1; padding: var(--space-1) var(--space-1) 0; }
+.search__presets { padding: 0 var(--space-1); }
 .search__presets .chip { min-height: 32px; }
 
 .stepper { display: flex; align-items: center; gap: var(--space-2); }
@@ -94,23 +98,31 @@
 .stepper__btn:hover { border-color: var(--color-ink); }
 .stepper__unit { color: var(--color-ink-soft); font-size: var(--text-sm); }
 
-@media (min-width: 720px) {
-  .search { grid-template-columns: 1.3fr 1.6fr 1fr auto; align-items: stretch; border-radius: var(--radius-pill); padding: var(--space-2); }
-  .search__field { border-radius: var(--radius-pill); background: transparent; padding: var(--space-2) var(--space-5); }
+@media (min-width: 768px) {
+  .search__bar { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+}
+@media (min-width: 1024px) {
+  .search__bar {
+    grid-template-columns: minmax(0, 1fr) auto auto auto; align-items: center;
+    border-radius: var(--radius-pill); padding: var(--space-2);
+  }
+  .search__field {
+    min-height: var(--search-row); justify-content: center;
+    border-radius: var(--radius-pill); background: transparent; padding: 0 var(--space-5);
+  }
   .search__field + .search__field { border-left: 1px solid var(--color-border); border-radius: 0; }
   .search__field:focus-within { border-radius: var(--radius-pill); }
-  .search__submit { width: auto; height: 100%; }
-  .search__presets { padding: var(--space-2) var(--space-4) var(--space-1); }
+  .search__submit { width: auto; height: var(--search-row); min-height: 0; }
+  .search__presets { padding: 0 var(--space-5); }
 }
-.search-shell { position: relative; }
-.search--compact { box-shadow: var(--shadow-sm); }
+.search--compact .search__bar { box-shadow: var(--shadow-sm); }
 .search--compact .search__presets { display: none; }
-@media (min-width: 720px) {
-  .search--compact .search__submit { min-height: 48px; padding: 0 var(--space-5); font-size: var(--text-md); }
+@media (min-width: 1024px) {
+  .search--compact .search__submit { width: var(--search-row); padding: 0; }
   .search--compact .search__submit span { display: none; }
 }
 
-/* Results: collapsed search pill on phones */
+/* Results: collapsed search pill on phones and tablets */
 .search-summary {
   display: flex; align-items: center; gap: var(--space-3); width: 100%; text-align: left;
   padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4); min-height: 56px;
@@ -122,7 +134,7 @@
 .search-summary__edit { padding: var(--space-2) var(--space-4); border-radius: var(--radius-pill); background: var(--color-surface-2); font-size: var(--text-sm); font-weight: var(--weight-bold); }
 .search-collapsible { display: none; margin-top: var(--space-3); }
 .search-collapsible.is-open { display: block; }
-@media (min-width: 720px) {
+@media (min-width: 1024px) {
   .search-summary { display: none; }
   .search-collapsible { display: block; margin-top: 0; }
 }
