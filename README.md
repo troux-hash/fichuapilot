@@ -23,9 +23,9 @@ python -m venv .venv
 .venv\Scripts\python scripts\dev.py
 ```
 
-Open http://localhost:8000 · Admin at http://localhost:8000/admin · API docs at `/api/docs`.
-The dev server always uses the local SQLite copy in `data/fichua.db`, even though `.env` holds the live
-Supabase `DATABASE_URL` (add `--prod` to point it at the live database on purpose).
+Open http://localhost:8000 · Partners at `/partners` · Admin at `/admin` (local password: `admin`) · API docs at `/api/docs`.
+The dev server always uses the local SQLite copy in `data/fichua.db`, the test checkout and no WhatsApp,
+even though `.env` holds the live settings (add `--prod` to point it at the live database on purpose).
 
 Run tests: `.venv\Scripts\python -m pytest -q`
 

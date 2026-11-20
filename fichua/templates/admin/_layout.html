@@ -1,0 +1,25 @@
+{% extends "layouts/app.html" %}
+{% import "components/icons.html" as i %}
+{% block title %}{% block atitle %}Admin{% endblock %} · Fichua Admin{% endblock %}
+{% block home_href %}/admin{% endblock %}
+{% block tag %}Admin{% endblock %}
+{% block sidebar %}
+  <span class="sidebar__group">Business</span>
+  <a class="navlink{% if active == 'dashboard' %} is-active{% endif %}" href="/admin">{{ i.icon('home') }}Dashboard</a>
+  <a class="navlink{% if active == 'approvals' %} is-active{% endif %}" href="/admin/approvals">{{ i.icon('shield') }}Approvals{% if pending %}<span class="count">{{ pending }}</span>{% endif %}</a>
+  <a class="navlink{% if active == 'hotels' %} is-active{% endif %}" href="/admin/hotels">{{ i.icon('hotel') }}Hotels</a>
+  <a class="navlink{% if active == 'finance' %} is-active{% endif %}" href="/admin/finance">{{ i.icon('cash') }}Finance</a>
+  <a class="navlink{% if active == 'messages' %} is-active{% endif %}" href="/admin/messages">{{ i.icon('chat') }}WhatsApp messages</a>
+  <span class="sidebar__group">Setup</span>
+  <a class="navlink{% if active == 'codes' %} is-active{% endif %}" href="/admin/codes">{{ i.icon('key') }}Access codes</a>
+  <a class="navlink{% if active == 'settings' %} is-active{% endif %}" href="/admin/settings">{{ i.icon('settings') }}Settings</a>
+  <a class="navlink" href="/" target="_blank" rel="noopener">{{ i.icon('external') }}Guest site</a>
+  <form method="post" action="/admin/logout" class="hide-desktop"><button class="navlink" type="submit" style="background:none;border:0;font:inherit;cursor:pointer">{{ i.icon('logout') }}Log out</button></form>
+{% endblock %}
+{% block sidebar_foot %}
+  <div style="display:grid;gap:6px">
+    <span>Payments: <strong style="color:#fff">{{ 'Stripe' if payments_mode == 'stripe' else 'Test checkout' }}</strong></span>
+    <span>WhatsApp: <strong style="color:#fff">{{ 'Connected' if whatsapp_ready else 'Not connected' }}</strong></span>
+  </div>
+  <form method="post" action="/admin/logout"><button class="btn btn-secondary btn-sm btn-block" type="submit">Log out</button></form>
+{% endblock %}

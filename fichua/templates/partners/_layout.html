@@ -1,0 +1,35 @@
+{% extends "layouts/app.html" %}
+{% import "components/icons.html" as i %}
+{% block title %}{% block ptitle %}{% endblock %} · Fichua Partners{% endblock %}
+{% block home_href %}/partners{% endblock %}
+{% block tag %}Partners{% endblock %}
+{% block sidebar %}
+  {% set step_done = {'hotel': status.steps.identity, 'photos': status.steps.photos, 'rooms': status.steps.rooms, 'policies': status.steps.policies, 'review': hotel.status in ('pending', 'live')} %}
+  {% set step_icons = {'hotel': 'hotel', 'photos': 'image', 'rooms': 'bed', 'policies': 'shield', 'review': 'send'} %}
+  <span class="sidebar__group">Set up your hotel</span>
+  {% for key, label in steps %}
+  <a class="navlink{% if active == key %} is-active{% endif %}" href="/partners/{{ key }}">{{ i.icon(step_icons[key]) }}{{ label }}{% if step_done[key] %}<span class="tick">{{ i.icon('check', 16) }}</span>{% endif %}</a>
+  {% endfor %}
+  <span class="sidebar__group">Run your hotel</span>
+  <a class="navlink{% if active == 'calendar' %} is-active{% endif %}" href="/partners/calendar">{{ i.icon('calendar') }}Calendar and prices</a>
+  <a class="navlink{% if active == 'bookings' %} is-active{% endif %}" href="/partners/bookings">{{ i.icon('list') }}Bookings</a>
+  <form method="post" action="/partners/logout" class="hide-desktop"><button class="navlink" type="submit" style="background:none;border:0;font:inherit;cursor:pointer">{{ i.icon('logout') }}Log out</button></form>
+{% endblock %}
+{% block sidebar_foot %}
+  {% set status_labels = {'draft': 'Draft', 'pending': 'Waiting for approval', 'changes': 'Changes requested', 'live': 'Live', 'rejected': 'Not approved'} %}
+  <div style="display:grid;gap:6px">
+    <strong style="color:#fff;font-size:var(--text-sm)">{{ hotel.name }}</strong>
+    <span class="mono">{{ hotel.id }}</span>
+    <span class="pill pill--{{ hotel.status }}" style="justify-self:start">{{ status_labels.get(hotel.status, hotel.status) }}</span>
+    {% if hotel.status == 'live' %}<a href="/hotels/{{ hotel.id }}" target="_blank" rel="noopener" style="color:#C9C3FF">See it as a guest ↗</a>{% endif %}
+  </div>
+  <form method="post" action="/partners/logout"><button class="btn btn-secondary btn-sm btn-block" type="submit">Log out</button></form>
+{% endblock %}
+{% block app_content %}
+  {% if hotel.status == 'pending' %}<div class="alert alert-warning" role="status"><strong>Submitted.</strong> Fichua is reviewing your hotel, usually within 24 hours. You can keep editing in the meantime.</div>
+  {% elif hotel.status == 'changes' %}<div class="alert alert-info" role="status"><strong>Fichua asked for changes:</strong> {{ hotel.review_note }} Update your listing, then submit it again from Review and submit.</div>
+  {% elif hotel.status == 'rejected' %}<div class="alert alert-error" role="status"><strong>Not approved.</strong> {{ hotel.review_note }}</div>
+  {% elif hotel.status == 'live' and active in ('hotel', 'photos', 'rooms', 'policies') %}<div class="alert alert-success" role="status">Your hotel is live. Changes you save here show on Fichua straight away.</div>{% endif %}
+  {% block partner_content %}{% endblock %}
+{% endblock %}
+{% block scripts %}<script src="{{ asset('/static/js/partners.js') }}" defer></script>{% block partner_scripts %}{% endblock %}{% endblock %}

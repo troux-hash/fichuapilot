@@ -1,0 +1,35 @@
+{% extends "partners/_layout.html" %}
+{% block ptitle %}Add a booking you took{% endblock %}
+{% block page_title %}Add a booking you took{% endblock %}
+{% block page_sub %}<p><a href="/partners/bookings">← Back to bookings</a> · Walk-ins, phone calls, WhatsApp or other websites. This blocks the room on Fichua so it is never sold twice.</p>{% endblock %}
+{% block partner_content %}
+<form method="post" action="/partners/bookings/new" class="split">
+  <section class="panel panel-pad" style="display:grid;gap:var(--space-4)">
+    {% if errors %}<div class="alert alert-error" role="alert"><ul>{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul></div>{% endif %}
+    <div class="field">
+      <span class="label" id="src-label">Where did the booking come from?</span>
+      <div class="choice-grid" role="radiogroup" aria-labelledby="src-label">
+        {% for s in sources %}<label class="choice"><input type="radio" name="source" value="{{ s }}" {% if form.get('source', 'Walk-in') == s %}checked{% endif %}>{{ s }}</label>{% endfor %}
+      </div>
+    </div>
+    <div class="form-grid-2">
+      <div class="field"><label for="room">Room type</label>
+        <select id="room" name="room" required>{% for r in rooms %}<option value="{{ r.id }}" {% if form.get('room') == r.id %}selected{% endif %}>{{ r.name }} ({{ r.total_rooms or 0 }})</option>{% endfor %}</select></div>
+      <div class="field"><label for="rooms_count">Rooms</label><input id="rooms_count" name="rooms_count" type="number" min="1" max="20" value="{{ form.get('rooms_count', 1) }}"></div>
+      <div class="field"><label for="check_in">Check-in</label><input id="check_in" name="check_in" type="date" value="{{ form.get('check_in', '') }}" required data-check-in></div>
+      <div class="field"><label for="check_out">Check-out</label><input id="check_out" name="check_out" type="date" value="{{ form.get('check_out', '') }}" required data-check-out></div>
+      <div class="field"><label for="guest_name">Guest name</label><input id="guest_name" name="guest_name" value="{{ form.get('guest_name', '') }}" required></div>
+      <div class="field"><label for="guest_phone">Guest phone <span class="muted" style="font-weight:400">(optional)</span></label><input id="guest_phone" name="guest_phone" type="tel" value="{{ form.get('guest_phone', '') }}"></div>
+      <div class="field"><label for="guests">Guests</label><input id="guests" name="guests" type="number" min="1" max="12" value="{{ form.get('guests', 2) }}"></div>
+      <div class="field"><label for="amount">Amount agreed <span class="muted" style="font-weight:400">(optional)</span></label>
+        <div class="money-input"><input id="amount" name="amount" inputmode="decimal" value="{{ form.get('amount', '') }}"><span>USD</span></div>
+        <span class="hint">For your records. No commission on bookings you take yourself.</span></div>
+    </div>
+  </section>
+  <aside class="panel panel-pad" style="position:sticky;top:var(--space-5);display:grid;gap:var(--space-3)">
+    <h2>Block the room</h2>
+    <p class="muted small" style="margin:0">The room stops selling on Fichua for these nights straight away. Cancel it later from Bookings to put it back on sale.</p>
+    <button class="btn btn-primary btn-block" type="submit">Block room</button>
+  </aside>
+</form>
+{% endblock %}

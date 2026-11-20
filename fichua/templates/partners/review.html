@@ -1,0 +1,60 @@
+{% extends "partners/_layout.html" %}
+{% import "components/icons.html" as i %}
+{% block ptitle %}Review and submit{% endblock %}
+{% block page_title %}Review and submit{% endblock %}
+{% block page_sub %}<p>Step 5 of 5 · Fichua checks every new hotel before it goes live, to keep guests safe.</p>{% endblock %}
+{% block partner_content %}
+{% if error %}<div class="alert alert-error" role="alert">{{ error }}</div>{% endif %}
+<div class="split">
+  <section class="panel">
+    {% set rows = [
+      ('hotel', 'Hotel details', status.steps.identity, (hotel.name ~ ' · ' ~ (hotel.city or 'city missing') ~ ', ' ~ (hotel.country or '')) if status.steps.identity else 'Add the address, phone numbers and map pin'),
+      ('photos', 'Photos', status.steps.photos, status.photos ~ ' hotel photos' ~ ('' if status.steps.photos else ' (at least 3 needed)')),
+      ('rooms', 'Rooms and prices', status.steps.rooms, (status.rooms ~ ' room types · ' ~ status.room_units ~ ' rooms') if status.steps.rooms else 'Add at least one room type with a price'),
+      ('policies', 'Policies and payment', status.steps.policies, 'Terms accepted' if status.steps.policies else 'Accept the partner terms'),
+    ] %}
+    {% for key, title, ok, detail in rows %}
+    <div class="row" style="padding:var(--space-4) var(--space-5);border-bottom:1px solid var(--color-border)">
+      <span class="pill {{ 'pill--live' if ok else 'pill--pending' }}">{{ 'Done' if ok else 'To do' }}</span>
+      <div style="flex:1;min-width:0"><strong>{{ title }}</strong><div class="muted small">{{ detail }}</div></div>
+      <a class="btn btn-secondary btn-sm" href="/partners/{{ key }}">{{ 'Edit' if ok else 'Finish' }}</a>
+    </div>
+    {% endfor %}
+    {% if rooms %}
+    <div style="padding:var(--space-4) var(--space-5)">
+      <span class="label">Your prices</span>
+      <div class="table-wrap" style="margin-top:var(--space-2)"><table class="table">
+        <thead><tr><th>Room type</th><th class="num">Rooms</th><th class="num">Guests</th><th class="num">Price a night</th></tr></thead>
+        <tbody>{% for r in rooms %}<tr><td>{{ r.name }}</td><td class="num">{{ r.total_rooms or 0 }}</td><td class="num">{{ r.max_guests }}</td><td class="num">{{ (r.base_price or 0)|usd }}</td></tr>{% endfor %}</tbody>
+      </table></div>
+    </div>
+    {% endif %}
+  </section>
+  <aside class="panel panel-pad" style="display:grid;gap:var(--space-3)">
+    {% if hotel.status in ('draft', 'changes') %}
+      <h2>{{ 'Submit again' if hotel.status == 'changes' else 'Submit for approval' }}</h2>
+      <ol class="small" style="margin:0;padding-left:var(--space-5);display:grid;gap:6px;color:var(--color-ink-soft)">
+        <li>Fichua checks your hotel, usually within 24 hours.</li>
+        <li>We may call or visit to confirm the details.</li>
+        <li>Once approved, you go live and get a WhatsApp message.</li>
+      </ol>
+      <form method="post" action="/partners/submit">
+        <button class="btn btn-primary btn-block" type="submit" {% if not status.ready %}disabled{% endif %}>{{ i.icon('send') }}Submit to Fichua</button>
+      </form>
+      {% if not status.ready %}<p class="muted small" style="margin:0">Finish the steps marked "To do" first.</p>{% endif %}
+    {% elif hotel.status == 'pending' %}
+      <h2>Waiting for approval</h2>
+      <p class="muted small" style="margin:0">We'll message you on WhatsApp at {{ hotel.whatsapp or hotel.phone }}. Meanwhile, you can set prices for special dates in the calendar.</p>
+      <a class="btn btn-secondary btn-block" href="/partners/calendar">Open the calendar</a>
+    {% elif hotel.status == 'live' %}
+      <h2>You're live</h2>
+      <p class="muted small" style="margin:0">Guests can book {{ hotel.name }} now.</p>
+      <a class="btn btn-primary btn-block" href="/partners/calendar">Manage your calendar</a>
+      <a class="btn btn-secondary btn-block" href="/hotels/{{ hotel.id }}" target="_blank" rel="noopener">See it as a guest {{ i.icon('external', 16) }}</a>
+    {% else %}
+      <h2>Not approved</h2>
+      <p class="muted small" style="margin:0">{{ hotel.review_note or 'Contact the Fichua team for details.' }}</p>
+    {% endif %}
+  </aside>
+</div>
+{% endblock %}

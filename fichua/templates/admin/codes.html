@@ -1,0 +1,47 @@
+{% extends "admin/_layout.html" %}
+{% block atitle %}Access codes{% endblock %}
+{% block page_title %}Access codes{% endblock %}
+{% block page_sub %}<p>Hotels need a code to join. Give one to each hotel you invite, with the partner link.</p>{% endblock %}
+{% block app_content %}
+{% if created %}
+<div class="alert alert-success" role="status" style="display:grid;gap:6px">
+  <strong>Code {{ created }} created.</strong>
+  <span>Send this to the hotel: <span class="mono" data-copy="{{ request.base_url }}partners?code={{ created }}">{{ request.base_url }}partners?code={{ created }}</span> (tap to copy)</span>
+</div>
+{% endif %}
+<div class="split">
+  <section style="display:grid;gap:var(--space-3)">
+    {% if codes %}
+    <div class="table-wrap"><table class="table">
+      <thead><tr><th>Code</th><th>Gives</th><th class="num">Used</th><th>Expires</th><th>Note</th><th></th></tr></thead>
+      <tbody>{% for c in codes %}
+        <tr>
+          <td class="mono"><strong>{{ c.code }}</strong></td>
+          <td>{{ 'Listing + Hotel Manager' if c.plan == 'manager' else 'Listing only' }}{% if c.free_until %}<br><span class="muted small">free until {{ c.free_until|nice_date('%d %b %Y') }}</span>{% endif %}</td>
+          <td class="num">{{ c.uses }} / {{ c.max_uses }}</td>
+          <td>{{ c.expires_on|nice_date('%d %b %Y') if c.expires_on else 'Never' }}</td>
+          <td class="wrap" style="min-width:140px">{{ c.note or '' }}</td>
+          <td><form method="post" action="/admin/codes/{{ c.code }}/toggle"><button class="btn btn-ghost btn-sm" type="submit">{{ 'Disable' if c.is_active else 'Enable' }}</button></form>{% if not c.is_active %}<span class="pill pill--muted">Disabled</span>{% endif %}</td>
+        </tr>
+      {% endfor %}</tbody>
+    </table></div>
+    {% else %}
+    <section class="panel panel-pad" style="text-align:center"><h2>No codes yet</h2><p class="muted" style="margin:var(--space-2) 0 0">Create your first one on the right.</p></section>
+    {% endif %}
+  </section>
+  <form class="panel panel-pad" method="post" action="/admin/codes" style="display:grid;gap:var(--space-4)">
+    <h2>New code</h2>
+    {% if error %}<div class="alert alert-error" role="alert">{{ error }}</div>{% endif %}
+    <div class="field"><label for="code">Code</label><input id="code" name="code" placeholder="Leave empty to generate one" autocapitalize="characters"></div>
+    <div class="field"><label for="plan">Gives</label>
+      <select id="plan" name="plan"><option value="manager">Listing + Hotel Manager</option><option value="listing">Listing only</option></select></div>
+    <div class="field"><label for="free_until">Hotel Manager free until</label><input id="free_until" name="free_until" type="date"><span class="hint">Empty = free with no end date for now.</span></div>
+    <div class="form-grid-2">
+      <div class="field"><label for="max_uses">Hotels that can use it</label><input id="max_uses" name="max_uses" type="number" min="1" value="1"></div>
+      <div class="field"><label for="expires_on">Code expires</label><input id="expires_on" name="expires_on" type="date"></div>
+    </div>
+    <div class="field"><label for="note">Note <span class="muted" style="font-weight:400">(only you see it)</span></label><input id="note" name="note" placeholder="e.g. Kigali hotels met at the expo"></div>
+    <button class="btn btn-primary btn-block" type="submit">Create code</button>
+  </form>
+</div>
+{% endblock %}

@@ -4,6 +4,7 @@
 {% block content %}
 <section class="hero">
   <div class="container">
+    <span class="hero__eyebrow"><i aria-hidden="true"></i>Rwanda · Benin · Côte d'Ivoire</span>
     <h1>Your next stay, <em>found in seconds.</em></h1>
     {{ ui.search_form(stay, '', presets, destinations) }}
     <div class="recent" data-recent>
@@ -11,14 +12,14 @@
       <div class="chips" data-recent-list></div>
     </div>
     <div class="trust-strip">
-      <span>Total price, no surprises</span>
-      <span>Free cancellation on most rooms</span>
-      <span>Pay at the hotel</span>
+      <span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Secure card payment</span>
+      <span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>Instant confirmation on WhatsApp</span>
+      <span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>Free cancellation on most rooms</span>
     </div>
   </div>
 </section>
 
-<section class="section">
+<section class="section" style="padding-top:var(--space-6)">
   <div class="container">
     {% if destinations %}
     <div class="section-head">
@@ -36,7 +37,7 @@
     {% else %}
     <div class="card empty">
       <h2>No hotels yet</h2>
-      <p class="muted">Upload your first Excel file in the admin and they'll appear here instantly.</p>
+      <p class="muted">Approve a partner hotel or upload an Excel file in the admin, and it appears here instantly.</p>
       <a class="btn btn-primary" href="/admin">Go to admin</a>
     </div>
     {% endif %}
@@ -45,9 +46,21 @@
 
 <section class="section" style="padding-top:0">
   <div class="container value-props">
-    <div class="card card-pad"><div class="icon" aria-hidden="true">⚡</div><h3>Results in seconds</h3><p class="muted">Dates and guests are pre-filled. Tap a city and you're looking at real prices.</p></div>
-    <div class="card card-pad"><div class="icon" aria-hidden="true">🛡️</div><h3>Prices you can trust</h3><p class="muted">Every price is the total for your stay. What you see is what you pay at the hotel.</p></div>
-    <div class="card card-pad"><div class="icon" aria-hidden="true">✓</div><h3>Book in one step</h3><p class="muted">No account, no card. Four fields and you're confirmed.</p></div>
+    <div class="card card-pad">
+      <div class="icon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></div>
+      <h3>Results in seconds</h3>
+      <p class="muted">Dates and guests are already filled in. Tap a city and you see real prices.</p>
+    </div>
+    <div class="card card-pad">
+      <div class="icon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg></div>
+      <h3>Prices you can trust</h3>
+      <p class="muted">Every price is the total for your stay, in US dollars with your local currency beside it.</p>
+    </div>
+    <div class="card card-pad">
+      <div class="icon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></div>
+      <h3>Booked in one step</h3>
+      <p class="muted">No account needed. Pay securely and get your confirmation on WhatsApp straight away.</p>
+    </div>
   </div>
 </section>
 {% endblock %}

@@ -1,51 +1,83 @@
 /* ==========================================================================
    Fichua design tokens — THE file to edit to re-skin the product.
-   See design/DESIGN_PRINCIPLES.md. Components only ever use these variables.
+   Two themes share one set of token names:
+     :root        → "Aurora": the guest site. Dark, glass panels, light-on-dark gradients.
+     .theme-pro   → Partners portal + admin. Light, calm, professional, same brand accents.
+   Components never use raw colours; see design/DESIGN_PRINCIPLES.md.
    ========================================================================== */
 
 :root {
-  /* Brand */
-  --color-ink: #0E1B33;            /* trust: text, header */
-  --color-ink-soft: #3B4760;
-  --color-muted: #6B7489;
-  --color-primary: #1F3A8A;        /* links, selection */
-  --color-primary-soft: #E8EDFB;
-  --color-accent: #FF5A3C;         /* the ONE call-to-action colour */
-  --color-accent-hover: #E8452A;
-  --color-accent-soft: #FFEDE8;
-  --color-success: #0F8A5F;
-  --color-success-soft: #E3F5EE;
-  --color-warning: #B45309;
-  --color-warning-soft: #FEF3E2;
-  --color-danger: #C2261D;
-  --color-danger-soft: #FDECEA;
-  --color-star: #F5A524;
+  color-scheme: dark;
 
-  /* Surfaces */
-  --color-bg: #F7F5F2;             /* warm off-white */
-  --color-surface: #FFFFFF;
-  --color-surface-2: #F1EEEA;
-  --color-border: #E4E0DA;
-  --color-border-strong: #CFC9C0;
-  --color-on-accent: #FFFFFF;
-  --hero-gradient: radial-gradient(1200px 500px at 85% -10%, #FFD9CC 0%, transparent 60%),
-                   radial-gradient(900px 500px at -10% 10%, #DCE4FF 0%, transparent 55%);
+  /* Brand spectrum */
+  --violet: #8F7CFF;
+  --cyan: #4CD7F6;
+  --pink: #FF5FA2;
+  --peach: #FFB36B;
+  --mint: #3BE8B0;
+  --gradient-brand: linear-gradient(120deg, #8F7CFF 0%, #FF5FA2 55%, #FFB36B 100%);
+  --gradient-cool: linear-gradient(120deg, #4CD7F6 0%, #8F7CFF 100%);
+  --gradient-mint: linear-gradient(120deg, #3BE8B0 0%, #4CD7F6 100%);
+
+  /* Page + surfaces (glass) */
+  --color-bg: #06071A;
+  --page-bg:
+    radial-gradient(60% 45% at 12% 0%, rgba(143, 124, 255, 0.38), transparent 62%),
+    radial-gradient(45% 40% at 92% 12%, rgba(76, 215, 246, 0.24), transparent 60%),
+    radial-gradient(55% 45% at 70% 100%, rgba(255, 95, 162, 0.20), transparent 62%),
+    #06071A;
+  --color-surface: rgba(255, 255, 255, 0.06);
+  --color-surface-2: rgba(255, 255, 255, 0.09);
+  --color-surface-solid: #11132E;
+  --glass-blur: blur(18px) saturate(150%);
+  --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.10);
+  --header-bg: rgba(8, 9, 30, 0.62);
+  --input-bg: rgba(255, 255, 255, 0.07);
+  --color-border: rgba(255, 255, 255, 0.12);
+  --color-border-strong: rgba(255, 255, 255, 0.24);
+
+  /* Text */
+  --color-ink: #F5F4FF;
+  --color-ink-soft: #CFCDEB;
+  --color-muted: #A5A2CC;
+
+  /* Semantic */
+  --color-primary: #A99BFF;
+  --color-primary-soft: rgba(143, 124, 255, 0.18);
+  --color-accent: #FF5FA2;
+  --color-accent-soft: rgba(255, 95, 162, 0.16);
+  --color-success: #3BE8B0;
+  --color-success-soft: rgba(59, 232, 176, 0.14);
+  --color-warning: #FFCB5C;
+  --color-warning-soft: rgba(255, 203, 92, 0.14);
+  --color-danger: #FF7A8F;
+  --color-danger-soft: rgba(255, 107, 129, 0.15);
+  --color-star: #FFCB5C;
+
+  /* Buttons + chips */
+  --btn-primary-bg: var(--gradient-brand);
+  --btn-primary-fg: #0A0A1F;
+  --btn-primary-shadow: 0 10px 30px -10px rgba(255, 95, 162, 0.65);
+  --chip-active-bg: #F5F4FF;
+  --chip-active-fg: #0A0A1F;
+  --price-fill: var(--gradient-brand);
 
   /* Typography */
-  --font-display: "Fraunces", Georgia, "Times New Roman", serif;
-  --font-body: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Sora", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Manrope", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
   --text-md: 1rem;
   --text-lg: 1.125rem;
   --text-xl: 1.375rem;
   --text-2xl: 1.75rem;
-  --text-3xl: clamp(2rem, 4.5vw, 3.25rem);
-  --text-hero: clamp(2.4rem, 6.5vw, 4.5rem);
+  --text-3xl: clamp(2rem, 4.5vw, 3rem);
+  --text-hero: clamp(2.6rem, 7vw, 5rem);
   --weight-regular: 400;
   --weight-medium: 500;
   --weight-bold: 700;
-  --leading-tight: 1.1;
+  --leading-tight: 1.08;
   --leading-normal: 1.55;
 
   /* Spacing (4px scale) */
@@ -53,62 +85,93 @@
   --space-6: 24px; --space-7: 32px; --space-8: 48px; --space-9: 72px;
 
   /* Shape & depth */
-  --radius-sm: 8px;
-  --radius-md: 14px;
-  --radius-lg: 22px;
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
   --radius-pill: 999px;
-  --shadow-sm: 0 1px 2px rgba(14, 27, 51, 0.06), 0 1px 1px rgba(14, 27, 51, 0.04);
-  --shadow-md: 0 6px 20px -6px rgba(14, 27, 51, 0.16), 0 2px 6px rgba(14, 27, 51, 0.06);
-  --shadow-lg: 0 24px 60px -18px rgba(14, 27, 51, 0.30);
-  --focus-ring: 0 0 0 3px rgba(31, 58, 138, 0.35);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 12px 32px -14px rgba(0, 0, 0, 0.7);
+  --shadow-lg: 0 30px 70px -24px rgba(0, 0, 0, 0.8);
+  --shadow-glow: 0 0 0 1px rgba(143, 124, 255, 0.35), 0 18px 50px -18px rgba(143, 124, 255, 0.7);
+  --focus-ring: 0 0 0 3px rgba(76, 215, 246, 0.55);
 
   /* Layout & motion */
   --container: 1200px;
-  --header-h: 64px;
+  --header-h: 68px;
   --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
   --speed: 180ms;
 }
 
-/* Dark mode — automatic, follows the device */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --color-ink: #F2F0EC;
-    --color-ink-soft: #C9CDD8;
-    --color-muted: #98A0B3;
-    --color-primary: #8FA8FF;
-    --color-primary-soft: #1D2747;
-    --color-accent-soft: #3A1E17;
-    --color-success-soft: #10352A;
-    --color-warning-soft: #3A2A10;
-    --color-danger-soft: #3D1513;
-    --color-bg: #0B1222;
-    --color-surface: #131C30;
-    --color-surface-2: #1A2540;
-    --color-border: #26314B;
-    --color-border-strong: #36425F;
-    --hero-gradient: radial-gradient(1200px 500px at 85% -10%, #3A1E2A 0%, transparent 60%),
-                     radial-gradient(900px 500px at -10% 10%, #18264F 0%, transparent 55%);
-    --shadow-md: 0 6px 20px -6px rgba(0, 0, 0, 0.5);
-    --shadow-lg: 0 24px 60px -18px rgba(0, 0, 0, 0.7);
-  }
+/* --------------------------------------------------------------------------
+   Pro theme: partner portal + admin. Light, high-clarity, same brand accents.
+   -------------------------------------------------------------------------- */
+.theme-pro {
+  color-scheme: light;
+  --color-bg: #F3F5FA;
+  --page-bg: #F3F5FA;
+  --color-surface: #FFFFFF;
+  --color-surface-2: #EEF1F8;
+  --color-surface-solid: #FFFFFF;
+  --glass-blur: none;
+  --glass-highlight: 0 0 0 transparent;
+  --header-bg: rgba(255, 255, 255, 0.85);
+  --input-bg: #FFFFFF;
+  --color-border: #E2E6F0;
+  --color-border-strong: #CBD1E1;
+  --color-ink: #10132B;
+  --color-ink-soft: #454A67;
+  --color-muted: #5E6380;
+  --color-primary: #5B4BFF;
+  --color-primary-soft: #EEEBFF;
+  --color-accent: #D6337A;
+  --color-accent-soft: #FDEAF3;
+  --color-success: #05704F;
+  --color-success-soft: #E3F7EF;
+  --color-warning: #8A5A00;
+  --color-warning-soft: #FFF3D9;
+  --color-danger: #C21F3A;
+  --color-danger-soft: #FDEBEE;
+  --color-star: #C98A00;
+  --btn-primary-bg: #5B4BFF;
+  --btn-primary-fg: #FFFFFF;
+  --btn-primary-shadow: 0 8px 20px -10px rgba(91, 75, 255, 0.8);
+  --chip-active-bg: #10132B;
+  --chip-active-fg: #FFFFFF;
+  --price-fill: linear-gradient(120deg, #10132B, #10132B);
+  --shadow-sm: 0 1px 2px rgba(16, 19, 43, 0.06);
+  --shadow-md: 0 10px 30px -16px rgba(16, 19, 43, 0.25);
+  --shadow-lg: 0 24px 60px -24px rgba(16, 19, 43, 0.3);
+  --focus-ring: 0 0 0 3px rgba(91, 75, 255, 0.3);
+  --sidebar-bg: #0F1229;
+  --sidebar-fg: #E8E7FF;
+  --sidebar-muted: #9D9CC4;
 }
 
 /* --------------------------------------------------------------------------
-   Theme experiments: open any page with ?theme=<name> to preview.
+   Theme experiments: open any guest page with ?theme=<name>.
    -------------------------------------------------------------------------- */
-[data-theme="sunrise"] {
-  --color-accent: #F59E0B;
-  --color-accent-hover: #D97706;
-  --color-accent-soft: #FEF3C7;
-  --color-on-accent: #1F1300;
-  --color-primary: #0F766E;
-}
-
-[data-theme="savanna"] {
-  --color-ink: #1F2A1C;
-  --color-primary: #3F6212;
-  --color-accent: #C2410C;
-  --color-accent-hover: #9A3412;
-  --color-bg: #F6F3EA;
-  --font-display: "Plus Jakarta Sans", system-ui, sans-serif;
+[data-theme="daylight"] {
+  color-scheme: light;
+  --color-bg: #F6F4FF;
+  --page-bg:
+    radial-gradient(60% 45% at 10% 0%, rgba(143, 124, 255, 0.30), transparent 60%),
+    radial-gradient(45% 40% at 95% 10%, rgba(76, 215, 246, 0.25), transparent 60%),
+    radial-gradient(55% 45% at 70% 100%, rgba(255, 95, 162, 0.18), transparent 60%),
+    #F6F4FF;
+  --color-surface: rgba(255, 255, 255, 0.62);
+  --color-surface-2: rgba(255, 255, 255, 0.8);
+  --color-surface-solid: #FFFFFF;
+  --header-bg: rgba(255, 255, 255, 0.6);
+  --input-bg: rgba(255, 255, 255, 0.75);
+  --color-border: rgba(16, 19, 43, 0.10);
+  --color-border-strong: rgba(16, 19, 43, 0.2);
+  --color-ink: #10132B;
+  --color-ink-soft: #3E4263;
+  --color-muted: #5E6380;
+  --color-primary: #5B4BFF;
+  --color-success: #05704F;
+  --color-warning: #8A5A00;
+  --color-danger: #C21F3A;
+  --chip-active-bg: #10132B;
+  --chip-active-fg: #FFFFFF;
 }

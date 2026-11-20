@@ -67,7 +67,7 @@
 <a class="card hotel-card" href="/hotels/{{ h.id }}?{{ qs(stay.as_params(), destination=destination) }}">
   <div class="hotel-card__media">
     <img src="{{ h.images[0] }}" alt="{{ h.name }}" loading="lazy">
-    {% if o.room.free_cancellation %}<span class="badge badge--success hotel-card__badge">Free cancellation</span>{% endif %}
+    {% if o.room.free_cancellation %}<span class="badge badge--glass hotel-card__badge">Free cancellation</span>{% endif %}
   </div>
   <div class="hotel-card__body">
     <div class="hotel-card__top">
@@ -85,8 +85,9 @@
         {% if o.rooms_left <= 3 %}<div class="scarcity">Only {{ o.rooms_left }} left at this price</div>{% endif %}
       </div>
       <div class="price">
-        <span class="price__total">{{ o.total_price|money(h.currency) }}</span>
-        <span class="price__meta">total · {{ o.per_night|money(h.currency) }}/night</span>
+        <span class="price__total">{{ o.total_price|usd }}</span>
+        <span class="price__meta">total · {{ o.per_night|usd }}/night</span>
+        {% set loc = o.total_price|local(h.country) %}{% if loc %}<span class="price__local">{{ loc }}</span>{% endif %}
       </div>
     </div>
   </div>

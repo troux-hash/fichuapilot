@@ -1,0 +1,53 @@
+{% extends "admin/_layout.html" %}
+{% block atitle %}Settings{% endblock %}
+{% block page_title %}Settings{% endblock %}
+{% block page_sub %}<p>How Fichua charges, pays hotels and converts prices.</p>{% endblock %}
+{% block app_content %}
+{% if saved %}<div class="alert alert-success" role="status">Saved. New bookings use these settings straight away.</div>{% endif %}
+{% if errors %}<div class="alert alert-error" role="alert"><ul>{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul></div>{% endif %}
+<form method="post" action="/admin/settings" class="split">
+  <div style="display:grid;gap:var(--space-5)">
+    <section class="panel panel-pad" style="display:grid;gap:var(--space-4)">
+      <h2>Commission and fees</h2>
+      <div class="form-grid-2">
+        <div class="field"><label for="commission_pct">Default commission</label>
+          <div class="money-input"><input id="commission_pct" name="commission_pct" inputmode="decimal" value="{{ values.commission_pct }}"><span>%</span></div>
+          <span class="hint">Taken from every Fichua booking. Change it per hotel on its approval page.</span></div>
+        <div class="field"><label for="manager_fee_usd">Hotel Manager fee</label>
+          <div class="money-input"><input id="manager_fee_usd" name="manager_fee_usd" inputmode="decimal" value="{{ values.manager_fee_usd }}"><span>USD / month</span></div>
+          <span class="hint">Shown for planning only. Not charged yet: hotels with a code use it for free.</span></div>
+      </div>
+    </section>
+    <section class="panel panel-pad" style="display:grid;gap:var(--space-4)">
+      <h2>When hotels get paid</h2>
+      <div class="radio-cards">
+        {% for key, label in timings.items() %}
+        <label class="radio-card"><input type="radio" name="payout_timing" value="{{ key }}" {% if values.payout_timing == key %}checked{% endif %}>
+          <span><strong>{{ label }}</strong><br><span class="muted small">{{ {'immediate': 'Best for testing: you see the money move the moment a guest pays.', 'after_checkin': 'Safer: the hotel is paid once the guest has arrived.', 'weekly': 'One payout run per week, every Monday morning.'}[key] }}</span></span></label>
+        {% endfor %}
+      </div>
+      <div class="field" style="max-width:260px"><label for="payout_delay_hours">Hours after check-in</label><input id="payout_delay_hours" name="payout_delay_hours" inputmode="numeric" value="{{ values.payout_delay_hours }}"><span class="hint">Used with "After the guest checks in".</span></div>
+    </section>
+    <section class="panel panel-pad" style="display:grid;gap:var(--space-4)">
+      <h2>Exchange rates</h2>
+      <p class="muted small" style="margin:0">Prices and payments are in US dollars. Guests and hotels also see the local amount, converted with these rates.</p>
+      <div class="form-grid-2">
+        <div class="field"><label for="rate_RWF">1 USD in Rwandan francs</label><div class="money-input"><input id="rate_RWF" name="rate_RWF" inputmode="decimal" value="{{ values.rate_RWF }}"><span>RWF</span></div></div>
+        <div class="field"><label for="rate_XOF">1 USD in CFA francs (Benin, Côte d'Ivoire)</label><div class="money-input"><input id="rate_XOF" name="rate_XOF" inputmode="decimal" value="{{ values.rate_XOF }}"><span>FCFA</span></div></div>
+      </div>
+    </section>
+    <section class="panel panel-pad" style="display:grid;gap:var(--space-4)">
+      <h2>WhatsApp and checkout</h2>
+      <div class="form-grid-2">
+        <div class="field"><label for="admin_whatsapp">Your WhatsApp number</label><input id="admin_whatsapp" name="admin_whatsapp" type="tel" value="{{ values.admin_whatsapp }}" placeholder="+1 555 000 0000"><span class="hint">Where your "payment received" alerts go.</span></div>
+        <div class="field"><label for="hold_minutes">Hold a room while the guest pays</label><div class="money-input"><input id="hold_minutes" name="hold_minutes" inputmode="numeric" value="{{ values.hold_minutes }}"><span>minutes</span></div></div>
+      </div>
+    </section>
+  </div>
+  <aside class="panel panel-pad" style="position:sticky;top:var(--space-5);display:grid;gap:var(--space-3)">
+    <h2>Save settings</h2>
+    <p class="muted small" style="margin:0">Changes apply to new bookings. Existing bookings keep the commission they were made with.</p>
+    <button class="btn btn-primary btn-block" type="submit">Save settings</button>
+  </aside>
+</form>
+{% endblock %}

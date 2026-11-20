@@ -1,13 +1,15 @@
-"""Guest-facing pages: home → results → hotel → checkout → confirmation / manage."""
+"""Guest-facing pages: home → results → hotel → checkout → pay → confirmation / manage."""
 from __future__ import annotations
 
+import secrets
+
 from fastapi import APIRouter, Form, Request
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, Response
 
 from ..db import db
-from ..services import bookings, catalog, dates
+from ..services import bookings, catalog, dates, notify, partners, payments
 from ..services.search import SORTS, Filters, search
-from ..web import qs, render
+from ..web import base_url, qs, render
 
 router = APIRouter()
 
@@ -17,13 +19,18 @@ def _stay_from(request: Request) -> dates.Stay:
     return dates.parse_stay(q.get("check_in"), q.get("check_out"), q.get("guests"))
 
 
+def _flush_messages() -> None:
+    """Send queued WhatsApp messages after the booking transaction has committed."""
+    with db.connect() as conn:
+        notify.flush(conn)
+
+
 @router.get("/")
 def home(request: Request):
     with db.connect() as conn:
         destinations = catalog.destinations(conn)
     stay = dates.parse_stay(None, None, 2)
-    return render(request, "pages/home.html", destinations=destinations, stay=stay,
-                  presets=dates.presets())
+    return render(request, "pages/home.html", destinations=destinations, stay=stay, presets=dates.presets())
 
 
 @router.get("/search")
@@ -60,8 +67,8 @@ def _checkout_context(conn, stay: dates.Stay, room_id: str):
         return None
     hotel = catalog.get_hotel(conn, room["hotel_id"])
     live = catalog.availability(conn, stay, room_type_id=room_id)
-    offer = live[0] if live else None
-    return {"room": room, "hotel": hotel, "offer": offer, "stay": stay}
+    return {"room": room, "hotel": hotel, "offer": live[0] if live else None, "stay": stay,
+            "policy": partners.POLICIES.get((hotel or {}).get("cancellation_policy") or "flexible")}
 
 
 @router.get("/book")
@@ -71,39 +78,100 @@ def checkout(request: Request, room: str):
         ctx = _checkout_context(conn, stay, room)
     if not ctx or not ctx["hotel"]:
         return render(request, "pages/not_found.html", status_code=404)
-    return render(request, "pages/checkout.html", form={}, errors={}, **ctx)
+    return render(request, "pages/checkout.html", form={"guest_language": "en"}, errors={}, **ctx)
 
 
 @router.post("/book")
 def place_booking(request: Request, room: str = Form(...), check_in: str = Form(...),
                   check_out: str = Form(...), guests: int = Form(...),
                   guest_name: str = Form(""), guest_email: str = Form(""),
-                  guest_phone: str = Form(""), special_requests: str = Form("")):
+                  guest_phone: str = Form(""), special_requests: str = Form(""),
+                  guest_language: str = Form("en")):
     stay = dates.parse_stay(check_in, check_out, guests)
-    form = {"guest_name": guest_name, "guest_email": guest_email,
-            "guest_phone": guest_phone, "special_requests": special_requests}
+    form = {"guest_name": guest_name, "guest_email": guest_email, "guest_phone": guest_phone,
+            "special_requests": special_requests, "guest_language": guest_language}
     errors = bookings.validate_guest(guest_name, guest_email, guest_phone)
+    redirect_to = None
     with db.connect() as conn:
         if not errors:
             try:
                 b = bookings.create_booking(conn, stay, room, **form)
-                return RedirectResponse(f"/bookings/{b['reference']}?t={b['access_token']}&new=1",
-                                        status_code=303)
+                if payments.provider() == "stripe":
+                    hotel = catalog.get_hotel(conn, b["hotel_id"])
+                    room_row = catalog.rooms_by_ids(conn, [room])[room]
+                    base = base_url(request)
+                    booking_url = f"{base}/bookings/{b['reference']}?t={b['access_token']}"
+                    session = payments.create_checkout(
+                        booking={**b, "check_in": stay.check_in.isoformat(), "check_out": stay.check_out.isoformat()},
+                        hotel_name=hotel["name"], room_name=room_row["name"],
+                        success_url=booking_url + "&session_id={CHECKOUT_SESSION_ID}",
+                        cancel_url=f"{base}/book?{qs(stay.as_params(), room=room)}")
+                    conn.run("UPDATE bookings SET stripe_session_id = :s WHERE id = :id",
+                             {"s": session["id"], "id": b["id"]})
+                    redirect_to = session["url"]
+                else:
+                    redirect_to = f"/pay/{b['reference']}?t={b['access_token']}"
             except bookings.BookingError as exc:
                 errors["general"] = str(exc)
+            except payments.PaymentError as exc:
+                conn.raw.rollback()
+                errors["general"] = f"We couldn't start the payment: {exc}"
+        if redirect_to:
+            return RedirectResponse(redirect_to, status_code=303)
         ctx = _checkout_context(conn, stay, room)
     if not ctx:
         return render(request, "pages/not_found.html", status_code=404)
     return render(request, "pages/checkout.html", form=form, errors=errors, status_code=422, **ctx)
 
 
-@router.get("/bookings/{reference}")
-def booking_detail(request: Request, reference: str, t: str = "", new: int = 0):
+@router.get("/pay/{reference}")
+def test_checkout(request: Request, reference: str, t: str = ""):
+    """Fichua's built-in test checkout, used until a Stripe key is configured."""
     with db.connect() as conn:
         b = bookings.get_booking(conn, reference, t)
+    if not b or payments.provider() != "test":
+        return render(request, "pages/not_found.html", status_code=404)
+    if b["payment_status"] == "paid":
+        return RedirectResponse(f"/bookings/{b['reference']}?t={t}", status_code=303)
+    return render(request, "pages/pay.html", booking=b, token=t)
+
+
+@router.post("/pay/{reference}")
+def test_checkout_pay(request: Request, reference: str, t: str = Form("")):
+    with db.connect() as conn:
+        b = bookings.get_booking(conn, reference, t)
+        if not b or payments.provider() != "test":
+            return render(request, "pages/not_found.html", status_code=404)
+        if b["is_expired"]:
+            return render(request, "pages/pay.html", booking=b, token=t, status_code=410,
+                          error="This checkout expired and the room was released. Please book again.")
+        bookings.confirm_payment(conn, b["id"], provider="test", provider_ref="test_" + secrets.token_hex(8))
+    _flush_messages()
+    return RedirectResponse(f"/bookings/{b['reference']}?t={t}&new=1", status_code=303)
+
+
+@router.get("/bookings/{reference}")
+def booking_detail(request: Request, reference: str, t: str = "", new: int = 0, session_id: str = ""):
+    confirmed_now = False
+    with db.connect() as conn:
+        b = bookings.get_booking(conn, reference, t)
+        if b and session_id and b["payment_status"] != "paid" and payments.provider() == "stripe":
+            try:
+                session = payments.fetch_checkout(session_id)
+                if session.get("payment_status") == "paid" and session.get("client_reference_id") == b["id"]:
+                    bookings.confirm_payment(conn, b["id"], provider="stripe",
+                                             provider_ref=session.get("payment_intent") or session_id)
+                    confirmed_now = True
+            except payments.PaymentError:
+                pass
+            b = bookings.get_booking(conn, reference, t)
+    if confirmed_now:
+        _flush_messages()
     if not b:
         return render(request, "pages/not_found.html", status_code=404)
-    return render(request, "pages/booking.html", booking=b, token=t, is_new=bool(new))
+    pay_url = f"/pay/{b['reference']}?t={t}" if payments.provider() == "test" else None
+    return render(request, "pages/booking.html", booking=b, token=t, is_new=bool(new) or confirmed_now,
+                  pay_url=pay_url, whatsapp_ready=notify.whatsapp_ready())
 
 
 @router.post("/bookings/{reference}/cancel")
@@ -111,13 +179,16 @@ def booking_cancel(request: Request, reference: str, t: str = Form("")):
     with db.connect() as conn:
         try:
             b = bookings.cancel_booking(conn, reference, t)
-            message = "Your booking has been cancelled. No charge was made."
-        except bookings.BookingError as exc:
+            message = ("Your booking is cancelled and your payment is being refunded."
+                       if b["payment_status"] == "refunded" else "Your booking is cancelled.")
+        except (bookings.BookingError, payments.PaymentError) as exc:
+            conn.raw.rollback()
             b = bookings.get_booking(conn, reference, t)
             message = str(exc)
+    _flush_messages()
     if not b:
         return render(request, "pages/not_found.html", status_code=404)
-    return render(request, "pages/booking.html", booking=b, token=t, is_new=False, message=message)
+    return render(request, "pages/booking.html", booking=b, token=t, is_new=False, message=message, pay_url=None)
 
 
 @router.get("/manage")
@@ -134,3 +205,13 @@ def manage_lookup(request: Request, reference: str = Form(""), email: str = Form
                       error="We couldn't find a booking with that reference and email.",
                       form={"reference": reference, "email": email})
     return RedirectResponse(f"/bookings/{b['reference']}?t={b['access_token']}", status_code=303)
+
+
+@router.get("/media/{media_id}")
+def media(media_id: str):
+    with db.connect() as conn:
+        m = partners.get_media(conn, media_id)
+    if not m:
+        return Response(status_code=404)
+    return Response(content=m["data"], media_type=m["content_type"],
+                    headers={"Cache-Control": "public, max-age=31536000, immutable"})

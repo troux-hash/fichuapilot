@@ -1,10 +1,14 @@
-"""JSON API — the same services as the pages, ready for a future mobile app or partner widget."""
+"""JSON API, Stripe webhook and the daily payouts job."""
 from __future__ import annotations
 
-from fastapi import APIRouter, Request
+import json
 
+from fastapi import APIRouter, Request
+from fastapi.responses import JSONResponse
+
+from ..config import settings
 from ..db import db
-from ..services import catalog, dates
+from ..services import bookings, catalog, dates, notify, payments, payouts
 from ..services.search import Filters, search
 
 router = APIRouter(prefix="/api")
@@ -14,7 +18,8 @@ router = APIRouter(prefix="/api")
 def health():
     with db.connect() as conn:
         conn.scalar("SELECT 1")
-    return {"status": "ok", "database": db.dialect}
+    return {"status": "ok", "database": db.dialect, "payments": payments.provider(),
+            "whatsapp": "connected" if notify.whatsapp_ready() else "not connected"}
 
 
 @router.get("/destinations")
@@ -30,3 +35,32 @@ def api_search(request: Request):
     with db.connect() as conn:
         data = search(conn, stay, q.get("destination") or None, Filters.from_query(q))
     return {"stay": {**stay.as_params(), "nights": stay.nights}, **data}
+
+
+@router.post("/stripe/webhook")
+async def stripe_webhook(request: Request):
+    payload = await request.body()
+    if not payments.verify_webhook(payload, request.headers.get("stripe-signature", ""),
+                                   settings.stripe_webhook_secret):
+        return JSONResponse({"error": "bad signature"}, status_code=400)
+    event = json.loads(payload)
+    if event.get("type") in ("checkout.session.completed", "checkout.session.async_payment_succeeded"):
+        session = event["data"]["object"]
+        if session.get("payment_status") == "paid" and session.get("client_reference_id"):
+            with db.connect() as conn:
+                bookings.confirm_payment(conn, session["client_reference_id"], provider="stripe",
+                                         provider_ref=session.get("payment_intent") or session.get("id"))
+            with db.connect() as conn:
+                notify.flush(conn)
+    return {"received": True}
+
+
+@router.get("/cron/payouts")
+def cron_payouts(request: Request):
+    """Called daily by Vercel Cron (Authorization: Bearer CRON_SECRET)."""
+    if settings.cron_secret and request.headers.get("authorization") != f"Bearer {settings.cron_secret}":
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    with db.connect() as conn:
+        released = payouts.process_due(conn)
+        sent = notify.flush(conn)
+    return {"payouts_released": released, "messages_sent": sent}

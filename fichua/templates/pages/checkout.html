@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% import "components/ui.html" as ui %}
 
-{% block title %}Confirm your stay · {{ app_name }}{% endblock %}
+{% block title %}Confirm and pay · {{ app_name }}{% endblock %}
 
 {% block content %}
 {% macro field(name, label, type='text', autocomplete='', hint='', required=true) %}
@@ -17,8 +17,8 @@
 {% endmacro %}
 <div class="container" style="padding-bottom:var(--space-8)">
   <a class="back-link" href="/hotels/{{ hotel.id }}?{{ qs(stay.as_params()) }}#rooms">← Back to {{ hotel.name }}</a>
-  <h1 class="page-title">Confirm your stay</h1>
-  <p class="muted">One step. No account, no payment today.</p>
+  <h1 class="page-title">Confirm and pay</h1>
+  <p class="muted">One step. No account needed.</p>
 
   <div class="checkout-layout">
     <form class="card card-pad stack" method="post" action="/book" novalidate data-checkout>
@@ -31,18 +31,28 @@
       <div class="form-grid">
         {{ field('guest_name', 'Full name', autocomplete='name') }}
         <div class="form-grid form-grid--2">
-          {{ field('guest_email', 'Email', 'email', 'email', "We'll use it to find your booking.") }}
-          {{ field('guest_phone', 'Phone', 'tel', 'tel', 'In case the hotel needs to reach you.', required=false) }}
+          {{ field('guest_email', 'Email', 'email', 'email', "To find your booking later.") }}
+          {{ field('guest_phone', 'WhatsApp number', 'tel', 'tel', 'Your confirmation arrives here. Include the country code.') }}
+        </div>
+        <div class="field">
+          <label for="guest_language">Messages in</label>
+          <select id="guest_language" name="guest_language">
+            <option value="en" {% if form.get('guest_language') != 'fr' %}selected{% endif %}>English</option>
+            <option value="fr" {% if form.get('guest_language') == 'fr' %}selected{% endif %}>Français</option>
+          </select>
         </div>
         {{ field('special_requests', 'Special requests', 'textarea', required=false) }}
       </div>
 
-      <div class="pay-later"><span aria-hidden="true">✓</span><div><strong>No payment needed today.</strong> You'll pay {{ hotel.name }} during your stay.</div></div>
+      <div class="pay-box">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+        <div><strong>You pay the full amount now, by card.</strong> Nothing more to pay at the hotel. {% if room.free_cancellation %}{{ policy[1] if policy else 'Free cancellation until 24 hours before check-in.' }} Cancel in time and you are refunded in full.{% else %}This rate is non-refundable.{% endif %}</div>
+      </div>
 
       <button class="btn btn-primary btn-lg btn-block" type="submit" {% if not offer %}disabled{% endif %} data-submit>
-        Confirm booking{% if offer %} · {{ offer.total_price|money(hotel.currency) }}{% endif %}
+        {% if offer %}Pay {{ offer.total_price|usd }} and confirm{% else %}Not available{% endif %}
       </button>
-      <p class="muted small" style="text-align:center;margin:0">By confirming you agree to the hotel's policies. {% if room.free_cancellation %}Free cancellation until the day before check-in.{% else %}This rate is non-refundable.{% endif %}</p>
+      {% if offer %}{% set loc = offer.total_price|local(hotel.country) %}{% if loc %}<p class="muted small" style="text-align:center;margin:0">{{ loc }} at today's rate. Your card is charged in US dollars.</p>{% endif %}{% endif %}
     </form>
 
     <aside class="card summary-card">
@@ -57,8 +67,8 @@
           <div><dt>Check-out</dt><dd>{{ stay.check_out|nice_date('%a %d %b %Y') }}, until {{ hotel.check_out_time or '11:00' }}</dd></div>
           <div><dt>Guests</dt><dd>{{ stay.guests }}</dd></div>
           {% if offer %}
-          <div><dt>{{ (offer.total_price / stay.nights)|money(hotel.currency, true) }} × {{ stay.nights }} night{{ 's' if stay.nights != 1 }}</dt><dd>{{ offer.total_price|money(hotel.currency, true) }}</dd></div>
-          <div class="total"><dt>Total</dt><dd>{{ offer.total_price|money(hotel.currency, true) }}</dd></div>
+          <div><dt>{{ stay.nights }} night{{ 's' if stay.nights != 1 }} (average {{ (offer.total_price / stay.nights)|usd }})</dt><dd>{{ offer.total_price|usd }}</dd></div>
+          <div class="total"><dt>Total to pay now</dt><dd>{{ offer.total_price|usd }}</dd></div>
           {% endif %}
         </dl>
         <div class="row" style="flex-wrap:wrap;gap:6px">

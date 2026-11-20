@@ -1,0 +1,87 @@
+{% extends "partners/_layout.html" %}
+{% import "components/icons.html" as i %}
+{% block ptitle %}Calendar and prices{% endblock %}
+{% block page_title %}Calendar and prices{% endblock %}
+{% block page_sub %}<p>Every night is open at your standard price. Change only what's different.</p>{% endblock %}
+{% block page_actions %}<a class="btn btn-secondary" href="/partners/bookings/new">{{ i.icon('plus') }}Add a booking you took</a>{% endblock %}
+{% block partner_content %}
+{% if saved %}<div class="alert alert-success" role="status">Saved {{ saved }} night{{ 's' if saved != '1' }} for the {{ room.name }}. Guests see the change right away.</div>{% endif %}
+{% if error %}<div class="alert alert-error" role="alert">{{ error }}</div>{% endif %}
+<div class="choice-grid" role="group" aria-label="Room type">
+  {% for r in rooms %}<a class="choice" href="/partners/calendar?room={{ r.id }}&month={{ month_value }}" {% if r.id == room.id %}style="background:var(--color-ink);color:#fff;border-color:var(--color-ink)" aria-current="true"{% endif %}>{{ r.name }} · {{ r.total_rooms or 0 }}</a>{% endfor %}
+</div>
+<div class="panel panel-pad row" style="flex-wrap:wrap;gap:var(--space-2) var(--space-5);font-size:var(--text-sm)">
+  <span class="label">Price rules</span>
+  <span>Standard <strong>{{ (room.base_price or 0)|usd }}</strong></span>
+  <span>Fri and Sat <strong>{{ (room.weekend_price or room.base_price or 0)|usd }}</strong></span>
+  <span>{{ room.total_rooms or 0 }} rooms to sell each night</span>
+  <a href="/partners/rooms/{{ room.id }}" style="margin-left:auto">Edit standard prices</a>
+</div>
+<div class="split">
+  <section class="panel panel-pad" style="display:grid;gap:var(--space-3)">
+    <div class="row-between">
+      <div class="row">
+        <a class="btn btn-secondary btn-sm" href="/partners/calendar?room={{ room.id }}&month={{ prev_m }}" aria-label="Previous month">←</a>
+        <strong style="min-width:150px;text-align:center">{{ month_label }}</strong>
+        <a class="btn btn-secondary btn-sm" href="/partners/calendar?room={{ room.id }}&month={{ next_m }}" aria-label="Next month">→</a>
+      </div>
+      <div class="legend">
+        <span><i style="background:var(--color-surface)"></i>Open</span>
+        <span><i style="background:var(--color-warning-soft)"></i>1 left</span>
+        <span><i style="background:var(--color-danger-soft)"></i>Sold out</span>
+        <span><i style="background:repeating-linear-gradient(135deg,#EEF1F8 0 4px,#E6E9F2 4px 8px)"></i>Closed</span>
+        <span><i style="background:var(--color-accent);border-radius:50%;width:8px;height:8px;box-shadow:none"></i>Changed by you</span>
+      </div>
+    </div>
+    <div class="cal" aria-hidden="true">{% for d in ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'] %}<span class="cal__head">{{ d }}</span>{% endfor %}</div>
+    <div class="cal" data-calendar>
+      {% for d in days %}
+      <button type="button" class="cal__day is-{{ d.state }}{% if not d.in_month %} is-out{% endif %}{% if d.past %} is-past{% endif %}"
+              data-date="{{ d.date }}" data-price="{{ '%g'|format(d.price) if d.price is not none else '' }}" data-units="{{ d.units if d.units is not none else '' }}"
+              data-booked="{{ d.booked }}" data-closed="{{ '1' if d.state == 'closed' else '' }}" {% if d.past %}disabled{% endif %}
+              aria-label="{{ d.date }}: {% if d.state == 'closed' %}closed{% else %}{{ d.price|usd if d.price is not none else 'no price' }}, {{ d.left }} of {{ d.units or 0 }} left{% endif %}">
+        <span class="cal__top">{{ d.day }}{% if d.changed %}<span class="cal__dot" aria-hidden="true"></span>{% endif %}</span>
+        <span class="cal__left">{% if d.state == 'closed' %}Closed{% elif d.state == 'sold' %}Sold out{% else %}{{ d.left }}/{{ d.units or 0 }} left{% endif %}</span>
+        <span class="cal__price">{{ d.price|usd if d.price is not none else '—' }}</span>
+      </button>
+      {% endfor %}
+    </div>
+    <p class="muted small" style="margin:0">Click a day to change it. Click a second day to change every night in between.</p>
+  </section>
+  <form class="panel panel-pad" method="post" action="/partners/calendar" style="display:grid;gap:var(--space-4);position:sticky;top:var(--space-5)" data-cal-form>
+    <input type="hidden" name="room" value="{{ room.id }}">
+    <input type="hidden" name="month" value="{{ month_value }}">
+    <div>
+      <span class="label" style="color:var(--color-muted);text-transform:uppercase;font-size:11px;letter-spacing:.08em">{{ room.name }}</span>
+      <h2 data-cal-title>Pick dates</h2>
+    </div>
+    <div class="form-grid-2">
+      <div class="field"><label for="date_from">From</label><input id="date_from" name="date_from" type="date" required data-from></div>
+      <div class="field"><label for="date_to">To (included)</label><input id="date_to" name="date_to" type="date" data-to></div>
+    </div>
+    <div class="field">
+      <label for="price">Price per night</label>
+      <div class="money-input"><input id="price" name="price" inputmode="decimal" placeholder="Keep current" data-money data-price><span>USD</span></div>
+      <span class="local-preview" data-local-for="price"></span>
+    </div>
+    <div class="field">
+      <label for="units">Rooms to sell</label>
+      <input id="units" name="units" type="number" min="0" max="{{ room.total_rooms or 0 }}" placeholder="{{ room.total_rooms or 0 }}" data-units>
+      <span class="hint" data-booked-note>You can't sell fewer rooms than are already booked.</span>
+    </div>
+    <div class="field">
+      <span class="label" id="apply-label">Apply to</span>
+      <div class="choice-grid" role="radiogroup" aria-labelledby="apply-label">
+        <label class="choice"><input type="radio" name="apply_to" value="all" checked>Every night</label>
+        <label class="choice"><input type="radio" name="apply_to" value="weekdays">Sun to Thu</label>
+        <label class="choice"><input type="radio" name="apply_to" value="weekends">Fri and Sat</label>
+      </div>
+    </div>
+    <div class="toggle-row" style="border-top:1px solid var(--color-border)"><label for="closed">Stop selling these nights</label><input id="closed" type="checkbox" name="closed" value="1" data-closed></div>
+    <div class="toggle-row"><label for="reset">Back to standard prices</label><input id="reset" type="checkbox" name="reset" value="1"></div>
+    <button class="btn btn-primary btn-block" type="submit">Save changes</button>
+    <p class="muted small" style="margin:0">Existing bookings are never changed.</p>
+  </form>
+</div>
+{% endblock %}
+{% block partner_scripts %}<script>window.FICHUA_RATE = {{ local_rate|tojson }}; window.FICHUA_LOCAL = {{ local_label|tojson }};</script>{% endblock %}

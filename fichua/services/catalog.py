@@ -1,108 +1,172 @@
-"""Hotels, rooms and live availability — the read side of the catalogue."""
+"""Hotels, rooms and live availability — the read side of the catalogue.
+
+Price and inventory for a room type on a night, in order of precedence:
+  1. rate_overrides  — what the partner set in the calendar (price, rooms to sell, closed)
+  2. room_rates      — nightly rows from an Excel upload
+  3. room_types      — the standing rule: base price (weekend price on Fri/Sat) and total rooms
+Rooms left = rooms to sell − confirmed bookings − unpaid checkouts still inside their hold.
+"""
 from __future__ import annotations
 
-from ..db import Connection
+from datetime import date, timedelta
+
+from ..db import Connection, utcnow
 from .dates import Stay
 
 PLACEHOLDER_IMAGE = "/static/img/placeholder.svg"
-
-AVAILABILITY_SQL = """
-SELECT rt.id AS room_type_id,
-       rt.hotel_id AS hotel_id,
-       SUM(r.price) AS total_price,
-       MIN(r.units - COALESCE(b.booked, 0)) AS rooms_left
-FROM room_types rt
-JOIN hotels h ON h.id = rt.hotel_id
-JOIN room_rates r ON r.room_type_id = rt.id
-LEFT JOIN (
-    SELECT bn.room_type_id, bn.stay_date, COUNT(*) AS booked
-    FROM booking_nights bn
-    JOIN bookings bk ON bk.id = bn.booking_id
-    WHERE bk.status = 'confirmed'
-      AND bn.stay_date >= :check_in AND bn.stay_date < :check_out
-    GROUP BY bn.room_type_id, bn.stay_date
-) b ON b.room_type_id = r.room_type_id AND b.stay_date = r.stay_date
-WHERE h.is_active = TRUE
-  AND rt.max_guests >= :guests
-  AND r.stay_date >= :check_in AND r.stay_date < :check_out
-  {scope}
-GROUP BY rt.id, rt.hotel_id
-HAVING COUNT(*) = :nights AND MIN(r.units - COALESCE(b.booked, 0)) > 0
-"""
+WEEKEND = (4, 5)  # Friday and Saturday nights
 
 
 def split_list(value: str | None) -> list[str]:
     return [v.strip() for v in (value or "").split(",") if v.strip()]
 
 
-def hydrate_hotel(row: dict) -> dict:
+def media_urls(conn: Connection, owner_type: str, ids: list[str]) -> dict[str, list[str]]:
+    if not ids:
+        return {}
+    marks, params = conn.in_params(ids)
+    rows = conn.all(f"SELECT id, owner_id FROM media WHERE owner_type = :t AND owner_id IN ({marks}) "
+                    "ORDER BY sort, created_at", {"t": owner_type, **params})
+    out: dict[str, list[str]] = {}
+    for r in rows:
+        out.setdefault(r["owner_id"], []).append(f"/media/{r['id']}")
+    return out
+
+
+def hydrate_hotel(row: dict, photos: list[str] | None = None) -> dict:
     row = dict(row)
     row["amenities"] = split_list(row.get("amenities"))
-    row["images"] = split_list(row.get("image_urls")) or [PLACEHOLDER_IMAGE]
+    row["images"] = (photos or []) + split_list(row.get("image_urls")) or [PLACEHOLDER_IMAGE]
     return row
 
 
-def hydrate_room(row: dict) -> dict:
+def hydrate_room(row: dict, photos: list[str] | None = None) -> dict:
     row = dict(row)
     row["amenities"] = split_list(row.get("amenities"))
-    row["images"] = split_list(row.get("image_urls")) or [PLACEHOLDER_IMAGE]
+    row["images"] = (photos or []) + split_list(row.get("image_urls")) or [PLACEHOLDER_IMAGE]
     return row
+
+
+def night_grid(conn: Connection, rooms: list[dict], start: date, end: date,
+               exclude_booking_id: str | None = None) -> dict[tuple[str, str], dict]:
+    """Price, rooms to sell, closed flag and rooms booked for every room × night in [start, end)."""
+    if not rooms or end <= start:
+        return {}
+    marks, params = conn.in_params([r["id"] for r in rooms], "rt")
+    params.update({"s": start, "e": end})
+    nightly = {(r["room_type_id"], r["stay_date"]): r for r in conn.all(
+        f"SELECT room_type_id, stay_date, price, units FROM room_rates WHERE room_type_id IN ({marks}) "
+        "AND stay_date >= :s AND stay_date < :e", params)}
+    overrides = {(r["room_type_id"], r["stay_date"]): r for r in conn.all(
+        f"SELECT room_type_id, stay_date, price, units, closed FROM rate_overrides "
+        f"WHERE room_type_id IN ({marks}) AND stay_date >= :s AND stay_date < :e", params)}
+    exclude = " AND b.id <> :exclude" if exclude_booking_id else ""
+    booked = {(r["room_type_id"], r["stay_date"]): int(r["n"]) for r in conn.all(
+        "SELECT bn.room_type_id, bn.stay_date, COUNT(*) AS n FROM booking_nights bn "
+        "JOIN bookings b ON b.id = bn.booking_id "
+        f"WHERE bn.room_type_id IN ({marks}) AND bn.stay_date >= :s AND bn.stay_date < :e "
+        "AND (b.status = 'confirmed' OR (b.status = 'pending' AND b.hold_expires_at > :now))"
+        f"{exclude} GROUP BY bn.room_type_id, bn.stay_date",
+        {**params, "now": utcnow(), "exclude": exclude_booking_id})}
+
+    grid: dict[tuple[str, str], dict] = {}
+    days = (end - start).days
+    for room in rooms:
+        for i in range(days):
+            d = start + timedelta(days=i)
+            key = (room["id"], d.isoformat())
+            o, n = overrides.get(key), nightly.get(key)
+            weekend = d.weekday() in WEEKEND
+            rule_price = room.get("weekend_price") if weekend and room.get("weekend_price") else room.get("base_price")
+            price = (o["price"] if o and o.get("price") is not None
+                     else n["price"] if n else rule_price)
+            units = (o["units"] if o and o.get("units") is not None
+                     else n["units"] if n else room.get("total_rooms"))
+            grid[key] = {
+                "date": d,
+                "price": float(price) if price is not None else None,
+                "rule_price": float(rule_price) if rule_price is not None else None,
+                "units": int(units) if units is not None else None,
+                "closed": bool(o and o.get("closed")),
+                "booked": booked.get(key, 0),
+                "changed": bool(o),
+                "weekend": weekend,
+            }
+    return grid
 
 
 def availability(conn: Connection, stay: Stay, *, destination: str | None = None,
-                 hotel_id: str | None = None, room_type_id: str | None = None) -> list[dict]:
-    """Room types that fit the party and have inventory every night of the stay."""
-    params = {
-        "check_in": stay.check_in,
-        "check_out": stay.check_out,
-        "guests": stay.guests,
-        "nights": stay.nights,
-    }
-    scope = ""
+                 hotel_id: str | None = None, room_type_id: str | None = None,
+                 include_inactive: bool = False, exclude_booking_id: str | None = None) -> list[dict]:
+    """Room types that fit the party and can be sold every night of the stay."""
+    params: dict = {"guests": stay.guests}
+    where = ["rt.max_guests >= :guests"]
+    if not include_inactive:
+        where.append("h.is_active = TRUE")
     if destination:
-        scope = ("AND (LOWER(h.city) LIKE :q OR LOWER(h.country) LIKE :q "
-                 "OR LOWER(h.name) LIKE :q)")
+        where.append("(LOWER(h.city) LIKE :q OR LOWER(h.country) LIKE :q OR LOWER(h.name) LIKE :q)")
         params["q"] = f"%{destination.strip().lower()}%"
     if hotel_id:
-        scope += " AND h.id = :hotel_id"
+        where.append("h.id = :hotel_id")
         params["hotel_id"] = hotel_id
     if room_type_id:
-        scope += " AND rt.id = :room_type_id"
+        where.append("rt.id = :room_type_id")
         params["room_type_id"] = room_type_id
-    return conn.all(AVAILABILITY_SQL.format(scope=scope), params)
+    rooms = conn.all("SELECT rt.id, rt.hotel_id, rt.total_rooms, rt.base_price, rt.weekend_price "
+                     "FROM room_types rt JOIN hotels h ON h.id = rt.hotel_id WHERE " + " AND ".join(where), params)
+    grid = night_grid(conn, rooms, stay.check_in, stay.check_out, exclude_booking_id)
+    out = []
+    for room in rooms:
+        total, left = 0.0, None
+        for i in range(stay.nights):
+            night = grid[(room["id"], (stay.check_in + timedelta(days=i)).isoformat())]
+            if night["closed"] or night["price"] is None or night["units"] is None:
+                break
+            free = night["units"] - night["booked"]
+            if free <= 0:
+                break
+            total += night["price"]
+            left = free if left is None else min(left, free)
+        else:
+            out.append({"room_type_id": room["id"], "hotel_id": room["hotel_id"],
+                        "total_price": round(total, 2), "rooms_left": left})
+    return out
 
 
 def hotels_by_ids(conn: Connection, ids: list[str]) -> dict[str, dict]:
     if not ids:
         return {}
-    keys = {f"h{i}": v for i, v in enumerate(ids)}
-    placeholders = ", ".join(f":{k}" for k in keys)
-    rows = conn.all(f"SELECT * FROM hotels WHERE id IN ({placeholders})", keys)
-    return {r["id"]: hydrate_hotel(r) for r in rows}
+    marks, params = conn.in_params(ids, "h")
+    rows = conn.all(f"SELECT * FROM hotels WHERE id IN ({marks})", params)
+    photos = media_urls(conn, "hotel", [r["id"] for r in rows])
+    return {r["id"]: hydrate_hotel(r, photos.get(r["id"])) for r in rows}
 
 
 def rooms_by_ids(conn: Connection, ids: list[str]) -> dict[str, dict]:
     if not ids:
         return {}
-    keys = {f"r{i}": v for i, v in enumerate(ids)}
-    placeholders = ", ".join(f":{k}" for k in keys)
-    rows = conn.all(f"SELECT * FROM room_types WHERE id IN ({placeholders})", keys)
-    return {r["id"]: hydrate_room(r) for r in rows}
+    marks, params = conn.in_params(ids, "r")
+    rows = conn.all(f"SELECT * FROM room_types WHERE id IN ({marks})", params)
+    photos = media_urls(conn, "room", [r["id"] for r in rows])
+    return {r["id"]: hydrate_room(r, photos.get(r["id"])) for r in rows}
 
 
-def get_hotel(conn: Connection, hotel_id: str) -> dict | None:
-    row = conn.one("SELECT * FROM hotels WHERE id = :id AND is_active = TRUE", {"id": hotel_id})
-    return hydrate_hotel(row) if row else None
+def get_hotel(conn: Connection, hotel_id: str, include_inactive: bool = False) -> dict | None:
+    sql = "SELECT * FROM hotels WHERE id = :id" + ("" if include_inactive else " AND is_active = TRUE")
+    row = conn.one(sql, {"id": hotel_id})
+    if not row:
+        return None
+    return hydrate_hotel(row, media_urls(conn, "hotel", [hotel_id]).get(hotel_id))
 
 
 def hotel_rooms(conn: Connection, hotel_id: str, stay: Stay) -> list[dict]:
     """All room types for a hotel, priced and flagged available/unavailable for the stay."""
-    rows = conn.all("SELECT * FROM room_types WHERE hotel_id = :id ORDER BY max_guests, name",
-                    {"id": hotel_id})
+    rows = conn.all("SELECT * FROM room_types WHERE hotel_id = :id ORDER BY max_guests, name", {"id": hotel_id})
+    photos = media_urls(conn, "room", [r["id"] for r in rows])
     live = {a["room_type_id"]: a for a in availability(conn, stay, hotel_id=hotel_id)}
     rooms = []
     for row in rows:
-        room = hydrate_room(row)
+        room = hydrate_room(row, photos.get(row["id"]))
         a = live.get(room["id"])
         room["available"] = a is not None
         room["fits_party"] = room["max_guests"] >= stay.guests
@@ -116,18 +180,18 @@ def hotel_rooms(conn: Connection, hotel_id: str, stay: Stay) -> list[dict]:
 
 
 def destinations(conn: Connection) -> list[dict]:
-    """Cities with active hotels, most hotels first, with a cover image."""
-    rows = conn.all("SELECT city, country, image_urls FROM hotels WHERE is_active = TRUE "
+    """Cities with live hotels, most hotels first, each with a cover image."""
+    rows = conn.all("SELECT id, city, country, image_urls FROM hotels WHERE is_active = TRUE "
                     "ORDER BY guest_rating DESC")
+    photos = media_urls(conn, "hotel", [r["id"] for r in rows])
     cities: dict[tuple, dict] = {}
     used: set[str] = set()
     for r in rows:
         key = (r["city"], r["country"])
         city = cities.setdefault(key, {"city": r["city"], "country": r["country"], "hotels": 0, "image": None})
         city["hotels"] += 1
-        if city["image"] is None:  # best-rated hotel's first photo not already used by another city
-            images = split_list(r["image_urls"])
-            fresh = [i for i in images if i not in used]
+        if city["image"] is None:
+            fresh = [i for i in photos.get(r["id"], []) + split_list(r["image_urls"]) if i not in used]
             if fresh:
                 city["image"] = fresh[0]
                 used.add(fresh[0])

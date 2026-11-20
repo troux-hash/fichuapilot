@@ -107,8 +107,11 @@
   $$("form[data-confirm]").forEach((f) => f.addEventListener("submit", (e) => { if (!confirm(f.dataset.confirm)) e.preventDefault(); }));
   $$("[data-checkout]").forEach((f) => f.addEventListener("submit", () => {
     const btn = $("[data-submit]", f);
-    setTimeout(() => { btn.disabled = true; btn.textContent = "Confirming…"; }, 0);
+    if (btn) setTimeout(() => { btn.disabled = true; btn.textContent = "Opening secure payment…"; }, 0);
   }));
+
+  // Filter dropdowns (admin finance) apply as soon as they change.
+  $$("select[data-autosubmit]").forEach((s) => s.addEventListener("change", () => s.form.requestSubmit()));
 
   // Tap reference to copy.
   $$("[data-copy]").forEach((el) => {

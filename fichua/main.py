@@ -8,7 +8,7 @@ from fastapi.staticfiles import StaticFiles
 
 from .config import ROOT_DIR, settings
 from .db import db
-from .routes import admin, api, public
+from .routes import admin, api, partners, public
 
 log = logging.getLogger("fichua")
 
@@ -23,6 +23,7 @@ def create_app() -> FastAPI:
     app.mount("/static", StaticFiles(directory=ROOT_DIR / "public" / "static", check_dir=False),
               name="static")
     app.include_router(public.router)
+    app.include_router(partners.router)
     app.include_router(admin.router)
     app.include_router(api.router)
     return app

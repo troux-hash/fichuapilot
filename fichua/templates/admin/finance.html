@@ -1,0 +1,87 @@
+{% extends "admin/_layout.html" %}
+{% block atitle %}Finance{% endblock %}
+{% block page_title %}Finance{% endblock %}
+{% block page_sub %}<p>{{ f.label() }} · {{ 'Bookings made on Fichua' if f.source == 'fichua' else ('Bookings hotels took themselves' if f.source == 'offline' else 'All bookings') }}</p>{% endblock %}
+{% block page_actions %}
+  {% if payments_mode == 'stripe' %}<a class="btn btn-secondary" href="https://dashboard.stripe.com/{{ 'test/' if stripe_test else '' }}payments" target="_blank" rel="noopener">Open Stripe ↗</a>{% endif %}
+{% endblock %}
+{% block app_content %}
+<form class="panel panel-pad filterbar" method="get" action="/admin/finance">
+  <div class="field"><label for="period">Period</label>
+    <select id="period" name="period" data-autosubmit>{% for k, v in periods.items() %}<option value="{{ k }}" {% if f.period == k %}selected{% endif %}>{{ v }}</option>{% endfor %}</select></div>
+  <div class="field"><label for="from">From</label><input id="from" name="from" type="date" value="{{ f.date_from }}"></div>
+  <div class="field"><label for="to">To</label><input id="to" name="to" type="date" value="{{ f.date_to }}"></div>
+  <div class="field"><label for="hotel">Hotel</label>
+    <select id="hotel" name="hotel" data-autosubmit><option value="">All hotels</option>{% for h in hotels %}<option value="{{ h.id }}" {% if f.hotel_id == h.id %}selected{% endif %}>{{ h.name }}</option>{% endfor %}</select></div>
+  <div class="field"><label for="country">Country</label>
+    <select id="country" name="country" data-autosubmit><option value="">All countries</option>{% for c in countries %}<option value="{{ c }}" {% if f.country == c %}selected{% endif %}>{{ c }}</option>{% endfor %}</select></div>
+  <div class="field"><label for="source">Bookings</label>
+    <select id="source" name="source" data-autosubmit>
+      <option value="fichua" {% if f.source == 'fichua' %}selected{% endif %}>Made on Fichua</option>
+      <option value="offline" {% if f.source == 'offline' %}selected{% endif %}>Taken by hotels</option>
+      <option value="all" {% if f.source == 'all' %}selected{% endif %}>All</option>
+    </select></div>
+  <button class="btn btn-primary" type="submit">Apply</button>
+</form>
+
+<div class="stats">
+  <div class="stat stat--accent"><span>Paid by guests</span><strong>{{ totals.gross|usd }}</strong><small>{{ totals.bookings }} bookings · {{ totals.nights }} nights</small></div>
+  <div class="stat"><span>Fichua commission</span><strong>{{ totals.commission|usd }}</strong><small>{{ '%.1f'|format(totals.commission / totals.gross * 100) if totals.gross else '0' }}% of sales</small></div>
+  <div class="stat"><span>Paid out to hotels</span><strong>{{ totals.payout_sent|usd }}</strong><small>{{ totals.payout_pending|usd }} still to send</small></div>
+  <div class="stat"><span>Refunded</span><strong>{{ totals.refunded|usd }}</strong><small>cancelled bookings</small></div>
+  {% if f.source != 'fichua' %}<div class="stat"><span>Taken by hotels</span><strong>{{ totals.offline_value|usd }}</strong><small>no commission</small></div>{% endif %}
+</div>
+
+{% if due %}
+<section class="panel panel-pad" style="display:grid;gap:var(--space-3)">
+  <div class="panel-head" style="margin:0"><h2>Payouts to send</h2>
+    <form method="post" action="/admin/payouts/run"><button class="btn btn-secondary btn-sm" type="submit">Release payouts that are due</button></form></div>
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>Hotel</th><th>Booking</th><th>Due</th><th class="num">Amount</th><th>Status</th><th></th></tr></thead>
+    <tbody>{% for p in due %}
+      <tr><td>{{ p.hotel_name }}</td><td class="mono">{{ p.reference }}</td><td>{{ p.due_at|nice_date('%d %b %Y, %H:%M') if p.due_at else '—' }}</td><td class="num">{{ p.amount|usd }}</td>
+        <td><span class="pill pill--{{ p.status }}">{{ {'scheduled': 'Scheduled', 'due': 'Send now', 'recover': 'Recover from hotel'}.get(p.status, p.status) }}</span></td>
+        <td>{% if p.status in ('due', 'scheduled') %}<form method="post" action="/admin/payouts/{{ p.id }}/sent" data-confirm="Mark {{ p.amount|usd }} to {{ p.hotel_name }} as paid?"><button class="btn btn-primary btn-sm" type="submit">Mark as paid</button></form>{% endif %}</td></tr>
+    {% endfor %}</tbody>
+  </table></div>
+</section>
+{% endif %}
+
+{% if by_hotel %}
+<section class="panel panel-pad" style="display:grid;gap:var(--space-3)">
+  <h2>By hotel</h2>
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>Hotel</th><th>Country</th><th class="num">Bookings</th><th class="num">Paid by guests</th><th class="num">Commission</th></tr></thead>
+    <tbody>{% for h in by_hotel %}<tr><td>{{ h.hotel_name }}</td><td>{{ h.country }}</td><td class="num">{{ h.bookings }}</td><td class="num">{{ h.gross|usd }}</td><td class="num">{{ h.commission|usd }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+</section>
+{% endif %}
+
+<section style="display:grid;gap:var(--space-3)">
+  <h2 style="font-size:var(--text-lg)">Bookings <span class="muted" style="font-weight:600">· {{ rows|length }}</span></h2>
+  {% if rows %}
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>Booking</th><th>Hotel</th><th>Guest</th><th>Stay</th><th>Paid</th><th class="num">Amount</th><th class="num">Commission</th><th class="num">To hotel</th><th>Payout</th><th></th></tr></thead>
+    <tbody>
+    {% for r in rows %}
+    <tr>
+      <td>{% if r.source == 'offline' %}<span class="pill pill--offline">{{ r.offline_source or 'Offline' }}</span>{% else %}<span class="mono">{{ r.reference }}</span>{% endif %}<br>
+        <span class="pill pill--{{ r.payment_status if r.payment_status in ('paid', 'refunded') else r.status }}" style="margin-top:4px">{{ {'paid': 'Paid', 'refunded': 'Refunded', 'n/a': 'Offline'}.get(r.payment_status, r.status|capitalize) }}</span></td>
+      <td>{{ r.hotel_name }}<br><span class="muted small">{{ r.country }}</span></td>
+      <td>{{ r.guest_name }}</td>
+      <td>{{ r.check_in|nice_date('%d %b') }} – {{ r.check_out|nice_date('%d %b') }}<br><span class="muted small">{{ r.room_name }} · {{ r.nights }}n</span></td>
+      <td>{{ (r.paid_at or r.created_at)|nice_date('%d %b, %H:%M') }}</td>
+      <td class="num">{{ r.total_price|usd }}</td>
+      <td class="num">{% if r.commission_amount is not none %}{{ r.commission_amount|usd }}<br><span class="muted small">{{ '%g'|format(r.commission_pct or 0) }}%</span>{% else %}—{% endif %}</td>
+      <td class="num">{{ r.payout_amount|usd if r.payout_amount is not none else '—' }}</td>
+      <td>{% if r.payout_status %}<span class="pill pill--{{ r.payout_status }}">{{ {'sent': 'Sent', 'scheduled': 'Scheduled', 'due': 'Send now', 'cancelled': 'Cancelled', 'recover': 'Recover'}.get(r.payout_status, r.payout_status) }}</span>{% if r.payout_method == 'test' %}<br><span class="muted small">test</span>{% endif %}{% else %}—{% endif %}</td>
+      <td>{% if r.stripe_url %}<a href="{{ r.stripe_url }}" target="_blank" rel="noopener">Stripe ↗</a>{% elif r.provider == 'test' %}<span class="muted small">test checkout</span>{% endif %}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}
+  <section class="panel panel-pad" style="text-align:center"><h2>No bookings in this view</h2><p class="muted" style="margin:var(--space-2) 0 0">Try another period, or make a test booking on the guest site.</p></section>
+  {% endif %}
+</section>
+{% endblock %}

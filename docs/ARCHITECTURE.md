@@ -22,14 +22,23 @@ Browser ──▶ Vercel CDN ── /static/* ──▶ public/static (CSS, JS, 
 | `fichua/config.py` | All settings from env vars | adding a knob |
 | `fichua/db.py` | Tiny DB adapter (`all / one / scalar / run / run_many`) | switching DB engines (rarely) |
 | `fichua/schema.sql` | The data model — portable Postgres | adding tables/columns (use `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`) |
-| `fichua/services/` | Business logic, no HTTP | changing search ranking, booking rules, import format |
-| `fichua/routes/` | `public.py` (guest pages), `admin.py`, `api.py` (JSON) | adding pages/endpoints |
+| `fichua/services/` | Business logic, no HTTP: `catalog` (availability), `search`, `bookings` (hold → pay → confirm → cancel), `payments` (test checkout / Stripe), `payouts`, `notify` (WhatsApp outbox), `partners` (accounts, codes, onboarding, calendar), `finance`, `app_settings`, `currency`, `importer` | changing rules |
+| `fichua/routes/` | `public.py` (guest pages), `partners.py` (partner portal), `admin.py`, `api.py` (JSON, Stripe webhook, payout cron) | adding pages/endpoints |
 | `fichua/templates/` | Jinja pages + `components/ui.html` macros | changing markup |
 | `public/static/css/tokens.css` | **Design tokens** (colours, fonts, radii) | re-skinning — see `design/DESIGN_PRINCIPLES.md` |
 | `public/static/css/components.css` | Component styles | changing a component |
 | `public/static/js/app.js` | Progressive enhancement | changing interactions |
 | `scripts/` | Synthetic data generator, CLI importer | — |
 | `tests/` | End-to-end flow tests | always, with any change |
+
+## The money and message flow
+
+1. Guest checks out → booking `pending`, room held for `hold_minutes` (unpaid holds count against inventory).
+2. Payment succeeds (test checkout, or Stripe success page / webhook — idempotent) → booking `confirmed`,
+   commission = hotel's % (or default 7%), payout scheduled per the admin's payout timing.
+3. Three WhatsApp messages (guest, hotel, Fichua) are written to `messages`, then sent if WhatsApp is connected.
+4. Cancellation inside the free window → Stripe refund, payout cancelled (or flagged "recover").
+5. Partners' calendar changes live in `rate_overrides` and win over Excel rates and the room's standard price.
 
 ## Key decisions
 

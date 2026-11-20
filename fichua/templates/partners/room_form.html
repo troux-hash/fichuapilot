@@ -1,0 +1,86 @@
+{% extends "partners/_layout.html" %}
+{% block ptitle %}{{ 'Edit ' ~ room.name if room.id else 'Add a room type' }}{% endblock %}
+{% block page_title %}{{ 'Edit ' ~ room.name if room.id else 'Add a room type' }}{% endblock %}
+{% block page_sub %}<p><a href="/partners/rooms">← Back to rooms</a></p>{% endblock %}
+{% block partner_content %}
+<form method="post" action="/partners/rooms/{{ room.id if room.id else 'new' }}" enctype="multipart/form-data" class="split" data-upload>
+  <div style="display:grid;gap:var(--space-5)">
+    {% if errors %}<div class="alert alert-error" role="alert"><ul>{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul></div>{% endif %}
+    <section class="panel panel-pad" style="display:grid;gap:var(--space-4)">
+      <h2>The room</h2>
+      <div class="field">
+        <span class="label" id="kind-label">What kind of room is it?</span>
+        <div class="choice-grid" role="radiogroup" aria-labelledby="kind-label">
+          {% for k in kinds %}<label class="choice"><input type="radio" name="room_kind" value="{{ k }}" {% if (room.room_kind or 'Double') == k %}checked{% endif %}>{{ k }}</label>{% endfor %}
+        </div>
+      </div>
+      <div class="field"><label for="name">Name guests will see</label><input id="name" name="name" value="{{ room.name or '' }}" placeholder="e.g. Basic room, Garden view double" required></div>
+      <div class="form-grid-3">
+        <div class="field"><label for="total_rooms">Rooms of this type</label><input id="total_rooms" name="total_rooms" type="number" min="1" max="500" value="{{ room.total_rooms or 1 }}" required><span class="hint">How many you can sell each night</span></div>
+        <div class="field"><label for="max_guests">Guests per room</label><input id="max_guests" name="max_guests" type="number" min="1" max="20" value="{{ room.max_guests or 2 }}" required><span class="hint">Maximum, children included</span></div>
+        <div class="field"><label for="size_sqm">Size (m²)</label><input id="size_sqm" name="size_sqm" type="number" min="0" value="{{ room.size_sqm or '' }}"></div>
+      </div>
+      <div class="field"><label for="bed_type">Beds</label><input id="bed_type" name="bed_type" value="{{ room.bed_type or '' }}" placeholder="e.g. 1 double bed"></div>
+      <div class="field">
+        <span class="label" id="ram-label">In the room</span>
+        <div class="choice-grid" role="group" aria-labelledby="ram-label">
+          {% for a in room_amenities %}<label class="choice"><input type="checkbox" name="amenities" value="{{ a }}" {% if a in room.amenities %}checked{% endif %}>{{ a }}</label>{% endfor %}
+        </div>
+      </div>
+      <div class="toggle-row" style="border:0"><label for="breakfast_included">Breakfast included</label><input id="breakfast_included" type="checkbox" name="breakfast_included" value="1" {% if room.breakfast_included %}checked{% endif %}></div>
+    </section>
+
+    <section class="panel panel-pad" style="display:grid;gap:var(--space-4)">
+      <h2>Price per night</h2>
+      <div class="form-grid-2">
+        <div class="field">
+          <label for="base_price">Standard price</label>
+          <div class="money-input"><input id="base_price" name="base_price" inputmode="decimal" value="{{ room.base_price or '' }}" placeholder="45" data-money required><span>USD</span></div>
+          <span class="local-preview" data-local-for="base_price"></span>
+        </div>
+        <div class="field">
+          <label for="weekend_price">Friday and Saturday <span class="muted" style="font-weight:400">(optional)</span></label>
+          <div class="money-input"><input id="weekend_price" name="weekend_price" inputmode="decimal" value="{{ room.weekend_price or '' }}" placeholder="Same as standard" data-money><span>USD</span></div>
+          <span class="local-preview" data-local-for="weekend_price"></span>
+        </div>
+      </div>
+      <p class="muted small" style="margin:0">Guests pay in US dollars and see {{ local_label or 'their local currency' }} beside it. Every night is open at this price; change single dates and seasons in the calendar.</p>
+    </section>
+
+    <section class="panel panel-pad" style="display:grid;gap:var(--space-4)">
+      <h2>Room photos</h2>
+      {% if room.photos %}
+      <div class="photo-grid">
+        {% for p in room.photos %}
+        <div class="photo"><img src="/media/{{ p.id }}" alt="Room photo {{ loop.index }}" loading="lazy"></div>
+        {% endfor %}
+      </div>
+      {% endif %}
+      <label class="uploader" data-dropzone>
+        <strong data-file-label>Add photos of the bed, bathroom and view</strong>
+        <span class="muted small">At least 3 recommended · resized on your phone before upload</span>
+        <input type="file" name="files" accept="image/jpeg,image/png,image/webp" multiple>
+      </label>
+    </section>
+  </div>
+  <aside class="panel panel-pad" style="position:sticky;top:var(--space-5);display:grid;gap:var(--space-3)">
+    <h2>Save the room type</h2>
+    <p class="muted small" style="margin:0" data-upload-status>Photos upload together with the room.</p>
+    <button class="btn btn-primary btn-block" type="submit">Save room type</button>
+    <a class="btn btn-ghost btn-block" href="/partners/rooms">Cancel</a>
+  </aside>
+</form>
+{% if room.id and room.photos %}
+<section class="panel panel-pad">
+  <h2 style="margin-bottom:var(--space-3)">Remove photos</h2>
+  <div class="photo-grid">
+    {% for p in room.photos %}
+    <div class="photo"><img src="/media/{{ p.id }}" alt="" loading="lazy">
+      <div class="photo__actions"><form method="post" action="/partners/rooms/{{ room.id }}/photos/{{ p.id }}/delete" data-confirm="Delete this photo?"><button type="submit">Delete</button></form></div>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+{% endblock %}
+{% block partner_scripts %}<script>window.FICHUA_RATE = {{ local_rate|tojson }}; window.FICHUA_LOCAL = {{ local_label|tojson }};</script>{% endblock %}

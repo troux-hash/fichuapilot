@@ -1,0 +1,72 @@
+{% extends "admin/_layout.html" %}
+{% block atitle %}{{ hotel.name }}{% endblock %}
+{% block page_title %}{{ hotel.name }}{% endblock %}
+{% block page_sub %}<p><a href="/admin/approvals">← Approvals</a> · <span class="mono">{{ hotel.id }}</span> · {{ hotel.property_type or 'Hotel' }} · {{ hotel.city }}{% if hotel.country %}, {{ hotel.country }}{% endif %}</p>{% endblock %}
+{% block page_actions %}<span class="pill pill--{{ hotel.status }}">{{ {'pending': 'Waiting for approval', 'changes': 'Changes requested', 'draft': 'Still onboarding', 'live': 'Live', 'rejected': 'Rejected'}.get(hotel.status, hotel.status) }}</span>{% endblock %}
+{% block app_content %}
+{% set wa = 'sent to the owner on WhatsApp' if whatsapp_ready else 'saved in WhatsApp messages (WhatsApp is not connected yet)' %}
+{% if decided == 'approve' %}<div class="alert alert-success" role="status"><strong>Approved.</strong> {{ hotel.name }} is live on Fichua. The welcome message was {{ wa }}. <a href="/hotels/{{ hotel.id }}" target="_blank">See it as a guest ↗</a></div>
+{% elif decided == 'changes' %}<div class="alert alert-info" role="status">Your request was {{ wa }}. The hotel stays hidden until it is fixed.</div>
+{% elif decided == 'reject' %}<div class="alert alert-error" role="status">Rejected. The message was {{ wa }}. The hotel stays hidden.</div>
+{% elif decided == 'password' %}<div class="alert alert-success" role="status">Password reset. Share it with the owner by phone.</div>{% endif %}
+<div class="split">
+  <div style="display:grid;gap:var(--space-5)">
+    <section class="panel panel-pad" style="display:grid;gap:var(--space-4)">
+      <h2>Automatic checks</h2>
+      <div style="display:grid;gap:var(--space-2)">
+        {% for c in checks %}
+        <div class="row small"><span class="pill pill--{{ 'live' if c.level == 'ok' else ('pending' if c.level == 'warn' else 'rejected') }}">{{ 'OK' if c.level == 'ok' else ('Check' if c.level == 'warn' else 'Problem') }}</span>{{ c.text }}</div>
+        {% endfor %}
+      </div>
+    </section>
+    <section class="panel panel-pad" style="display:grid;gap:var(--space-4)">
+      <h2>Photos</h2>
+      {% if hotel.images and hotel.images[0] != '/static/img/placeholder.svg' %}
+      <div class="photo-grid">{% for img in hotel.images[:8] %}<div class="photo"><img src="{{ img }}" alt="" loading="lazy"></div>{% endfor %}</div>
+      {% else %}<p class="muted" style="margin:0">No photos yet.</p>{% endif %}
+    </section>
+    <section class="panel panel-pad" style="display:grid;gap:var(--space-3)">
+      <h2>Rooms and prices</h2>
+      {% if rooms %}
+      <div class="table-wrap"><table class="table">
+        <thead><tr><th>Room type</th><th class="num">Rooms</th><th class="num">Guests</th><th class="num">Standard</th><th class="num">Fri and Sat</th><th class="num">Photos</th></tr></thead>
+        <tbody>{% for r in rooms %}<tr><td>{{ r.name }}</td><td class="num">{{ r.total_rooms or 0 }}</td><td class="num">{{ r.max_guests }}</td><td class="num">{{ (r.base_price or 0)|usd }}</td><td class="num">{{ (r.weekend_price or r.base_price or 0)|usd }}</td><td class="num">{{ r.photo_count }}</td></tr>{% endfor %}</tbody>
+      </table></div>
+      {% else %}<p class="muted" style="margin:0">No room types yet.</p>{% endif %}
+    </section>
+    <section class="panel panel-pad" style="display:grid;gap:var(--space-3)">
+      <h2>Details</h2>
+      <div class="form-grid-2 small">
+        <div><span class="label">Owner</span><br>{{ hotel.owner_name or '—' }} · {{ hotel.owner_email or '' }}</div>
+        <div><span class="label">Access code</span><br><span class="mono">{{ hotel.access_code or '—' }}</span> · plan {{ hotel.plan or 'listing' }}{% if hotel.manager_free_until %}, free until {{ hotel.manager_free_until|nice_date('%d %b %Y') }}{% endif %}</div>
+        <div><span class="label">Reception</span><br>{{ hotel.phone or '—' }}</div>
+        <div><span class="label">WhatsApp</span><br>{{ hotel.whatsapp or '—' }}</div>
+        <div><span class="label">Address</span><br>{{ hotel.address or '—' }}{% if hotel.area %}, {{ hotel.area }}{% endif %}</div>
+        <div><span class="label">Map pin</span><br>{% if hotel.lat is not none %}<a href="https://www.openstreetmap.org/?mlat={{ hotel.lat }}&mlon={{ hotel.lng }}#map=17/{{ hotel.lat }}/{{ hotel.lng }}" target="_blank" rel="noopener">{{ '%.5f'|format(hotel.lat) }}, {{ '%.5f'|format(hotel.lng) }} ↗</a>{% else %}—{% endif %}</div>
+        <div><span class="label">Cancellation</span><br>{{ policies.get(hotel.cancellation_policy or 'flexible', ('Flexible', ''))[0] }}</div>
+        <div><span class="label">Check-in / out</span><br>{{ hotel.check_in_time or '14:00' }} / {{ hotel.check_out_time or '11:00' }}</div>
+      </div>
+      {% if hotel.description %}<p class="small" style="margin:0">{{ hotel.description }}</p>{% endif %}
+    </section>
+  </div>
+  <aside style="display:grid;gap:var(--space-4);position:sticky;top:var(--space-5)">
+    <form class="panel panel-pad" method="post" action="/admin/approvals/{{ hotel.id }}" style="display:grid;gap:var(--space-4)">
+      <h2>Decision</h2>
+      <div class="field"><label for="commission">Commission for this hotel</label>
+        <div class="money-input"><input id="commission" name="commission" inputmode="decimal" value="{{ '%g'|format(hotel.commission_pct) if hotel.commission_pct is not none else default_commission }}"><span>%</span></div>
+        <span class="hint">Default is {{ default_commission }}% (Settings). This changes it for this hotel only.</span></div>
+      <div class="field"><label for="note">Message to the hotel <span class="muted" style="font-weight:400">(sent by WhatsApp)</span></label>
+        <textarea id="note" name="note" rows="3" placeholder="Needed if you ask for changes, e.g. please add 2 photos of the Family suite.">{{ hotel.review_note or '' }}</textarea></div>
+      <button class="btn btn-primary btn-block" name="action" value="approve" type="submit" {% if not status.ready %}disabled title="The hotel hasn't finished onboarding"{% endif %}>Approve and publish</button>
+      <button class="btn btn-secondary btn-block" name="action" value="changes" type="submit">Ask for changes</button>
+      <button class="btn btn-ghost btn-block" name="action" value="reject" type="submit" style="color:var(--color-danger)">Reject</button>
+      {% if not status.ready %}<p class="muted small" style="margin:0">Approve becomes available once the hotel finishes every onboarding step.</p>{% endif %}
+    </form>
+    <form class="panel panel-pad" method="post" action="/admin/partners/{{ hotel.id }}/password" style="display:grid;gap:var(--space-3)">
+      <h2>Reset the owner's password</h2>
+      <div class="field"><label for="password">New password</label><input id="password" name="password" type="text" minlength="8" required></div>
+      <button class="btn btn-secondary btn-block" type="submit">Set new password</button>
+    </form>
+  </aside>
+</div>
+{% endblock %}

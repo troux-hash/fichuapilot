@@ -1,0 +1,31 @@
+{% extends "admin/_layout.html" %}
+{% block atitle %}WhatsApp messages{% endblock %}
+{% block page_title %}WhatsApp messages{% endblock %}
+{% block page_sub %}<p>Every message Fichua sends to guests, hotels and you, newest first.</p>{% endblock %}
+{% block page_actions %}<form method="post" action="/admin/messages/retry"><button class="btn btn-secondary" type="submit">Send unsent messages again</button></form>{% endblock %}
+{% block app_content %}
+{% if not whatsapp_ready %}<div class="alert alert-info">WhatsApp isn't connected yet, so messages are saved here but not delivered. Add <code>WHATSAPP_TOKEN</code> and <code>WHATSAPP_PHONE_NUMBER_ID</code> to connect it.</div>{% endif %}
+{% if not admin_whatsapp %}<div class="alert alert-warning">Your own WhatsApp number isn't set, so payment alerts for you have nowhere to go. <a href="/admin/settings">Add it in Settings</a>.</div>{% endif %}
+<div class="choice-grid" role="group" aria-label="Show">
+  {% for key, label in [('', 'All'), ('guest', 'Guests'), ('hotel', 'Hotels'), ('admin', 'You')] %}
+  <a class="choice" href="/admin/messages{{ '?role=' ~ key if key }}" {% if role == key %}style="background:var(--color-ink);color:#fff;border-color:var(--color-ink)" aria-current="true"{% endif %}>{{ label }}</a>
+  {% endfor %}
+</div>
+{% if rows %}
+<div class="table-wrap"><table class="table">
+  <thead><tr><th>When</th><th>To</th><th>Message</th><th>Status</th></tr></thead>
+  <tbody>
+  {% for m in rows %}
+  <tr>
+    <td>{{ m.created_at|nice_date('%d %b, %H:%M') }}</td>
+    <td><strong>{{ {'guest': 'Guest', 'hotel': 'Hotel', 'admin': 'You'}.get(m.role, m.role) }}</strong>{% if m.hotel_name %}<br><span class="muted small">{{ m.hotel_name }}</span>{% endif %}<br><span class="muted small mono">{{ ('+' ~ m.to_phone) if m.to_phone else 'no number' }} · {{ (m.language or 'en')|upper }}</span></td>
+    <td class="wrap"><div style="white-space:pre-line;max-width:520px">{{ m.body }}</div></td>
+    <td><span class="pill pill--{{ m.status }}">{{ {'sent': 'Delivered to WhatsApp', 'queued': 'Queued', 'failed': 'Failed', 'not_sent': 'Not sent'}.get(m.status, m.status) }}</span>{% if m.error %}<br><span class="muted small">{{ m.error }}</span>{% endif %}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+{% else %}
+<section class="panel panel-pad" style="text-align:center"><h2>No messages yet</h2><p class="muted" style="margin:var(--space-2) 0 0">They appear as soon as a guest pays or you approve a hotel.</p></section>
+{% endif %}
+{% endblock %}

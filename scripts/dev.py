@@ -18,6 +18,11 @@ ROOT = Path(__file__).resolve().parent.parent
 
 if "--prod" not in sys.argv:
     os.environ["DATABASE_URL"] = f"sqlite:///{(ROOT / 'data' / 'fichua.db').as_posix()}"
+    # Local admin uses a local password, never the live one from .env.
+    os.environ["ADMIN_PASSWORD"] = os.getenv("LOCAL_ADMIN_PASSWORD", "admin")
+    # Local runs never charge real cards or message real phones.
+    os.environ["STRIPE_SECRET_KEY"] = os.getenv("LOCAL_STRIPE_SECRET_KEY", "")
+    os.environ["WHATSAPP_TOKEN"] = os.getenv("LOCAL_WHATSAPP_TOKEN", "")
 
 if __name__ == "__main__":
     os.chdir(ROOT)

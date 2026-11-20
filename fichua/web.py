@@ -1,8 +1,9 @@
-"""Shared template setup and view helpers (filters, query-string builders)."""
+"""Shared template setup and view helpers (filters, query-string builders, asset URLs)."""
 from __future__ import annotations
 
 import os
-from datetime import date
+import time
+from datetime import date, datetime
 from pathlib import Path
 from urllib.parse import urlencode
 
@@ -10,21 +11,28 @@ from fastapi import Request
 from fastapi.templating import Jinja2Templates
 
 from .config import settings
+from .services import currency
 
 templates = Jinja2Templates(directory=str(Path(__file__).with_name("templates")))
 
-CURRENCY_SYMBOLS = {"USD": "$", "EUR": "€", "GBP": "£", "KES": "KSh ", "TZS": "TSh ", "ZAR": "R", "AED": "AED "}
+CURRENCY_SYMBOLS = {"USD": "$", "EUR": "€", "GBP": "£", "RWF": "RWF ", "XOF": "FCFA "}
 
 
-def money(value, currency: str = "USD", decimals: bool = False) -> str:
-    symbol = CURRENCY_SYMBOLS.get(currency or "USD", f"{currency} ")
+def money(value, currency_code: str = "USD", decimals: bool = False) -> str:
+    code = currency_code or "USD"
+    if code == "USD":
+        return currency.usd(value, decimals)
+    symbol = CURRENCY_SYMBOLS.get(code, f"{code} ")
     amount = float(value or 0)
     return f"{symbol}{amount:,.2f}" if decimals else f"{symbol}{amount:,.0f}"
 
 
 def nice_date(value, fmt: str = "%a %d %b") -> str:
-    d = date.fromisoformat(value) if isinstance(value, str) else value
-    return d.strftime(fmt)
+    if not value:
+        return ""
+    if isinstance(value, str):
+        value = datetime.fromisoformat(value) if "T" in value or " " in value else date.fromisoformat(value)
+    return value.strftime(fmt)
 
 
 def qs(params: dict, **overrides) -> str:
@@ -41,6 +49,36 @@ def qs(params: dict, **overrides) -> str:
     return urlencode(items)
 
 
+# Exchange rates change rarely; cache them briefly instead of querying on every price.
+_rates: dict = {"at": 0.0, "values": {}}
+
+
+def rates() -> dict[str, str]:
+    if time.time() - _rates["at"] > 60:
+        from .db import db
+        from .services import app_settings
+        with db.connect() as conn:
+            _rates["values"] = app_settings.all_settings(conn)
+        _rates["at"] = time.time()
+    return _rates["values"]
+
+
+def forget_rates() -> None:
+    _rates["at"] = 0.0
+
+
+def local(amount, country) -> str:
+    return currency.local_text(amount, country, rates())
+
+
+def base_url(request: Request) -> str:
+    if settings.public_url:
+        return settings.public_url
+    proto = request.headers.get("x-forwarded-proto", request.url.scheme)
+    host = request.headers.get("x-forwarded-host") or request.headers.get("host") or request.url.netloc
+    return f"{proto}://{host}"
+
+
 STATIC_DIR = Path(__file__).resolve().parent.parent / "public"
 _DEPLOY_ID = (os.getenv("VERCEL_GIT_COMMIT_SHA") or "")[:8]
 
@@ -54,6 +92,8 @@ def asset(path: str) -> str:
 
 templates.env.globals["asset"] = asset
 templates.env.filters["money"] = money
+templates.env.filters["usd"] = currency.usd
+templates.env.filters["local"] = local
 templates.env.filters["nice_date"] = nice_date
 templates.env.globals["qs"] = qs
 templates.env.globals["app_name"] = settings.app_name

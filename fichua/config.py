@@ -44,6 +44,13 @@ class Settings:
     auto_migrate: bool
     default_currency: str
     max_upload_mb: int
+    public_url: str
+    stripe_secret_key: str
+    stripe_webhook_secret: str
+    whatsapp_token: str
+    whatsapp_phone_id: str
+    whatsapp_api_version: str
+    cron_secret: str
 
 
 def _default_database_url(is_production: bool) -> str:
@@ -66,6 +73,15 @@ def load_settings() -> Settings:
         auto_migrate=_bool("AUTO_MIGRATE", True),
         default_currency=os.getenv("DEFAULT_CURRENCY", "USD"),
         max_upload_mb=int(os.getenv("MAX_UPLOAD_MB", "4")),
+        public_url=os.getenv("PUBLIC_URL", "").rstrip("/"),
+        # Payments: without a Stripe key the site uses Fichua's built-in test checkout.
+        stripe_secret_key=os.getenv("STRIPE_SECRET_KEY", "").strip(),
+        stripe_webhook_secret=os.getenv("STRIPE_WEBHOOK_SECRET", "").strip(),
+        # WhatsApp Cloud API (Meta). Without these, messages are logged in admin, not sent.
+        whatsapp_token=os.getenv("WHATSAPP_TOKEN", "").strip(),
+        whatsapp_phone_id=os.getenv("WHATSAPP_PHONE_NUMBER_ID", "").strip(),
+        whatsapp_api_version=os.getenv("WHATSAPP_API_VERSION", "v23.0").strip(),
+        cron_secret=os.getenv("CRON_SECRET", "").strip(),
     )
 
 

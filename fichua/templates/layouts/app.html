@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{# App shell for the partner portal and the admin: dark sidebar + light work area (pro theme). #}
+{% block theme_color %}#0F1229{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ asset('/static/css/app.css') }}">{% block app_head %}{% endblock %}{% endblock %}
+{% block body_class %}theme-pro{% endblock %}
+{% block header %}{% endblock %}
+{% block footer %}{% endblock %}
+{% block content %}
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar__brand">
+      <a class="logo" href="{% block home_href %}/{% endblock %}"><span class="logo-mark" aria-hidden="true">F</span>{{ app_name }}</a>
+      <span class="sidebar__tag">{% block tag %}{% endblock %}</span>
+    </div>
+    <nav class="sidebar__nav" aria-label="Main">{% block sidebar %}{% endblock %}</nav>
+    <div class="sidebar__foot">{% block sidebar_foot %}{% endblock %}</div>
+  </aside>
+  <div class="app-main">
+    <div class="app-top">
+      <div>
+        <h1>{% block page_title %}{% endblock %}</h1>
+        {% block page_sub %}{% endblock %}
+      </div>
+      <div class="row" style="flex-wrap:wrap">{% block page_actions %}{% endblock %}</div>
+    </div>
+    <div class="app-body">{% block app_content %}{% endblock %}</div>
+  </div>
+</div>
+{% endblock %}

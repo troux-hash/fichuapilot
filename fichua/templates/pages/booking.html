@@ -4,11 +4,25 @@
 
 {% block content %}
 <div class="container narrow" style="padding-bottom:var(--space-8)">
-  {% if is_new %}
+  {% if booking.awaiting_payment %}
   <div class="confirm-hero">
-    <div class="confirm-check" aria-hidden="true">✓</div>
+    <div class="confirm-check is-pending" aria-hidden="true"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+    <h1>Waiting for your payment</h1>
+    <p class="muted">Your room is held for a few minutes. Complete the payment to confirm it.</p>
+    {% if pay_url %}<a class="btn btn-primary btn-lg" href="{{ pay_url }}">Pay {{ booking.total_price|usd }}</a>
+    {% else %}<p class="muted small">If you have just paid, this page updates in a moment. <a href="">Refresh</a></p>{% endif %}
+  </div>
+  {% elif booking.is_expired %}
+  <div class="confirm-hero">
+    <h1>This checkout expired</h1>
+    <p class="muted">The room was released because the payment wasn't completed. Nothing was charged.</p>
+    <a class="btn btn-primary" href="/">Search again</a>
+  </div>
+  {% elif is_new and booking.status == 'confirmed' %}
+  <div class="confirm-hero">
+    <div class="confirm-check" aria-hidden="true"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></div>
     <h1>You're going to {{ booking.city }}!</h1>
-    <p class="muted">Your room at {{ booking.hotel_name }} is confirmed. Bookmark this page — it's your booking.</p>
+    <p class="muted">Paid and confirmed.{% if whatsapp_ready %} We've sent the details to your WhatsApp.{% endif %} Bookmark this page: it's your booking.</p>
   </div>
   {% else %}
   <h1 class="page-title" style="margin-top:var(--space-7)">Your booking</h1>
@@ -16,6 +30,7 @@
 
   {% if message %}<div class="alert {{ 'alert-success' if booking.status == 'cancelled' else 'alert-error' }}" role="status" style="margin-top:var(--space-4)">{{ message }}</div>{% endif %}
 
+  {% if not booking.is_expired %}
   <article class="card booking-card">
     <img src="{{ booking.image }}" alt="{{ booking.hotel_name }}">
     <div class="card-pad">
@@ -24,7 +39,9 @@
           <div class="muted small">Booking reference</div>
           <div class="reference" data-copy="{{ booking.reference }}">{{ booking.reference }}</div>
         </div>
-        {% if booking.status == 'confirmed' %}<span class="badge badge--success">Confirmed</span>{% else %}<span class="badge badge--danger">Cancelled</span>{% endif %}
+        {% if booking.status == 'confirmed' %}<span class="badge badge--success">Paid · confirmed</span>
+        {% elif booking.status == 'pending' %}<span class="badge badge--warning">Awaiting payment</span>
+        {% else %}<span class="badge badge--danger">Cancelled{% if booking.payment_status == 'refunded' %} · refunded{% endif %}</span>{% endif %}
       </div>
       <h2 style="font-size:var(--text-2xl);margin-top:var(--space-5)">{{ booking.hotel_name }}</h2>
       <p class="muted">{{ booking.room_name }} · {{ booking.address or booking.city }}{% if booking.country %}, {{ booking.country }}{% endif %}</p>
@@ -32,22 +49,22 @@
         <div><dt>Check-in</dt><dd>{{ booking.check_in|nice_date('%a %d %b') }}</dd><span class="muted small">from {{ booking.check_in_time or '14:00' }}</span></div>
         <div><dt>Check-out</dt><dd>{{ booking.check_out|nice_date('%a %d %b') }}</dd><span class="muted small">until {{ booking.check_out_time or '11:00' }}</span></div>
         <div><dt>Guests</dt><dd>{{ booking.guests }}</dd><span class="muted small">{{ booking.nights }} night{{ 's' if booking.nights != 1 }}</span></div>
-        <div><dt>Total</dt><dd>{{ booking.total_price|money(booking.currency, true) }}</dd><span class="muted small">pay at hotel</span></div>
+        <div><dt>{{ 'Paid' if booking.payment_status == 'paid' else 'Total' }}</dt><dd>{{ booking.total_price|usd }}</dd>{% set loc = booking.total_price|local(booking.country) %}<span class="muted small">{{ loc or 'card payment' }}</span></div>
       </dl>
       <p class="small"><strong>Lead guest:</strong> {{ booking.guest_name }} · {{ booking.guest_email }}{% if booking.guest_phone %} · {{ booking.guest_phone }}{% endif %}</p>
       {% if booking.special_requests %}<p class="small"><strong>Requests:</strong> {{ booking.special_requests }}</p>{% endif %}
 
       <div class="row" style="flex-wrap:wrap;margin-top:var(--space-5)">
-        <button type="button" class="btn btn-secondary" onclick="window.print()">Print</button>
         <a class="btn btn-ghost" href="/">Find another stay</a>
         {% if booking.can_cancel %}
-        <form method="post" action="/bookings/{{ booking.reference }}/cancel" data-confirm="Cancel this booking? This can't be undone." style="margin-left:auto">
+        <form method="post" action="/bookings/{{ booking.reference }}/cancel" data-confirm="Cancel this booking? You'll be refunded in full." style="margin-left:auto">
           <input type="hidden" name="t" value="{{ token }}">
-          <button class="btn btn-danger" type="submit">Cancel booking</button>
+          <button class="btn btn-danger" type="submit">Cancel and refund</button>
         </form>
         {% endif %}
       </div>
     </div>
   </article>
+  {% endif %}
 </div>
 {% endblock %}

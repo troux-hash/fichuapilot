@@ -1,0 +1,41 @@
+{% extends "partners/_layout.html" %}
+{% import "components/icons.html" as i %}
+{% block ptitle %}Bookings{% endblock %}
+{% block page_title %}Bookings{% endblock %}
+{% block page_sub %}<p>Fichua bookings are paid in full. Bookings you take yourself block the room so it is never sold twice.</p>{% endblock %}
+{% block page_actions %}<a class="btn btn-primary" href="/partners/bookings/new">{{ i.icon('plus') }}Add a booking you took</a>{% endblock %}
+{% block partner_content %}
+{% if added %}<div class="alert alert-success" role="status">Blocked {{ added }} room{{ 's' if added != '1' }}. It's off sale on Fichua for those dates.</div>{% endif %}
+<div class="choice-grid" role="group" aria-label="Show">
+  {% for key, label in [('upcoming', 'Upcoming'), ('past', 'Past'), ('cancelled', 'Cancelled'), ('all', 'All')] %}
+  <a class="choice" href="/partners/bookings?show={{ key }}" {% if show == key %}style="background:var(--color-ink);color:#fff;border-color:var(--color-ink)" aria-current="true"{% endif %}>{{ label }}</a>
+  {% endfor %}
+</div>
+{% set fichua = rows|selectattr('source', 'equalto', 'fichua')|selectattr('status', 'equalto', 'confirmed')|list %}
+<div class="stats">
+  <div class="stat"><span>Bookings shown</span><strong>{{ rows|length }}</strong></div>
+  <div class="stat"><span>Nights booked</span><strong>{{ rows|selectattr('status', 'equalto', 'confirmed')|sum(attribute='nights') }}</strong></div>
+  <div class="stat stat--accent"><span>Your payouts from Fichua</span><strong>{{ fichua|sum(attribute='payout_amount')|usd }}</strong><small>after commission</small></div>
+</div>
+{% if rows %}
+<div class="table-wrap"><table class="table">
+  <thead><tr><th>Booking</th><th>Guest</th><th>Room</th><th>Dates</th><th class="num">Guest paid</th><th class="num">Your payout</th><th>Status</th><th></th></tr></thead>
+  <tbody>
+  {% for b in rows %}
+  <tr>
+    <td>{% if b.source == 'offline' %}<span class="pill pill--offline">{{ b.offline_source or 'Offline' }}</span>{% else %}<span class="mono">{{ b.reference }}</span>{% endif %}</td>
+    <td>{{ b.guest_name }}{% if b.guest_phone %}<br><span class="muted small">{{ b.guest_phone }}</span>{% endif %}</td>
+    <td>{{ b.room_name }}<br><span class="muted small">{{ b.guests }} guest{{ 's' if b.guests != 1 }}</span></td>
+    <td>{{ b.check_in|nice_date }} – {{ b.check_out|nice_date }}<br><span class="muted small">{{ b.nights }} night{{ 's' if b.nights != 1 }}</span></td>
+    <td class="num">{% if b.source == 'offline' %}<span class="muted">{{ b.total_price|usd if b.total_price else '—' }}</span>{% else %}{{ b.total_price|usd }}{% endif %}</td>
+    <td class="num">{% if b.source == 'offline' %}<span class="muted">paid to you</span>{% else %}<strong>{{ (b.payout_amount or 0)|usd }}</strong><br><span class="muted small">{{ {'sent': 'Sent', 'scheduled': 'Scheduled', 'due': 'Being sent', 'cancelled': 'Cancelled', 'recover': 'Refunded'}.get(b.payout_status, '') }}</span>{% endif %}</td>
+    <td><span class="pill pill--{{ b.status }}">{{ 'Confirmed' if b.status == 'confirmed' else 'Cancelled' }}</span></td>
+    <td>{% if b.source == 'offline' and b.status == 'confirmed' %}<form method="post" action="/partners/bookings/{{ b.id }}/cancel" data-confirm="Cancel this booking and put the room back on sale?"><button class="btn btn-ghost btn-sm" type="submit">Cancel</button></form>{% endif %}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+{% else %}
+<section class="panel panel-pad" style="text-align:center"><h2>No bookings here yet</h2><p class="muted" style="margin:var(--space-2) 0 0">New Fichua bookings arrive here and on your WhatsApp.</p></section>
+{% endif %}
+{% endblock %}

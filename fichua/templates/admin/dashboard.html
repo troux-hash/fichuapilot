@@ -1,42 +1,37 @@
-{% extends "admin/layout.html" %}
-{% block admin %}
-<h1 class="page-title">Dashboard</h1>
-<div class="stat-grid">
-  <div class="card stat"><strong>{{ stats.hotels }}</strong><span>Hotels</span></div>
-  <div class="card stat"><strong>{{ stats.rooms }}</strong><span>Room types</span></div>
-  <div class="card stat"><strong>{{ '{:,}'.format(stats.rate_nights or 0) }}</strong><span>Rate nights{% if stats.last_rate_date %} · until {{ stats.last_rate_date|nice_date('%d %b %Y') }}{% endif %}</span></div>
-  <div class="card stat"><strong>{{ stats.bookings }}</strong><span>Confirmed bookings</span></div>
+{% extends "admin/_layout.html" %}
+{% block atitle %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block page_sub %}<p>This month at a glance.</p>{% endblock %}
+{% block page_actions %}<a class="btn btn-secondary" href="/admin/codes">Create an access code</a><a class="btn btn-primary" href="/admin/finance">Open finance</a>{% endblock %}
+{% block app_content %}
+{% if stats.pending %}<div class="alert alert-warning row-between"><span><strong>{{ stats.pending }} hotel{{ 's' if stats.pending != 1 }} waiting for approval.</strong> They can't take bookings until you approve them.</span><a class="btn btn-primary btn-sm" href="/admin/approvals">Review</a></div>{% endif %}
+{% if payments_mode == 'test' %}<div class="alert alert-info">Payments run on Fichua's <strong>test checkout</strong> (no real money). Add <code>STRIPE_SECRET_KEY</code> to switch to Stripe test mode.</div>{% endif %}
+<div class="stats">
+  <div class="stat stat--accent"><span>Paid by guests this month</span><strong>{{ stats.month.gross|usd }}</strong><small>{{ stats.month.bookings }} bookings · {{ stats.month.nights }} nights</small></div>
+  <div class="stat"><span>Your commission</span><strong>{{ stats.month.commission|usd }}</strong><small>this month</small></div>
+  <div class="stat"><span>Paid out to hotels</span><strong>{{ stats.month.payout_sent|usd }}</strong><small>{{ stats.month.payout_pending|usd }} still to send</small></div>
+  <div class="stat"><span>Live hotels</span><strong>{{ stats.live_hotels }}</strong><small>{{ stats.rooms }} rooms</small></div>
 </div>
-
 {% if result %}
   {% if result.ok %}
-  <div class="alert alert-success" role="status" style="margin-bottom:var(--space-5)">
-    <strong>Imported {{ filename }}.</strong> {{ result.hotels }} hotels, {{ result.rooms }} room types and {{ '{:,}'.format(result.rate_nights) }} rate nights saved. <a href="/" target="_blank">See it live ↗</a>
-  </div>
+  <div class="alert alert-success" role="status"><strong>Imported {{ filename }}.</strong> {{ result.hotels }} hotels, {{ result.rooms }} room types and {{ '{:,}'.format(result.rate_nights) }} rate nights saved. <a href="/" target="_blank">See it live ↗</a></div>
   {% else %}
-  <div class="alert alert-error" role="alert" style="margin-bottom:var(--space-5)">
-    <strong>Nothing was imported from {{ filename }}.</strong> Fix {{ 'this' if result.errors|length == 1 else 'these ' ~ result.errors|length }} and upload again:
-    <ul>{% for e in result.errors[:50] %}<li>{{ e }}</li>{% endfor %}</ul>
-    {% if result.errors|length > 50 %}<p>…and {{ result.errors|length - 50 }} more.</p>{% endif %}
-  </div>
+  <div class="alert alert-error" role="alert"><strong>Nothing was imported from {{ filename }}.</strong> Fix {{ 'this' if result.errors|length == 1 else 'these ' ~ result.errors|length }} and upload again:
+    <ul>{% for e in result.errors[:50] %}<li>{{ e }}</li>{% endfor %}</ul>{% if result.errors|length > 50 %}<p>…and {{ result.errors|length - 50 }} more.</p>{% endif %}</div>
   {% endif %}
 {% endif %}
-
-<div class="card card-pad stack">
-  <div class="row-between">
-    <div>
-      <h2 style="font-size:var(--text-xl)">Upload hotel data</h2>
-      <p class="muted small" style="margin:4px 0 0">One Excel file per hotel group: <strong>Hotels</strong>, <strong>Rooms</strong> and <strong>Rates</strong> sheets. Re-uploading updates existing codes.</p>
-    </div>
+<section class="panel panel-pad" style="display:grid;gap:var(--space-4)">
+  <div class="panel-head" style="margin:0">
+    <div><h2>Bulk upload hotels from Excel</h2><p class="muted small" style="margin:4px 0 0">For hotel groups you onboard yourself. Hotels imported here go live straight away.</p></div>
     <a class="btn btn-secondary btn-sm" href="/admin/template.xlsx">Download template</a>
   </div>
-  <form method="post" action="/admin/upload" enctype="multipart/form-data" class="stack">
-    <label class="dropzone" data-dropzone>
+  <form method="post" action="/admin/upload" enctype="multipart/form-data" style="display:grid;gap:var(--space-3)">
+    <label class="uploader" data-dropzone>
       <strong data-file-label>Drop your .xlsx here or click to choose</strong>
-      <span class="muted small">Max {{ max_mb }} MB · validated before anything is saved</span>
+      <span class="muted small">Max {{ max_mb }} MB · checked before anything is saved</span>
       <input type="file" name="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required>
     </label>
-    <button class="btn btn-primary" type="submit">Upload & import</button>
+    <div class="form-actions"><button class="btn btn-primary" type="submit">Upload and import</button></div>
   </form>
-</div>
+</section>
 {% endblock %}

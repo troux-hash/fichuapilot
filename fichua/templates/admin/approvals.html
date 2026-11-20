@@ -1,0 +1,26 @@
+{% extends "admin/_layout.html" %}
+{% block atitle %}Approvals{% endblock %}
+{% block page_title %}New hotels to approve{% endblock %}
+{% block page_sub %}<p>No hotel appears on Fichua until you approve it.</p>{% endblock %}
+{% block app_content %}
+{% set labels = {'pending': 'Waiting for approval', 'changes': 'Changes requested', 'draft': 'Still onboarding'} %}
+{% if hotels %}
+<div class="table-wrap"><table class="table">
+  <thead><tr><th>Hotel</th><th>Location</th><th>Owner</th><th>Submitted</th><th>Status</th><th></th></tr></thead>
+  <tbody>
+  {% for h in hotels %}
+  <tr>
+    <td><strong>{{ h.name }}</strong><br><span class="muted small mono">{{ h.id }}</span></td>
+    <td>{{ h.city or '—' }}{% if h.country %}, {{ h.country }}{% endif %}</td>
+    <td>{{ h.owner_name or '—' }}<br><span class="muted small">{{ h.owner_email or '' }}</span></td>
+    <td>{{ h.submitted_at|nice_date('%d %b %Y, %H:%M') if h.submitted_at else '—' }}</td>
+    <td><span class="pill pill--{{ h.status }}">{{ labels.get(h.status, h.status) }}</span></td>
+    <td><a class="btn {{ 'btn-primary' if h.status == 'pending' else 'btn-secondary' }} btn-sm" href="/admin/approvals/{{ h.id }}">{{ 'Review' if h.status == 'pending' else 'Open' }}</a></td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+{% else %}
+<section class="panel panel-pad" style="text-align:center"><h2>Nothing to approve</h2><p class="muted" style="margin:var(--space-2) 0 0">Send a hotel an access code from <a href="/admin/codes">Access codes</a>. Their submission appears here.</p></section>
+{% endif %}
+{% endblock %}

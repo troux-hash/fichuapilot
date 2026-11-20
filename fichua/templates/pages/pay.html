@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Test payment · {{ app_name }}{% endblock %}
+{% block content %}
+<div class="container">
+  <form class="card paycard" method="post" action="/pay/{{ booking.reference }}" data-checkout>
+    <input type="hidden" name="t" value="{{ token }}">
+    <span class="badge badge--warning" style="align-self:flex-start">Test checkout · no real money</span>
+    {% if error %}<div class="alert alert-error" role="alert">{{ error }}</div>{% endif %}
+    <div>
+      <div class="muted small">{{ booking.hotel_name }} · {{ booking.room_name }}</div>
+      <div class="paycard__amount">{{ booking.total_price|usd }}</div>
+      <div class="muted small">{{ booking.check_in|nice_date }} – {{ booking.check_out|nice_date }} · {{ booking.nights }} night{{ 's' if booking.nights != 1 }} · {{ booking.reference }}</div>
+      {% set loc = booking.total_price|local(booking.country) %}{% if loc %}<div class="small" style="color:var(--color-ink-soft)">{{ loc }}</div>{% endif %}
+    </div>
+    <div class="paycard__card" aria-label="Test card">
+      <span class="small" style="font-weight:800;letter-spacing:.1em;text-transform:uppercase">Test card</span>
+      <span class="mono">4242 4242 4242 4242</span>
+      <span class="row small" style="justify-content:space-between;font-weight:700"><span>{{ booking.guest_name }}</span><span>12 / 34 · CVC 123</span></span>
+    </div>
+    <p class="muted small" style="margin:0">Fichua uses this test checkout until Stripe is connected. Paying here confirms the booking, records the commission, pays the hotel (test) and sends the WhatsApp messages, exactly like a real payment.</p>
+    {% if not booking.is_expired %}
+    <button class="btn btn-primary btn-lg btn-block" type="submit" data-submit>Pay {{ booking.total_price|usd }} (test)</button>
+    {% else %}
+    <a class="btn btn-secondary btn-block" href="/">Start a new search</a>
+    {% endif %}
+  </form>
+</div>
+{% endblock %}

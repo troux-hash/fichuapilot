@@ -76,7 +76,103 @@ CREATE TABLE IF NOT EXISTS booking_nights (
     PRIMARY KEY (booking_id, stay_date)
 );
 
+-- Partner accounts. One account owns one hotel for now (hotels.owner_id).
+CREATE TABLE IF NOT EXISTS partner_users (
+    id              TEXT PRIMARY KEY,
+    email           TEXT NOT NULL UNIQUE,
+    password_hash   TEXT NOT NULL,
+    name            TEXT,
+    phone           TEXT,
+    access_code     TEXT,
+    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Codes Fichua hands out: they gate partner sign-up and can grant a free Hotel Manager licence.
+CREATE TABLE IF NOT EXISTS access_codes (
+    code            TEXT PRIMARY KEY,
+    plan            TEXT NOT NULL DEFAULT 'manager',     -- listing | manager
+    free_until      DATE,
+    max_uses        INTEGER NOT NULL DEFAULT 1,
+    uses            INTEGER NOT NULL DEFAULT 0,
+    expires_on      DATE,
+    note            TEXT,
+    is_active       BOOLEAN DEFAULT TRUE,
+    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Admin-editable settings (commission, payout timing, exchange rates, ...).
+CREATE TABLE IF NOT EXISTS settings (
+    key             TEXT PRIMARY KEY,
+    value           TEXT
+);
+
+-- Photos uploaded by partners, stored in the database (portable; move to object storage later).
+CREATE TABLE IF NOT EXISTS media (
+    id              TEXT PRIMARY KEY,
+    owner_type      TEXT NOT NULL,                        -- hotel | room
+    owner_id        TEXT NOT NULL,
+    content_type    TEXT NOT NULL,
+    data            BYTEA NOT NULL,
+    label           TEXT,
+    sort            INTEGER DEFAULT 0,
+    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Changes a partner makes in the calendar. Wins over Excel rates and the room's standard price.
+CREATE TABLE IF NOT EXISTS rate_overrides (
+    room_type_id    TEXT NOT NULL REFERENCES room_types(id) ON DELETE CASCADE,
+    stay_date       DATE NOT NULL,
+    price           NUMERIC(10,2),
+    units           INTEGER,
+    closed          BOOLEAN DEFAULT FALSE,
+    PRIMARY KEY (room_type_id, stay_date)
+);
+
+CREATE TABLE IF NOT EXISTS payments (
+    id              TEXT PRIMARY KEY,
+    booking_id      TEXT NOT NULL REFERENCES bookings(id),
+    provider        TEXT NOT NULL,                        -- test | stripe
+    provider_ref    TEXT,                                 -- Stripe payment_intent id
+    amount          NUMERIC(10,2) NOT NULL,
+    currency        TEXT NOT NULL,
+    status          TEXT NOT NULL,                        -- paid | refunded
+    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS payouts (
+    id              TEXT PRIMARY KEY,
+    booking_id      TEXT NOT NULL REFERENCES bookings(id),
+    hotel_id        TEXT NOT NULL REFERENCES hotels(id),
+    amount          NUMERIC(10,2) NOT NULL,
+    currency        TEXT NOT NULL,
+    status          TEXT NOT NULL,                        -- scheduled | due | sent | cancelled | recover
+    due_at          TIMESTAMP,
+    sent_at         TIMESTAMP,
+    method          TEXT,                                 -- test | manual | stripe
+    note            TEXT,
+    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Every WhatsApp message Fichua sends (or would send), so the admin can see them all.
+CREATE TABLE IF NOT EXISTS messages (
+    id              TEXT PRIMARY KEY,
+    booking_id      TEXT,
+    hotel_id        TEXT,
+    role            TEXT NOT NULL,                        -- guest | hotel | admin
+    to_phone        TEXT,
+    language        TEXT,
+    kind            TEXT,
+    body            TEXT NOT NULL,
+    status          TEXT NOT NULL,                        -- queued | sent | failed | not_sent
+    error           TEXT,
+    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    sent_at         TIMESTAMP
+);
+
 CREATE INDEX IF NOT EXISTS idx_hotels_city ON hotels (city);
+CREATE INDEX IF NOT EXISTS idx_media_owner ON media (owner_type, owner_id);
+CREATE INDEX IF NOT EXISTS idx_payouts_status ON payouts (status, due_at);
+CREATE INDEX IF NOT EXISTS idx_messages_created ON messages (created_at);
 CREATE INDEX IF NOT EXISTS idx_room_types_hotel ON room_types (hotel_id);
 CREATE INDEX IF NOT EXISTS idx_rates_date ON room_rates (stay_date);
 CREATE INDEX IF NOT EXISTS idx_booking_nights_room_date ON booking_nights (room_type_id, stay_date);

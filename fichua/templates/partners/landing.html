@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Fichua Partners · List your hotel{% endblock %}
+{% block theme_color %}#0F1229{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ asset('/static/css/app.css') }}">{% endblock %}
+{% block body_class %}theme-pro{% endblock %}
+{% block header %}{% endblock %}
+{% block footer %}{% endblock %}
+{% block content %}
+<div class="partner-landing">
+  <section class="partner-landing__pitch">
+    <a class="logo" href="/" style="color:#fff"><span class="logo-mark" aria-hidden="true">F</span>Fichua <span class="sidebar__tag" style="margin-left:6px">Partners</span></a>
+    <h1>Fill your rooms. Get paid on time.</h1>
+    <p style="color:#D9D8F5;max-width:46ch;margin:0">List your hotel on Fichua in about 10 minutes from your phone. Guests across Rwanda, Benin and Côte d'Ivoire book and pay online; you get the money and a WhatsApp message.</p>
+    <ul>
+      <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>Every booking is paid in full before the guest arrives.</li>
+      <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>A free calendar to manage prices, closed dates and walk-ins.</li>
+      <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>Instant WhatsApp alerts for every new booking.</li>
+    </ul>
+  </section>
+  <section class="partner-landing__forms">
+    <form class="panel panel-pad" method="post" action="/partners/join" style="display:grid;gap:var(--space-4)">
+      <div>
+        <h2 style="font-family:var(--font-display);font-size:var(--text-2xl)">Join with your code</h2>
+        <p class="muted small" style="margin:4px 0 0">Fichua gives a code to each hotel it invites.</p>
+      </div>
+      {% if join_error %}<div class="alert alert-error" role="alert">{{ join_error }}</div>{% endif %}
+      <div class="field"><label for="code">Access code</label><input id="code" name="code" value="{{ form.get('code', request.query_params.get('code', '')) }}" placeholder="FICHUA-XXXXXX" autocapitalize="characters" required></div>
+      <div class="form-grid-2">
+        <div class="field"><label for="name">Your name</label><input id="name" name="name" value="{{ form.get('name', '') }}" autocomplete="name" required></div>
+        <div class="field"><label for="hotel_name">Hotel name</label><input id="hotel_name" name="hotel_name" value="{{ form.get('hotel_name', '') }}" required></div>
+        <div class="field"><label for="email">Email</label><input id="email" name="email" type="email" value="{{ form.get('email', '') }}" autocomplete="email" required></div>
+        <div class="field"><label for="phone">WhatsApp number</label><input id="phone" name="phone" type="tel" value="{{ form.get('phone', '') }}" placeholder="+250 788 000 000" autocomplete="tel" required></div>
+      </div>
+      <div class="field"><label for="password">Choose a password</label><input id="password" name="password" type="password" minlength="8" autocomplete="new-password" required><span class="hint">At least 8 characters.</span></div>
+      <button class="btn btn-primary btn-block" type="submit">Create my account</button>
+    </form>
+    <form class="panel panel-pad" method="post" action="/partners/login" style="display:grid;gap:var(--space-3)">
+      <h2 style="font-size:var(--text-lg)">Already a partner? Log in</h2>
+      {% if login_error %}<div class="alert alert-error" role="alert">{{ login_error }}</div>{% endif %}
+      <div class="form-grid-2">
+        <div class="field"><label for="login_email">Email</label><input id="login_email" name="email" type="email" value="{{ form.get('login_email', '') }}" autocomplete="email" required></div>
+        <div class="field"><label for="login_password">Password</label><input id="login_password" name="password" type="password" autocomplete="current-password" required></div>
+      </div>
+      <button class="btn btn-secondary btn-block" type="submit">Log in</button>
+      <p class="muted small" style="margin:0">Forgot your password? Message the Fichua team and we'll reset it.</p>
+    </form>
+  </section>
+</div>
+{% endblock %}

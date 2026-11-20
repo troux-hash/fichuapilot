@@ -39,6 +39,9 @@ SHEETS: dict[str, dict[str, tuple[bool, str, str]]] = {
         "check_in_time": (False, "str", "e.g. 14:00"),
         "check_out_time": (False, "str", "e.g. 11:00"),
         "is_active": (False, "bool", "yes/no, default yes"),
+        "phone": (False, "str", "Reception phone with country code"),
+        "whatsapp": (False, "str", "WhatsApp number for booking alerts"),
+        "email": (False, "str", ""),
     },
     "Rooms": {
         "room_code": (True, "str", "Unique code, e.g. NBO-001-DLX"),
@@ -52,6 +55,9 @@ SHEETS: dict[str, dict[str, tuple[bool, str, str]]] = {
         "image_urls": (False, "list", "Comma separated"),
         "breakfast_included": (False, "bool", "yes/no"),
         "free_cancellation": (False, "bool", "yes/no, default yes"),
+        "total_rooms": (False, "int", "Rooms of this type (open every night)"),
+        "base_price": (False, "float", "Standard price per night, USD"),
+        "weekend_price": (False, "float", "Fri and Sat nights, USD (optional)"),
     },
     "Rates": {
         "room_code": (True, "str", "Must exist in Rooms sheet or database"),
@@ -184,10 +190,10 @@ def _validate(hotels, rooms, rates, conn: Connection, result: ImportResult) -> N
 HOTEL_UPSERT = """
 INSERT INTO hotels (id, hotel_group, name, city, country, address, lat, lng, star_rating,
     guest_rating, review_count, property_type, description, amenities, image_urls, currency,
-    check_in_time, check_out_time, is_active)
+    check_in_time, check_out_time, is_active, phone, whatsapp, email, status)
 VALUES (:hotel_code, :hotel_group, :name, :city, :country, :address, :lat, :lng, :star_rating,
     :guest_rating, :review_count, :property_type, :description, :amenities, :image_urls,
-    :currency, :check_in_time, :check_out_time, :is_active)
+    :currency, :check_in_time, :check_out_time, :is_active, :phone, :whatsapp, :email, 'live')
 ON CONFLICT (id) DO UPDATE SET hotel_group = excluded.hotel_group, name = excluded.name,
     city = excluded.city, country = excluded.country, address = excluded.address,
     lat = excluded.lat, lng = excluded.lng, star_rating = excluded.star_rating,
@@ -196,20 +202,22 @@ ON CONFLICT (id) DO UPDATE SET hotel_group = excluded.hotel_group, name = exclud
     amenities = excluded.amenities, image_urls = excluded.image_urls,
     currency = excluded.currency, check_in_time = excluded.check_in_time,
     check_out_time = excluded.check_out_time, is_active = excluded.is_active,
+    phone = excluded.phone, whatsapp = excluded.whatsapp, email = excluded.email,
     updated_at = CURRENT_TIMESTAMP
 """
 
 ROOM_UPSERT = """
 INSERT INTO room_types (id, hotel_id, name, max_guests, bed_type, size_sqm, description,
-    amenities, image_urls, breakfast_included, free_cancellation)
+    amenities, image_urls, breakfast_included, free_cancellation, total_rooms, base_price, weekend_price)
 VALUES (:room_code, :hotel_code, :name, :max_guests, :bed_type, :size_sqm, :description,
-    :amenities, :image_urls, :breakfast_included, :free_cancellation)
+    :amenities, :image_urls, :breakfast_included, :free_cancellation, :total_rooms, :base_price, :weekend_price)
 ON CONFLICT (id) DO UPDATE SET hotel_id = excluded.hotel_id, name = excluded.name,
     max_guests = excluded.max_guests, bed_type = excluded.bed_type,
     size_sqm = excluded.size_sqm, description = excluded.description,
     amenities = excluded.amenities, image_urls = excluded.image_urls,
     breakfast_included = excluded.breakfast_included,
-    free_cancellation = excluded.free_cancellation
+    free_cancellation = excluded.free_cancellation, total_rooms = excluded.total_rooms,
+    base_price = excluded.base_price, weekend_price = excluded.weekend_price
 """
 
 RATE_UPSERT = """

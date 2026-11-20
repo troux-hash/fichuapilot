@@ -1,0 +1,48 @@
+{% extends "partners/_layout.html" %}
+{% block ptitle %}Policies and payment{% endblock %}
+{% block page_title %}Policies and payment{% endblock %}
+{% block page_sub %}<p>Step 4 of 5 · Your rules, and how Fichua pays you.</p>{% endblock %}
+{% block partner_content %}
+{% set pct = commission|float %}
+{% set example = 100.0 %}
+<form method="post" action="/partners/policies" class="split">
+  <div style="display:grid;gap:var(--space-5)">
+    {% if errors %}<div class="alert alert-error" role="alert"><ul>{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul></div>{% endif %}
+    <section class="panel panel-pad" style="display:grid;gap:var(--space-4)">
+      <h2>Cancellation policy</h2>
+      <div class="radio-cards">
+        {% for key, item in policies.items() %}
+        <label class="radio-card"><input type="radio" name="cancellation_policy" value="{{ key }}" {% if (hotel.cancellation_policy or 'flexible') == key %}checked{% endif %}>
+          <span><strong>{{ item[0] }}</strong><br><span class="muted small">{{ item[1] }}{% if key != 'strict' %} Guests who cancel in time get a full refund.{% endif %}</span></span></label>
+        {% endfor %}
+      </div>
+    </section>
+    <section class="panel panel-pad">
+      <h2 style="margin-bottom:var(--space-2)">House rules</h2>
+      <div class="toggle-row"><label for="children_allowed">Children welcome</label><input id="children_allowed" type="checkbox" name="children_allowed" value="1" {% if hotel.children_allowed is none or hotel.children_allowed %}checked{% endif %}></div>
+      <div class="toggle-row"><label for="pets_allowed">Pets allowed</label><input id="pets_allowed" type="checkbox" name="pets_allowed" value="1" {% if hotel.pets_allowed %}checked{% endif %}></div>
+      <div class="toggle-row"><label for="smoking_allowed">Smoking in rooms</label><input id="smoking_allowed" type="checkbox" name="smoking_allowed" value="1" {% if hotel.smoking_allowed %}checked{% endif %}></div>
+    </section>
+    <section class="panel panel-pad" style="display:grid;gap:var(--space-4)">
+      <h2>How you get paid</h2>
+      <p style="margin:0">Guests pay Fichua in full when they book, so every Fichua booking is already paid. Fichua sends you the money minus a <strong>{{ '%g'|format(pct) }}% commission</strong>.</p>
+      <div class="table-wrap"><table class="table">
+        <tbody>
+          <tr><td>Example: guest pays</td><td class="num">{{ example|usd }}</td></tr>
+          <tr><td>Fichua commission ({{ '%g'|format(pct) }}%)</td><td class="num">−{{ (example * pct / 100)|usd }}</td></tr>
+          <tr><td><strong>You receive</strong></td><td class="num"><strong>{{ (example - example * pct / 100)|usd }}</strong></td></tr>
+        </tbody>
+      </table></div>
+      <p class="muted small" style="margin:0">Bookings you take yourself (walk-ins, phone, WhatsApp) are commission-free. After approval, Fichua confirms with you the bank or mobile-money account for payouts. Fichua never asks for your bank details by WhatsApp.</p>
+      {% if hotel.plan == 'manager' %}<div class="alert alert-info">Your access code includes the Fichua Hotel Manager (calendar, offline bookings){% if hotel.manager_free_until %} free until {{ hotel.manager_free_until|nice_date('%d %B %Y') }}{% else %} free{% endif %}.</div>{% endif %}
+    </section>
+    <label class="radio-card"><input type="checkbox" name="accept_terms" value="1" {% if hotel.terms_accepted_at %}checked{% endif %}>
+      <span>I agree to the Fichua partner terms and the {{ '%g'|format(pct) }}% commission on bookings made through Fichua.</span></label>
+  </div>
+  <aside class="panel panel-pad" style="position:sticky;top:var(--space-5);display:grid;gap:var(--space-3)">
+    <h2>Save and review</h2>
+    <p class="muted small" style="margin:0">Last step next: check everything and submit it to Fichua.</p>
+    <button class="btn btn-primary btn-block" type="submit">Save and review</button>
+  </aside>
+</form>
+{% endblock %}
