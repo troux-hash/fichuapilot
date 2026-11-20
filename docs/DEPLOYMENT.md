@@ -1,5 +1,19 @@
 # Deploying Fichua (GitHub → Vercel + Supabase)
 
+## Current setup (live)
+
+| | |
+|---|---|
+| Live site | https://fichuapilot.vercel.app |
+| Code | github.com/troux-hash/fichuapilot (branch `main` = production) |
+| Hosting | Vercel project `fichuapilot`, functions in `pdx1` (Oregon) |
+| Database | Supabase Postgres, us-west-2 (Oregon), via the transaction pooler |
+
+**Every push to `main` deploys automatically.** Check a deploy with
+`python scripts/vercel_status.py --wait` (needs `VERCEL_TOKEN` in `.env`).
+
+The steps below are how this was set up — only needed for a fresh environment.
+
 Total cost to start: **$0**. Read the cost notes at the bottom before you take real bookings.
 
 ## 1. Supabase (database) — 5 minutes
