@@ -22,6 +22,31 @@ Markets: Rwanda, Benin, Côte d'Ivoire. Master currency USD (RWF / CFA shown alo
 | Platform | Daily payout job (Vercel Cron), portable Postgres schema with automatic column migrations |
 | Trust | "Built at MIT" section with the MIT, MIT Sandbox and MIT Kuo Sharper Center logos in the guest footer, partner landing page and partner portal ([guide](BRAND_ASSETS.md)) |
 
+## 🧪 QA findings — end-to-end test, 21 Nov 2026
+
+Traveler, hotel operator and admin journeys tested on the local copy (videos in `qa/2026-11-21/`, kept out of git).
+Full list with status tracking: [Fichua QA Backlog](https://claude.ai/artifact/HKnXLZX4Q9WQNiXj2Ct9ab) (34 items).
+
+| ID | Priority | Fix |
+|---|---|---|
+| FIX-01 | **P0** | Public `/api/search` returns private hotel fields (owner ID, commission, owner contacts, review note, plan): return public fields only |
+| FIX-02 | **P0** | Guest terms, privacy policy and readable partner terms, linked at checkout, join, policies step and footer |
+| FIX-03 | **P0** | WhatsApp: send approved EN / FR utility templates instead of free text (needed before connecting WhatsApp) |
+| FIX-04 | P1 | Partner review step wider than a phone (Edit links and prices cut off) |
+| FIX-05 | P1 | Partner room list squeezes details on phones |
+| FIX-06 | P1 | Multi-room walk-in fails when "Guests" is the group total, with a wrong "not enough rooms" message |
+| FIX-07 | P1 | After cancelling, reopening the page shows a raw 405: redirect to the booking page |
+| FIX-08 | P1 | App-wide friendly 404 / 405 / 500 pages (unknown links show raw JSON) |
+| FIX-09 | P1 | Plurals: "1 bookings", "1 room types", "1 guests" |
+| FIX-10 | P1 | Partner calendar on phones: range picking jumps away; booked nights not shown |
+| FIX-11 | P1 | Partner bookings list as cards on phones |
+| FIX-12 | P1 | Sticky "See rooms" bar covers Reserve on the hotel page |
+| FIX-13 | P1 | Admin tables cut off at laptop width |
+| FIX-14 | P1 | Named admin accounts, two-step login, rate limits |
+| FIX-15 | P1 | Big-group searches: explain that no room fits, instead of "nothing available" |
+
+Plus 18 smaller improvements (IMP-01 to IMP-18) and one setup task (SET-01) in the sheet.
+
 ## 🔜 P1 — next
 
 | # | Feature | Needs |

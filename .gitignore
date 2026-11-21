@@ -9,3 +9,6 @@ data/*.db-*
 .DS_Store
 Thumbs.db
 ~$*.xlsx
+
+# QA runs (videos, frames, notes) stay local
+qa/
