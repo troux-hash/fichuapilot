@@ -4,7 +4,7 @@
 {% block page_sub %}<p>Every hotel on Fichua, from partner sign-ups and Excel uploads.</p>{% endblock %}
 {% block app_content %}
 {% set labels = {'draft': 'Onboarding', 'pending': 'Waiting for approval', 'changes': 'Changes requested', 'live': 'Live', 'rejected': 'Rejected'} %}
-<div class="table-wrap"><table class="table">
+<div class="table-wrap"><table class="table table--fit">
   <thead><tr><th>Hotel</th><th>Location</th><th>Group</th><th class="num">Rooms</th><th class="num">Commission</th><th>Plan</th><th>Status</th><th></th></tr></thead>
   <tbody>
   {% for h in hotels %}

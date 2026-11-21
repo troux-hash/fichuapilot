@@ -120,8 +120,25 @@
       if (note) note.textContent = booked ? `Up to ${booked} room${booked > 1 ? "s are" : " is"} already booked on these dates, so you can't sell fewer.` : "No bookings on these dates yet.";
       if (units) units.min = booked;
     };
+    // On phones the form sits under the calendar: stay on the calendar until the range is picked.
+    const stacked = () => window.matchMedia("(max-width: 1179px)").matches;
+    const toForm = () => { if (stacked()) calForm.scrollIntoView({ behavior: "smooth", block: "start" }); };
+    const hint = $("[data-cal-hint]");
+    const say = (first) => {
+      if (!hint) return;
+      hint.textContent = "";
+      if (!first) { hint.textContent = "Range picked. Set the price or rooms below, then save."; return; }
+      hint.append(`${label(a)} picked. Pick the last night to change a range, or `);
+      if (stacked()) {
+        const go = document.createElement("button");
+        go.type = "button"; go.className = "link-button"; go.textContent = "change just this night";
+        go.addEventListener("click", toForm);
+        hint.append(go, ".");
+      } else hint.append("change just this night in the form.");
+    };
     days.forEach((d) => d.addEventListener("click", () => {
-      if (!a || b) { a = d.dataset.date; b = null;
+      const first = !a || b;
+      if (first) { a = d.dataset.date; b = null;
         // Empty boxes keep each night's current value; the hint shows what the first night has now.
         price.value = ""; units.value = "";
         price.placeholder = d.dataset.price ? `Now $${d.dataset.price}: leave empty to keep` : "Keep current";
@@ -130,7 +147,8 @@
         price.dispatchEvent(new Event("input"));
       } else { b = d.dataset.date; }
       paint();
-      if (window.matchMedia("(max-width: 1179px)").matches) calForm.scrollIntoView({ behavior: "smooth", block: "start" });
+      say(first);
+      if (!first) toForm();
     }));
   }
 })();

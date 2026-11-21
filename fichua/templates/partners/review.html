@@ -10,7 +10,7 @@
     {% set rows = [
       ('hotel', 'Hotel details', status.steps.identity, (hotel.name ~ ' · ' ~ (hotel.city or 'city missing') ~ ', ' ~ (hotel.country or '')) if status.steps.identity else 'Add the address, phone numbers and map pin'),
       ('photos', 'Photos', status.steps.photos, status.photos ~ ' hotel photos' ~ ('' if status.steps.photos else ' (at least 3 needed)')),
-      ('rooms', 'Rooms and prices', status.steps.rooms, (status.rooms ~ ' room types · ' ~ status.room_units ~ ' rooms') if status.steps.rooms else 'Add at least one room type with a price'),
+      ('rooms', 'Rooms and prices', status.steps.rooms, (status.rooms ~ (' room type · ' if status.rooms == 1 else ' room types · ') ~ status.room_units ~ (' room' if status.room_units == 1 else ' rooms')) if status.steps.rooms else 'Add at least one room type with a price'),
       ('policies', 'Policies and payment', status.steps.policies, 'Terms accepted' if status.steps.policies else 'Accept the partner terms'),
     ] %}
     {% for key, title, ok, detail in rows %}
@@ -23,9 +23,9 @@
     {% if rooms %}
     <div style="padding:var(--space-4) var(--space-5)">
       <span class="label">Your prices</span>
-      <div class="table-wrap" style="margin-top:var(--space-2)"><table class="table">
+      <div class="table-wrap" style="margin-top:var(--space-2)"><table class="table table--stack">
         <thead><tr><th>Room type</th><th class="num">Rooms</th><th class="num">Guests</th><th class="num">Price a night</th></tr></thead>
-        <tbody>{% for r in rooms %}<tr><td>{{ r.name }}</td><td class="num">{{ r.total_rooms or 0 }}</td><td class="num">{{ r.max_guests }}</td><td class="num">{{ (r.base_price or 0)|usd }}</td></tr>{% endfor %}</tbody>
+        <tbody>{% for r in rooms %}<tr><td data-label="Room type">{{ r.name }}</td><td class="num" data-label="Rooms">{{ r.total_rooms or 0 }}</td><td class="num" data-label="Guests">{{ r.max_guests }}</td><td class="num" data-label="Price a night">{{ (r.base_price or 0)|usd }}</td></tr>{% endfor %}</tbody>
       </table></div>
     </div>
     {% endif %}

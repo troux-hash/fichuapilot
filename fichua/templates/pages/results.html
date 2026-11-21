@@ -114,8 +114,14 @@
           <p class="muted">{{ facets.total }} stay{{ 's' if facets.total != 1 }} available if you loosen them.</p>
           <a class="btn btn-primary" href="/search?{{ qs(base) }}">Clear filters</a>
         {% else %}
+          {% if largest_room and stay.guests > largest_room %}
+          <h2>No room{% if destination %} in {{ destination|title }}{% endif %} sleeps {{ stay.guests }} guests</h2>
+          <p class="muted">The largest rooms here sleep {{ largest_room }}. Search for {{ largest_room }} guests, then book one room for each part of your group.</p>
+          <p><a class="btn btn-primary" href="/search?{{ qs(stay.as_params(), destination=destination, guests=largest_room) }}">Search for {{ largest_room }} guests</a></p>
+          {% else %}
           <h2>Nothing available{% if destination %} in {{ destination|title }}{% endif %} for these dates</h2>
           <p class="muted">Try other dates or one of these destinations.</p>
+          {% endif %}
           <div class="chips" style="justify-content:center">
             {% for d in destinations[:6] %}<a class="chip" href="/search?{{ qs(stay.as_params(), destination=d.city) }}">{{ d.city }}</a>{% endfor %}
           </div>

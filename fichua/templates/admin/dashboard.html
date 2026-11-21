@@ -7,7 +7,7 @@
 {% if stats.pending %}<div class="alert alert-warning row-between"><span><strong>{{ stats.pending }} hotel{{ 's' if stats.pending != 1 }} waiting for approval.</strong> They can't take bookings until you approve them.</span><a class="btn btn-primary btn-sm" href="/admin/approvals">Review</a></div>{% endif %}
 {% if payments_mode == 'test' %}<div class="alert alert-info">Payments run on Fichua's <strong>test checkout</strong> (no real money). Add <code>STRIPE_SECRET_KEY</code> to switch to Stripe test mode.</div>{% endif %}
 <div class="stats">
-  <div class="stat stat--accent"><span>Paid by guests this month</span><strong>{{ stats.month.gross|usd }}</strong><small>{{ stats.month.bookings }} bookings · {{ stats.month.nights }} nights</small></div>
+  <div class="stat stat--accent"><span>Paid by guests this month</span><strong>{{ stats.month.gross|usd }}</strong><small>{{ stats.month.bookings }} booking{{ '' if stats.month.bookings == 1 else 's' }} · {{ stats.month.nights }} night{{ '' if stats.month.nights == 1 else 's' }}</small></div>
   <div class="stat"><span>Your commission</span><strong>{{ stats.month.commission|usd }}</strong><small>this month</small></div>
   <div class="stat"><span>Paid out to hotels</span><strong>{{ stats.month.payout_sent|usd }}</strong><small>{{ stats.month.payout_pending|usd }} still to send</small></div>
   <div class="stat"><span>Live hotels</span><strong>{{ stats.live_hotels }}</strong><small>{{ stats.rooms }} rooms</small></div>

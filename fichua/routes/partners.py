@@ -412,21 +412,36 @@ def offline_save(request: Request, room: str = Form(""), check_in: str = Form(""
             return _login_redirect()
         errors = []
         stay = dates.parse_stay(check_in, check_out, guests)
-        if not conn.scalar("SELECT COUNT(*) FROM room_types WHERE id = :r AND hotel_id = :h", {"r": room, "h": hotel["id"]}):
+        room_type = conn.one("SELECT name, max_guests FROM room_types WHERE id = :r AND hotel_id = :h",
+                             {"r": room, "h": hotel["id"]})
+        if not room_type:
             errors.append("Choose a room type.")
         if len(guest_name.strip()) < 2:
             errors.append("Enter the guest's name.")
         count = max(1, min(20, int(rooms_count or 1))) if str(rooms_count).isdigit() else 1
+        # "Guests" is the whole group: share it over the rooms, then check each room fits its share.
+        per_room = -(-stay.guests // count)
+        room_stay = dates.parse_stay(check_in, check_out, per_room)
+        if room_type and per_room > (room_type["max_guests"] or 1):
+            fits = room_type["max_guests"] or 1
+            errors.append(f"A {room_type['name']} sleeps {fits}, so {stay.guests} guests need at least "
+                          f"{-(-stay.guests // fits)} rooms.")
+        if not errors:
+            live = catalog.availability(conn, room_stay, room_type_id=room, include_inactive=True)
+            left = live[0]["rooms_left"] if live else 0
+            if left < count:
+                errors.append(f"Only {left} room{'' if left == 1 else 's'} left for those dates." if left
+                              else "No rooms left for those dates (sold out or closed).")
         if not errors:
             try:
                 agreed = float(amount.replace(",", "")) if amount.strip() else None
                 for _ in range(count):
-                    bookings.create_booking(conn, stay, room, guest_name=guest_name, guest_phone=guest_phone,
+                    bookings.create_booking(conn, room_stay, room, guest_name=guest_name, guest_phone=guest_phone,
                                             source="offline", offline_source=source if source in bookings.OFFLINE_SOURCES
                                             else "Other website", agreed_amount=(agreed / count) if agreed else None)
             except bookings.BookingError:
                 conn.raw.rollback()
-                errors.append(f"Not enough rooms left for those dates to block {count}.")
+                errors.append("Those rooms were just booked by someone else. Check the calendar and try again.")
             except ValueError:
                 errors.append("Enter the amount as a number.")
         if errors:

@@ -58,7 +58,7 @@
 @media (min-width: 720px) { .panel-pad { padding: var(--space-6); } }
 .panel h2 { font-size: var(--text-lg); font-family: var(--font-body); font-weight: 800; letter-spacing: -0.01em; }
 .panel-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; margin-bottom: var(--space-4); }
-.split { display: grid; gap: var(--space-5); }
+.split { display: grid; gap: var(--space-5); grid-template-columns: minmax(0, 1fr); } /* minmax: wide tables scroll inside, never widen the page */
 @media (min-width: 1180px) { .split { grid-template-columns: minmax(0, 1fr) 340px; align-items: start; } }
 
 /* Stat tiles */
@@ -69,6 +69,12 @@
 .stat small { color: var(--color-muted); }
 .stat--accent { background: var(--sidebar-bg); border-color: var(--sidebar-bg); color: #FFFFFF; }
 .stat--accent span, .stat--accent small { color: var(--sidebar-muted); }
+@media (max-width: 719px) { /* phones: the summary tiles share one row instead of filling a screen */
+  .stats { grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: var(--space-2); }
+  .stat { padding: var(--space-3); }
+  .stat span { font-size: 10px; letter-spacing: 0.04em; }
+  .stat strong { font-size: var(--text-lg); }
+}
 
 /* Forms (pro) */
 .form-grid-2 { display: grid; gap: var(--space-4); }
@@ -123,6 +129,21 @@
 .table .num { text-align: right; font-variant-numeric: tabular-nums; }
 .table td.wrap { white-space: normal; min-width: 260px; }
 .table a { font-weight: 700; }
+/* Admin tables: long text wraps so status and actions stay on screen at laptop width. */
+.table--fit th, .table--fit td { white-space: normal; padding: var(--space-3); }
+.table--fit .pill, .table--fit .btn, .table--fit .mono { white-space: nowrap; }
+/* Phones: each row of a .table--stack becomes a card; every cell names its column in data-label. */
+@media (max-width: 719px) {
+  .table-wrap:has(> .table--stack) { overflow: visible; }
+  .table--stack thead { display: none; }
+  .table--stack, .table--stack tbody { display: block; }
+  .table--stack tr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3) var(--space-4); padding: var(--space-4); border-bottom: 1px solid var(--color-border); }
+  .table--stack tr:last-child { border-bottom: 0; }
+  .table--stack td { display: block; padding: 0; border: 0; white-space: normal; text-align: left; }
+  .table--stack td.num { text-align: left; }
+  .table--stack td[data-label]::before { content: attr(data-label); display: block; margin-bottom: 2px; font-size: 10px; font-weight: var(--weight-heavy); letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-muted); }
+  .table--stack td:empty { display: none; }
+}
 
 /* Filters bar (finance) */
 .filterbar { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: flex-end; }
@@ -148,6 +169,12 @@
 .room-row { display: grid; grid-template-columns: 96px minmax(0, 1fr) auto; gap: var(--space-4); align-items: center; padding: var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); }
 .room-row img { width: 96px; height: 72px; object-fit: cover; border-radius: var(--radius-sm); background: var(--color-surface-2); }
 .room-row h3 { font-size: var(--text-md); }
+.room-row__actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--space-2); }
+@media (max-width: 560px) { /* phones: buttons go under the room details */
+  .room-row { grid-template-columns: 72px minmax(0, 1fr); }
+  .room-row img { width: 72px; height: 56px; }
+  .room-row__actions { grid-column: 1 / -1; justify-content: flex-start; }
+}
 
 /* Calendar */
 .cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; user-select: none; }
@@ -155,8 +182,12 @@
 .cal__day {
   display: flex; flex-direction: column; justify-content: space-between; gap: 4px; min-width: 0; height: 84px; padding: 8px;
   border: 0; border-radius: 12px; background: var(--color-surface); box-shadow: inset 0 0 0 1px var(--color-border);
-  font: inherit; color: var(--color-ink); text-align: left; cursor: pointer;
+  font: inherit; color: var(--color-ink); text-align: left; cursor: pointer; position: relative;
 }
+/* A night with bookings gets a tab on its top edge (phones hide the "x/4 left" text). */
+.cal__day.is-booked::after { content: ""; position: absolute; top: 0; left: 10px; right: 10px; height: 3px; border-radius: 0 0 var(--radius-sm) var(--radius-sm); background: var(--color-primary); }
+.legend i.legend__booked { width: 14px; height: 3px; border-radius: var(--radius-pill); background: var(--color-primary); box-shadow: none; vertical-align: 3px; }
+.link-button { padding: 0; border: 0; background: none; font: inherit; color: var(--color-primary); text-decoration: underline; cursor: pointer; }
 .cal__day:hover { box-shadow: inset 0 0 0 1px var(--color-ink-soft); }
 .cal__day.is-out { opacity: 0.45; }
 .cal__day.is-past { opacity: 0.4; cursor: not-allowed; }

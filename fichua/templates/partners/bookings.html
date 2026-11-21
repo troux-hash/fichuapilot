@@ -18,18 +18,18 @@
   <div class="stat stat--accent"><span>Your payouts from Fichua</span><strong>{{ fichua|sum(attribute='payout_amount')|usd }}</strong><small>after commission</small></div>
 </div>
 {% if rows %}
-<div class="table-wrap"><table class="table">
+<div class="table-wrap"><table class="table table--stack">
   <thead><tr><th>Booking</th><th>Guest</th><th>Room</th><th>Dates</th><th class="num">Guest paid</th><th class="num">Your payout</th><th>Status</th><th></th></tr></thead>
   <tbody>
   {% for b in rows %}
   <tr>
-    <td>{% if b.source == 'offline' %}<span class="pill pill--offline">{{ b.offline_source or 'Offline' }}</span>{% else %}<span class="mono">{{ b.reference }}</span>{% endif %}</td>
-    <td>{{ b.guest_name }}{% if b.guest_phone %}<br><span class="muted small">{{ b.guest_phone }}</span>{% endif %}</td>
-    <td>{{ b.room_name }}<br><span class="muted small">{{ b.guests }} guest{{ 's' if b.guests != 1 }}</span></td>
-    <td>{{ b.check_in|nice_date }} – {{ b.check_out|nice_date }}<br><span class="muted small">{{ b.nights }} night{{ 's' if b.nights != 1 }}</span></td>
-    <td class="num">{% if b.source == 'offline' %}<span class="muted">{{ b.total_price|usd if b.total_price else '—' }}</span>{% else %}{{ b.total_price|usd }}{% endif %}</td>
-    <td class="num">{% if b.source == 'offline' %}<span class="muted">paid to you</span>{% else %}<strong>{{ (b.payout_amount or 0)|usd }}</strong><br><span class="muted small">{{ {'sent': 'Sent', 'scheduled': 'Scheduled', 'due': 'Being sent', 'cancelled': 'Cancelled', 'recover': 'Refunded'}.get(b.payout_status, '') }}</span>{% endif %}</td>
-    <td><span class="pill pill--{{ b.status }}">{{ 'Confirmed' if b.status == 'confirmed' else 'Cancelled' }}</span></td>
+    <td data-label="Booking">{% if b.source == 'offline' %}<span class="pill pill--offline">{{ b.offline_source or 'Offline' }}</span>{% else %}<span class="mono">{{ b.reference }}</span>{% endif %}</td>
+    <td data-label="Guest">{{ b.guest_name }}{% if b.guest_phone %}<br><span class="muted small">{{ b.guest_phone }}</span>{% endif %}</td>
+    <td data-label="Room">{{ b.room_name }}<br><span class="muted small">{{ b.guests }} guest{{ 's' if b.guests != 1 }}</span></td>
+    <td data-label="Dates">{{ b.check_in|nice_date }} – {{ b.check_out|nice_date }}<br><span class="muted small">{{ b.nights }} night{{ 's' if b.nights != 1 }}</span></td>
+    <td class="num" data-label="Guest paid">{% if b.source == 'offline' %}<span class="muted">{{ b.total_price|usd if b.total_price else '—' }}</span>{% else %}{{ b.total_price|usd }}{% endif %}</td>
+    <td class="num" data-label="Your payout">{% if b.source == 'offline' %}<span class="muted">paid to you</span>{% else %}<strong>{{ (b.payout_amount or 0)|usd }}</strong><br><span class="muted small">{{ {'sent': 'Sent', 'scheduled': 'Scheduled', 'due': 'Being sent', 'cancelled': 'Cancelled', 'recover': 'Refunded'}.get(b.payout_status, '') }}</span>{% endif %}</td>
+    <td data-label="Status"><span class="pill pill--{{ b.status }}">{{ 'Confirmed' if b.status == 'confirmed' else 'Cancelled' }}</span></td>
     <td>{% if b.source == 'offline' and b.status == 'confirmed' %}<form method="post" action="/partners/bookings/{{ b.id }}/cancel" data-confirm="Cancel this booking and put the room back on sale?"><button class="btn btn-ghost btn-sm" type="submit">Cancel</button></form>{% endif %}</td>
   </tr>
   {% endfor %}

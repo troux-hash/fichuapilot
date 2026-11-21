@@ -42,10 +42,12 @@ def results(request: Request):
     with db.connect() as conn:
         data = search(conn, stay, destination or None, filters)
         destinations = catalog.destinations(conn)
+        # With no results, say so when the real reason is the group size, not the dates.
+        largest = catalog.largest_room(conn, destination or None) if not data["results"] else 0
     base = {"destination": destination, **stay.as_params()}
     return render(request, "pages/results.html", destination=destination, stay=stay,
                   filters=filters, sorts=SORTS, base=base, presets=dates.presets(),
-                  destinations=destinations, **data)
+                  destinations=destinations, largest_room=largest, **data)
 
 
 @router.get("/hotels/{hotel_id}")
@@ -151,7 +153,8 @@ def test_checkout_pay(request: Request, reference: str, t: str = Form("")):
 
 
 @router.get("/bookings/{reference}")
-def booking_detail(request: Request, reference: str, t: str = "", new: int = 0, session_id: str = ""):
+def booking_detail(request: Request, reference: str, t: str = "", new: int = 0, session_id: str = "",
+                   cancelled: int = 0):
     confirmed_now = False
     with db.connect() as conn:
         b = bookings.get_booking(conn, reference, t)
@@ -170,25 +173,35 @@ def booking_detail(request: Request, reference: str, t: str = "", new: int = 0, 
     if not b:
         return render(request, "pages/not_found.html", status_code=404)
     pay_url = f"/pay/{b['reference']}?t={t}" if payments.provider() == "test" else None
+    message = None
+    if cancelled and b["status"] == "cancelled":
+        message = ("Your booking is cancelled and your payment is being refunded. Refunds reach your card in "
+                   "5 to 10 working days." if b["payment_status"] == "refunded" else "Your booking is cancelled.")
     return render(request, "pages/booking.html", booking=b, token=t, is_new=bool(new) or confirmed_now,
-                  pay_url=pay_url, whatsapp_ready=notify.whatsapp_ready())
+                  pay_url=pay_url, whatsapp_ready=notify.whatsapp_ready(), message=message)
 
 
 @router.post("/bookings/{reference}/cancel")
 def booking_cancel(request: Request, reference: str, t: str = Form("")):
+    error = None
     with db.connect() as conn:
         try:
             b = bookings.cancel_booking(conn, reference, t)
-            message = ("Your booking is cancelled and your payment is being refunded."
-                       if b["payment_status"] == "refunded" else "Your booking is cancelled.")
         except (bookings.BookingError, payments.PaymentError) as exc:
             conn.raw.rollback()
             b = bookings.get_booking(conn, reference, t)
-            message = str(exc)
+            error = str(exc)
     _flush_messages()
     if not b:
         return render(request, "pages/not_found.html", status_code=404)
-    return render(request, "pages/booking.html", booking=b, token=t, is_new=False, message=message, pay_url=None)
+    if error is None:  # back to the booking's own page, so a reload or a shared link still works
+        return RedirectResponse(f"/bookings/{b['reference']}?t={t}&cancelled=1", status_code=303)
+    return render(request, "pages/booking.html", booking=b, token=t, is_new=False, message=error, pay_url=None)
+
+
+@router.get("/favicon.ico")
+def favicon():
+    return RedirectResponse("/static/img/favicon.svg", status_code=301)
 
 
 @router.get("/manage")

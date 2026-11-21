@@ -129,4 +129,10 @@
     ["dragenter", "dragover"].forEach((ev) => z.addEventListener(ev, () => z.classList.add("is-drag")));
     ["dragleave", "drop"].forEach((ev) => z.addEventListener(ev, () => z.classList.remove("is-drag")));
   });
+
+  // Hotel page: hide the "See rooms" bar while the rooms are on screen, so it never covers Reserve.
+  const cta = $(".sticky-cta"), roomList = document.getElementById("rooms");
+  if (cta && roomList && "IntersectionObserver" in window) {
+    new IntersectionObserver(([entry]) => cta.classList.toggle("is-hidden", entry.isIntersecting)).observe(roomList);
+  }
 })();

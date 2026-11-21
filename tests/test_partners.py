@@ -193,3 +193,19 @@ def test_admin_pages_render(admin):
                  "/admin/finance?period=custom&from=2026-01-01&to=2027-12-31&source=all", "/admin/messages",
                  "/admin/messages?role=hotel", "/admin/codes", "/admin/settings"):
         assert admin.get(path).status_code == 200, path
+
+
+def test_walk_in_guests_are_the_group_total():
+    """FIX-06: 'Guests' is the whole group, shared over the rooms."""
+    p = state["partner"]
+    day = CI + timedelta(days=11)
+    stay = {"room": state["room_id"], "check_in": day.isoformat(), "check_out": (day + timedelta(days=1)).isoformat(),
+            "guest_name": "Group", "source": "Phone", "rooms_count": "2"}
+    too_big = p.post("/partners/bookings/new", data={**stay, "guests": "5"})
+    assert too_big.status_code == 422 and "sleeps 2, so 5 guests need at least 3 rooms" in too_big.text
+    r = p.post("/partners/bookings/new", data={**stay, "guests": "4"}, follow_redirects=False)
+    assert r.status_code == 303
+    with db.connect() as conn:
+        rows = conn.all("SELECT guests FROM bookings WHERE hotel_id = :h AND check_in = :d AND guest_name = 'Group'",
+                        {"h": state["hotel_id"], "d": day.isoformat()})
+    assert sorted(int(x["guests"]) for x in rows) == [2, 2]

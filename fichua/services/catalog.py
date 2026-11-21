@@ -151,6 +151,17 @@ def availability(conn: Connection, stay: Stay, *, destination: str | None = None
     return out
 
 
+def largest_room(conn: Connection, destination: str | None = None) -> int:
+    """How many guests the biggest live room sleeps, in a destination or anywhere (0 if none)."""
+    params: dict = {}
+    where = ["h.is_active = TRUE"]
+    if destination:
+        where.append("(LOWER(h.city) LIKE :q OR LOWER(h.country) LIKE :q OR LOWER(h.name) LIKE :q)")
+        params["q"] = f"%{destination.strip().lower()}%"
+    return int(conn.scalar("SELECT MAX(rt.max_guests) FROM room_types rt JOIN hotels h ON h.id = rt.hotel_id "
+                           "WHERE " + " AND ".join(where), params) or 0)
+
+
 def hotels_by_ids(conn: Connection, ids: list[str]) -> dict[str, dict]:
     if not ids:
         return {}

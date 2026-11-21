@@ -20,7 +20,7 @@
       <div class="field"><label for="check_out">Check-out</label><input id="check_out" name="check_out" type="date" value="{{ form.get('check_out', '') }}" required data-check-out></div>
       <div class="field"><label for="guest_name">Guest name</label><input id="guest_name" name="guest_name" value="{{ form.get('guest_name', '') }}" required></div>
       <div class="field"><label for="guest_phone">Guest phone <span class="muted" style="font-weight:400">(optional)</span></label><input id="guest_phone" name="guest_phone" type="tel" value="{{ form.get('guest_phone', '') }}"></div>
-      <div class="field"><label for="guests">Guests</label><input id="guests" name="guests" type="number" min="1" max="12" value="{{ form.get('guests', 2) }}"></div>
+      <div class="field"><label for="guests">Guests in total</label><input id="guests" name="guests" type="number" min="1" max="12" value="{{ form.get('guests', 2) }}"></div>
       <div class="field"><label for="amount">Amount agreed <span class="muted" style="font-weight:400">(optional)</span></label>
         <div class="money-input"><input id="amount" name="amount" inputmode="decimal" value="{{ form.get('amount', '') }}"><span>USD</span></div>
         <span class="hint">For your records. No commission on bookings you take yourself.</span></div>

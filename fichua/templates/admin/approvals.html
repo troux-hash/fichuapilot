@@ -5,13 +5,13 @@
 {% block app_content %}
 {% set labels = {'pending': 'Waiting for approval', 'changes': 'Changes requested', 'draft': 'Still onboarding'} %}
 {% if hotels %}
-<div class="table-wrap"><table class="table">
+<div class="table-wrap"><table class="table table--fit">
   <thead><tr><th>Hotel</th><th>Location</th><th>Owner</th><th>Submitted</th><th>Status</th><th></th></tr></thead>
   <tbody>
   {% for h in hotels %}
   <tr>
     <td><strong>{{ h.name }}</strong><br><span class="muted small mono">{{ h.id }}</span></td>
-    <td>{{ h.city or '—' }}{% if h.country %}, {{ h.country }}{% endif %}</td>
+    <td>{{ [h.city, h.country]|select|join(', ') or '—' }}</td>
     <td>{{ h.owner_name or '—' }}<br><span class="muted small">{{ h.owner_email or '' }}</span></td>
     <td>{{ h.submitted_at|nice_date('%d %b %Y, %H:%M') if h.submitted_at else '—' }}</td>
     <td><span class="pill pill--{{ h.status }}">{{ labels.get(h.status, h.status) }}</span></td>

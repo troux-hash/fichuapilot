@@ -16,7 +16,7 @@
       <p class="muted small" style="margin:2px 0 0">{{ r.total_rooms or 0 }} room{{ 's' if (r.total_rooms or 0) != 1 }} · up to {{ r.max_guests }} guest{{ 's' if r.max_guests != 1 }}{% if r.bed_type %} · {{ r.bed_type }}{% endif %} · {{ r.photo_count }} photo{{ 's' if r.photo_count != 1 }}</p>
       <p class="small" style="margin:4px 0 0"><strong>{{ (r.base_price or 0)|usd }}</strong> a night{% if r.weekend_price %} · {{ r.weekend_price|usd }} Fri and Sat{% endif %} {% set loc = (r.base_price or 0)|local(hotel.country) %}{% if loc %}<span class="muted">({{ loc }})</span>{% endif %}</p>
     </div>
-    <div class="row" style="flex-wrap:wrap;justify-content:flex-end">
+    <div class="room-row__actions">
       <a class="btn btn-secondary btn-sm" href="/partners/rooms/{{ r.id }}">Edit</a>
       <form method="post" action="/partners/rooms/{{ r.id }}/delete" data-confirm="Delete {{ r.name }}?"><button class="btn btn-ghost btn-sm" type="submit">Delete</button></form>
     </div>

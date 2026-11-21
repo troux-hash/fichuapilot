@@ -122,8 +122,10 @@ def test_cancel_refunds_and_reverses_payout():
     page = guest.get(location)
     if "Cancel and refund" not in page.text:
         pytest.skip("cheapest Cotonou room is non-refundable in this seed")
-    r = guest.post(f"/bookings/{ref}/cancel", data={"t": token})
-    assert "refunded" in r.text
+    r = guest.post(f"/bookings/{ref}/cancel", data={"t": token}, follow_redirects=False)
+    assert r.status_code == 303 and r.headers["location"].endswith("&cancelled=1")  # reload-safe (FIX-07)
+    page = guest.get(r.headers["location"])
+    assert "refunded" in page.text and "5 to 10 working days" in page.text
     with db.connect() as conn:
         b = conn.one("SELECT * FROM bookings WHERE reference = :r", {"r": ref})
         payout = conn.one("SELECT status FROM payouts WHERE booking_id = :b", {"b": b["id"]})
@@ -175,3 +177,18 @@ def test_local_currency_text():
     assert currency.local_text(100, "Rwanda", rates) == "≈ 145,000 RWF"
     assert currency.local_text(100, "Benin", rates) == "≈ 56 500 FCFA"
     assert currency.local_text(100, "Portugal", rates) == ""
+
+
+def test_friendly_error_pages():
+    page = guest.get("/this-page-does-not-exist")
+    assert page.status_code == 404 and "We couldn't find that page" in page.text  # FIX-08
+    api = guest.get("/api/nope")
+    assert api.status_code == 404 and api.json() == {"detail": "Not Found"}
+    wrong_method = guest.get("/bookings/FCH-XXXXXX/cancel")
+    assert wrong_method.status_code == 405 and "only works from a button" in wrong_method.text
+    assert guest.get("/favicon.ico", follow_redirects=False).status_code == 301
+
+
+def test_big_group_search_explains_room_size():
+    page = guest.get("/search", params={"destination": "Kigali", **STAY, "guests": 12})
+    assert "sleeps 12 guests" in page.text and "Search for" in page.text  # FIX-15

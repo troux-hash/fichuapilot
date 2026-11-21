@@ -30,13 +30,14 @@
         <span><i style="background:var(--color-warning-soft)"></i>1 left</span>
         <span><i style="background:var(--color-danger-soft)"></i>Sold out</span>
         <span><i style="background:repeating-linear-gradient(135deg,#EEF1F8 0 4px,#E6E9F2 4px 8px)"></i>Closed</span>
+        <span><i class="legend__booked"></i>Has bookings</span>
         <span><i style="background:var(--color-accent);border-radius:50%;width:8px;height:8px;box-shadow:none"></i>Changed by you</span>
       </div>
     </div>
     <div class="cal" aria-hidden="true">{% for d in ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'] %}<span class="cal__head">{{ d }}</span>{% endfor %}</div>
     <div class="cal" data-calendar>
       {% for d in days %}
-      <button type="button" class="cal__day is-{{ d.state }}{% if not d.in_month %} is-out{% endif %}{% if d.past %} is-past{% endif %}"
+      <button type="button" class="cal__day is-{{ d.state }}{% if not d.in_month %} is-out{% endif %}{% if d.past %} is-past{% endif %}{% if d.booked and d.state != 'sold' %} is-booked{% endif %}"
               data-date="{{ d.date }}" data-price="{{ '%g'|format(d.price) if d.price is not none else '' }}" data-units="{{ d.units if d.units is not none else '' }}"
               data-booked="{{ d.booked }}" data-closed="{{ '1' if d.state == 'closed' else '' }}" {% if d.past %}disabled{% endif %}
               aria-label="{{ d.date }}: {% if d.state == 'closed' %}closed{% else %}{{ d.price|usd if d.price is not none else 'no price' }}, {{ d.left }} of {{ d.units or 0 }} left{% endif %}">
@@ -46,7 +47,7 @@
       </button>
       {% endfor %}
     </div>
-    <p class="muted small" style="margin:0">Click a day to change it. Click a second day to change every night in between.</p>
+    <p class="muted small" style="margin:0" data-cal-hint aria-live="polite">Pick a day to change it, then pick a second day to change every night in between.</p>
   </section>
   <form class="panel panel-pad" method="post" action="/partners/calendar" style="display:grid;gap:var(--space-4);position:sticky;top:var(--space-5)" data-cal-form>
     <input type="hidden" name="room" value="{{ room.id }}">

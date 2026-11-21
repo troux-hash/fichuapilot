@@ -12,7 +12,7 @@
 <div class="split">
   <section style="display:grid;gap:var(--space-3)">
     {% if codes %}
-    <div class="table-wrap"><table class="table">
+    <div class="table-wrap"><table class="table table--fit">
       <thead><tr><th>Code</th><th>Gives</th><th class="num">Used</th><th>Expires</th><th>Note</th><th></th></tr></thead>
       <tbody>{% for c in codes %}
         <tr>
@@ -20,7 +20,7 @@
           <td>{{ 'Listing + Hotel Manager' if c.plan == 'manager' else 'Listing only' }}{% if c.free_until %}<br><span class="muted small">free until {{ c.free_until|nice_date('%d %b %Y') }}</span>{% endif %}</td>
           <td class="num">{{ c.uses }} / {{ c.max_uses }}</td>
           <td>{{ c.expires_on|nice_date('%d %b %Y') if c.expires_on else 'Never' }}</td>
-          <td class="wrap" style="min-width:140px">{{ c.note or '' }}</td>
+          <td class="wrap" style="min-width:96px">{{ c.note or '' }}</td>
           <td><form method="post" action="/admin/codes/{{ c.code }}/toggle"><button class="btn btn-ghost btn-sm" type="submit">{{ 'Disable' if c.is_active else 'Enable' }}</button></form>{% if not c.is_active %}<span class="pill pill--muted">Disabled</span>{% endif %}</td>
         </tr>
       {% endfor %}</tbody>
