@@ -3,14 +3,22 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>{% block title %}{{ app_name }} — find your stay in seconds{% endblock %}</title>
-  <meta name="description" content="Search and book hotels in Rwanda, Benin and Côte d'Ivoire in seconds. Total prices up front, secure payment, instant confirmation.">
-  <meta name="theme-color" content="{% block theme_color %}#06071A{% endblock %}">
+  <title>{% block title %}{{ app_name }} — know who's behind the door{% endblock %}</title>
+  {# Link previews (WhatsApp, social) and search snippets. Hotel pages add a canonical address and schema.org data. #}
+  {% block meta %}
+  <meta name="description" content="Owner-run hotels and lodges in Rwanda, Benin and Côte d'Ivoire, each reviewed by our team. One honest price, and cancellation dates shown before you pay.">
+  <meta property="og:site_name" content="{{ app_name }}">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="{{ app_name }}: know who's behind the door">
+  <meta property="og:description" content="Owner-run hotels and lodges in Rwanda, Benin and Côte d'Ivoire, each reviewed by our team.">
+  {% endblock %}
+  <meta name="theme-color" content="{% block theme_color %}#FFFFFF{% endblock %}">
   <script>document.documentElement.classList.add("js")</script>
   <link rel="icon" href="/static/img/favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700&display=swap">
+  {# Two families: Newsreader (serif) for names, headings and stories; Manrope for interface and prices. #}
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400..600&display=swap">
   <link rel="stylesheet" href="{{ asset('/static/css/tokens.css') }}">
   <link rel="stylesheet" href="{{ asset('/static/css/base.css') }}">
   <link rel="stylesheet" href="{{ asset('/static/css/components.css') }}">

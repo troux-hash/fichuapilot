@@ -22,7 +22,7 @@
   {% elif is_new and booking.status == 'confirmed' %}
   <div class="confirm-hero">
     <div class="confirm-check" aria-hidden="true"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></div>
-    <h1>You're going to {{ booking.city }}!</h1>
+    <h1>You're booked. {{ booking.hotel_name }} is expecting you on {{ booking.check_in|nice_date('%a %d %b') }}.</h1>
     <p class="muted">Paid and confirmed.{% if whatsapp_ready %} We've sent the details to your WhatsApp.{% endif %} Bookmark this page: it's your booking.</p>
   </div>
   {% else %}

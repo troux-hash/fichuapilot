@@ -53,7 +53,7 @@
     <section class="panel panel-pad" style="display:grid;gap:var(--space-4)">
       <h2>Contact and times</h2>
       <div class="form-grid-2">
-        <div class="field"><label for="phone">Reception phone</label><input id="phone" name="phone" type="tel" value="{{ hotel.phone or '' }}" placeholder="+250 788 000 000" required></div>
+        <div class="field"><label for="phone">Reception phone</label><input id="phone" name="phone" type="tel" value="{{ hotel.phone or '' }}" placeholder="+250 788 000 000" required><span class="hint">Guests can call or WhatsApp this number, before and after they book.</span></div>
         <div class="field"><label for="whatsapp">WhatsApp for booking alerts</label><input id="whatsapp" name="whatsapp" type="tel" value="{{ hotel.whatsapp or '' }}" placeholder="+250 788 000 000" required><span class="hint">New bookings and payments arrive here.</span></div>
         <div class="field"><label for="check_in_time">Check-in from</label><input id="check_in_time" name="check_in_time" type="time" value="{{ hotel.check_in_time or '14:00' }}"></div>
         <div class="field"><label for="check_out_time">Check-out until</label><input id="check_out_time" name="check_out_time" type="time" value="{{ hotel.check_out_time or '11:00' }}"></div>

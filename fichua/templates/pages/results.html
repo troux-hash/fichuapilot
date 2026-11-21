@@ -40,20 +40,10 @@
       </div>
 
       <div class="filter-group">
-        <h3>Guest rating</h3>
-        <div class="chips">
-          {% for val, label in [('', 'Any'), ('7', '7+'), ('8', '8+'), ('9', '9+')] %}
-          <label class="chip"><input type="radio" name="rating_min" value="{{ val }}"
-            {% if (filters.rating_min is none and val == '') or (filters.rating_min is not none and val and filters.rating_min == val|float) %}checked{% endif %}>{{ label }}</label>
-          {% endfor %}
-        </div>
-      </div>
-
-      <div class="filter-group">
         <h3>Stars</h3>
         <div class="chips">
           {% for s in [5, 4, 3, 2] %}
-          <label class="chip"><input type="checkbox" name="stars" value="{{ s }}" {% if s in filters.stars %}checked{% endif %}>{{ s }} ★</label>
+          <label class="chip"><input type="checkbox" name="stars" value="{{ s }}" {% if s in filters.stars %}checked{% endif %}>{{ s }}-star</label>
           {% endfor %}
         </div>
       </div>
@@ -90,6 +80,7 @@
       <div>
         <h1 class="results-title">{{ results|length }} stay{{ 's' if results|length != 1 }}{% if destination %} in {{ destination|title }}{% endif %}</h1>
         <p class="muted small" style="margin:4px 0 0">{{ ui.stay_summary(stay) }}</p>
+        <p class="muted small" style="margin:2px 0 0">Total prices for your stay. Places can't pay to rank higher.</p>
       </div>
       <div class="row">
         <button type="button" class="btn btn-secondary btn-sm filters-toggle" data-open-filters>

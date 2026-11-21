@@ -1,20 +1,32 @@
 {% extends "base.html" %}
 {% import "components/ui.html" as ui %}
+{% import "components/icons.html" as i %}
 
 {% block title %}{{ hotel.name }}, {{ hotel.city }} · {{ app_name }}{% endblock %}
+{% block meta %}
+<meta name="description" content="{{ summary }}">
+<link rel="canonical" href="{{ canonical }}">
+<meta property="og:site_name" content="{{ app_name }}">
+<meta property="og:type" content="website">
+<meta property="og:url" content="{{ canonical }}">
+<meta property="og:title" content="{{ hotel.name }}, {{ hotel.city }} · on Fichua">
+<meta property="og:description" content="{{ summary }}">
+{% if share_image %}<meta property="og:image" content="{{ share_image }}">
+<meta name="twitter:card" content="summary_large_image">{% endif %}
+<script type="application/ld+json">{{ structured|tojson }}</script>
+{% endblock %}
 {% block body_class %}has-sticky-cta{% endblock %}
 
 {% block content %}
 {% set available = rooms|selectattr('available')|list %}
-{% set cheapest = available[0] if available else none %}
 <div class="container">
   <a class="back-link" href="/search?{{ back_qs }}">← All stays</a>
   {% if date_note %}<div class="alert alert-info date-note" role="status">{{ date_note }}</div>{% endif %}
   <header class="hotel-head">
+    <p class="hotel-head__eyebrow">{{ hotel.property_type or 'Hotel' }} in {{ hotel.city }}, {{ hotel.country }}</p>
     <h1>{{ hotel.name }}</h1>
     <div class="meta">
       {{ ui.stars(hotel.star_rating) }}
-      {{ ui.rating_line(hotel) }}
       <a class="hotel-head__where" href="#location">{{ hotel.full_address or hotel.city }}</a>
     </div>
   </header>
@@ -23,12 +35,30 @@
     {% for img in hotel.images[:5] %}<img src="{{ img if loop.first else img|card_img }}" alt="{{ hotel.name }} photo {{ loop.index }}" {% if not loop.first %}loading="lazy"{% endif %}>{% endfor %}
   </div>
 
+  <p class="reviewed">
+    {{ i.icon('shield', 18) }}
+    <span><strong>Reviewed by the Fichua team{% if hotel.approved_at %} on {{ hotel.approved_at|nice_date('%d %b %Y') }}{% endif %}.</strong>
+    Address, contact number, photos and prices were checked before it went live. <a href="/#checks">What we check</a></span>
+  </p>
+
   <div class="hotel-layout">
     <div class="hotel-main">
+      <section class="hotel-story">
+        <h2>About this place</h2>
+        <p class="lede">{{ hotel.description or 'A place to stay in ' ~ hotel.city ~ '.' }}</p>
+      </section>
+
       <section>
-        <h2>About this stay</h2>
-        <p>{{ hotel.description or 'A comfortable stay in ' ~ hotel.city ~ '.' }}</p>
-        <p class="muted small">Check-in from {{ hotel.check_in_time or '14:00' }} · Check-out until {{ hotel.check_out_time or '11:00' }}</p>
+        <h2>Good to know</h2>
+        <dl class="facts">
+          <div><dt>Check-in</dt><dd>From {{ hotel.check_in_time or '14:00' }}</dd></div>
+          <div><dt>Check-out</dt><dd>Until {{ hotel.check_out_time or '11:00' }}</dd></div>
+          <div><dt>Cancellation</dt><dd>{{ policy[1] }} Each room shows its own date.</dd></div>
+          <div><dt>Payment</dt><dd>The full amount by card when you book, in US dollars. Nothing more to pay at the hotel.</dd></div>
+          <div><dt>Children</dt><dd>{% if hotel.children_allowed %}Welcome{% elif hotel.children_allowed is none %}Ask the hotel{% else %}Not accepted{% endif %}</dd></div>
+          <div><dt>Pets</dt><dd>{% if hotel.pets_allowed %}Allowed{% else %}Not allowed{% endif %}</dd></div>
+          <div><dt>Smoking</dt><dd>{% if hotel.smoking_allowed %}Allowed in some areas{% else %}Not allowed{% endif %}</dd></div>
+        </dl>
       </section>
 
       {% if hotel.amenities %}
@@ -77,7 +107,6 @@
                 <span class="price__total">{{ r.total_price|usd }}</span>
                 <span class="price__meta">{% if stay.rooms > 1 %}{{ stay.rooms }} rooms · {% endif %}{{ stay.nights }} night{{ 's' if stay.nights != 1 }} · {{ r.per_night|usd }}/night</span>
                 {% set loc = r.total_price|local(hotel.country) %}{% if loc %}<span class="price__local">{{ loc }}</span>{% endif %}
-                {% if r.rooms_left <= 3 %}<span class="scarcity">Only {{ r.rooms_left }} left</span>{% endif %}
               </div>
               <a class="btn btn-primary" href="/book?{{ qs(stay.as_params(), room=r.id) }}">Reserve{% if stay.rooms > 1 %} {{ stay.rooms }} rooms{% endif %}</a>
             {% elif not r.fits_party %}
@@ -92,7 +121,7 @@
         </article>
         {% endfor %}
         {% if not available %}
-          <div class="alert alert-info">No rooms available for {{ ui.stay_summary(stay) }}. Try different dates above.</div>
+          <div class="alert alert-info">No rooms available for {{ ui.stay_summary(stay) }}. Try different dates above{% if can_ask %}, or ask the hotel on WhatsApp{% endif %}.</div>
         {% endif %}
       </section>
     </div>
@@ -107,16 +136,19 @@
             <div><dt>Guests</dt><dd>{{ stay.guests }}{% if stay.rooms > 1 %} · {{ stay.rooms }} rooms{% endif %}</dd></div>
             <div class="total"><dt>Total ({{ stay.nights }} night{{ 's' if stay.nights != 1 }})</dt><dd>{{ cheapest.total_price|usd }}</dd></div>
           </dl>
+          <p class="rules__title">If you cancel <span class="muted">({{ cheapest.name }})</span></p>
+          {{ ui.rules_bar(rules) }}
           <a class="btn btn-primary btn-block" href="#rooms">See rooms</a>
         {% else %}
           <h3>Not available</h3>
           <p class="muted small">for {{ ui.stay_summary(stay) }}</p>
           <a class="btn btn-secondary btn-block" href="#rooms">Change dates</a>
         {% endif %}
+        {% if can_ask %}{{ ui.ask_form(hotel, stay) }}{% endif %}
         <ul class="trust-list">
-          <li>Total price shown, no hidden fees</li>
-          <li>Secure card payment</li>
-          <li>Instant confirmation on WhatsApp</li>
+          <li>The price you see is the price you pay</li>
+          <li>Secure card payment, no account needed</li>
+          <li>Reviewed by the Fichua team</li>
         </ul>
       </div>
     </aside>
@@ -126,7 +158,10 @@
 <div class="sticky-cta">
   {% if cheapest %}
   <div><strong>{{ cheapest.total_price|usd }}</strong> <span class="muted small">total</span><div class="muted small">{{ stay.check_in|nice_date('%d %b') }} – {{ stay.check_out|nice_date('%d %b') }} · {{ stay.guests }} guest{{ 's' if stay.guests != 1 }}{% if stay.rooms > 1 %} · {{ stay.rooms }} rooms{% endif %}</div></div>
-  <a class="btn btn-primary" href="#rooms">See rooms</a>
+  <div class="sticky-cta__actions">
+    {% if can_ask %}{{ ui.ask_form(hotel, stay, label='WhatsApp', note=false, cls='') }}{% endif %}
+    <a class="btn btn-primary" href="#rooms">See rooms</a>
+  </div>
   {% else %}
   <span class="muted small">Not available for these dates</span>
   <a class="btn btn-secondary" href="#rooms">Change dates</a>

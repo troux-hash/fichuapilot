@@ -1,19 +1,38 @@
 {# Reusable UI macros. Import with: {% import "components/ui.html" as ui %} #}
+{# No guest ratings or review counts anywhere: Fichua shows only reviews from verified Fichua stays (Brief 2), and none exist yet. #}
+{% import "components/icons.html" as i %}
 
-{% macro rating_word(r) -%}
-  {%- if r >= 9 %}Exceptional{% elif r >= 8.5 %}Excellent{% elif r >= 8 %}Very good{% elif r >= 7 %}Good{% else %}Pleasant{% endif -%}
-{%- endmacro %}
+{# The cancellation rules beside the price, drawn as a bar with dollar amounts (policies.timeline). #}
+{% macro rules_bar(parts) %}
+{% if parts %}
+<div class="rules">
+  <div class="rules__bar" aria-hidden="true">
+    {% for p in parts %}<span class="rules__part rules__part--{{ p.kind }}" style="flex-grow:{{ p.days }}"></span>{% endfor %}
+  </div>
+  <dl class="rules__legend">
+    {% for p in parts %}
+    <div class="rules__item rules__item--{{ p.kind }}">
+      <dt>{% if p.kind == 'free' %}Until {{ p.until|nice_date('%a %d %b') }}{% elif p.starts %}From {{ p.starts|nice_date('%a %d %b') }}{% else %}Once booked{% endif %}</dt>
+      <dd>{% if p.kind == 'free' %}Free cancellation, full refund of {{ p.refund|usd }}{% else %}No refund{% endif %}</dd>
+    </div>
+    {% endfor %}
+  </dl>
+</div>
+{% endif %}
+{% endmacro %}
 
+{# "Ask the hotel" before booking: WhatsApp opens with the dates and a reference code (Brief 2 §6.2). #}
+{% macro ask_form(hotel, stay, label='Ask the hotel on WhatsApp', note=true, cls='btn-block') %}
+<form class="ask" method="post" action="/hotels/{{ hotel.id }}/ask" target="_blank">
+  {% for k, v in stay.as_params().items() %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endfor %}
+  <button class="btn btn-whatsapp {{ cls }}" type="submit">{{ i.icon('chat', 18) }}<span>{{ label }}</span></button>
+  {% if note %}<p class="muted small">Opens WhatsApp with your dates and a reference code. Nothing is booked yet.</p>{% endif %}
+</form>
+{% endmacro %}
+
+{# The official class as words ("4-star"): the star symbol is kept for Fichua's own mark (Brief 2 §9). #}
 {% macro stars(n) -%}
-  {%- if n %}<span class="stars" aria-label="{{ n }} star hotel">{{ '★' * n }}</span>{% endif -%}
-{%- endmacro %}
-
-{% macro rating_line(h) -%}
-  {%- if h.guest_rating %}
-  <span class="rating-line"><span class="rating">{{ '%.1f'|format(h.guest_rating) }}</span>
-    <strong>{{ rating_word(h.guest_rating) }}</strong>
-    {%- if h.review_count %}<span class="muted">· {{ '{:,}'.format(h.review_count) }} reviews</span>{% endif %}</span>
-  {%- endif %}
+  {%- if n %}<span class="stars">{{ n }}-star</span>{% endif -%}
 {%- endmacro %}
 
 {% macro search_form(stay, destination='', presets=[], destinations=[], compact=false) %}
@@ -81,13 +100,11 @@
         <p class="muted small" style="margin:2px 0 0">{{ stars(h.star_rating) }} {{ h.property_type or 'Hotel' }} · {{ h.city }}</p>
       </div>
     </div>
-    {{ rating_line(h) }}
     {% if h.amenities %}<ul class="tags">{% for a in h.amenities[:3] %}<li>{{ a }}</li>{% endfor %}</ul>{% endif %}
     <div class="hotel-card__foot">
       <div class="small">
         <div>{% if stay.rooms > 1 %}{{ stay.rooms }} × {% endif %}{{ o.room.name }}</div>
         {% if o.room.breakfast_included %}<div class="badge badge--info" style="margin-top:4px">Breakfast included</div>{% endif %}
-        {% if o.rooms_left <= 3 %}<div class="scarcity">Only {{ o.rooms_left }} left at this price</div>{% endif %}
       </div>
       <div class="price">
         <span class="price__total">{{ o.total_price|usd }}</span>

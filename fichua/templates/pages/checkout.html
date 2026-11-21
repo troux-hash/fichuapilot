@@ -68,7 +68,6 @@
       <div class="card-pad">
         <h3 class="display" style="font-size:var(--text-xl)">{{ hotel.name }}</h3>
         <p class="muted small">{{ hotel.full_address or hotel.city }}</p>
-        {{ ui.rating_line(hotel) }}
         <dl class="summary-rows">
           <div><dt>Room</dt><dd>{{ room.name }}{% if stay.rooms > 1 %} × {{ stay.rooms }}{% endif %}</dd></div>
           <div><dt>Check-in</dt><dd>{{ stay.check_in|nice_date('%a %d %b %Y') }}, from {{ hotel.check_in_time or '14:00' }}</dd></div>
@@ -79,10 +78,8 @@
           <div class="total"><dt>Total to pay now</dt><dd>{{ offer.total_price|usd }}</dd></div>
           {% endif %}
         </dl>
-        <div class="row" style="flex-wrap:wrap;gap:6px">
-          {% if free_until %}<span class="badge badge--success">Free cancellation until {{ free_until|nice_date('%d %b') }}</span>{% endif %}
-          {% if room.breakfast_included %}<span class="badge badge--info">Breakfast included</span>{% endif %}
-        </div>
+        {% if room.breakfast_included %}<div class="row" style="flex-wrap:wrap;gap:6px"><span class="badge badge--info">Breakfast included</span></div>{% endif %}
+        {% if rules %}<p class="rules__title">If you cancel</p>{{ ui.rules_bar(rules) }}{% endif %}
       </div>
     </aside>
   </div>

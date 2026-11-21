@@ -14,6 +14,7 @@ LIMITS = {
     "partner": (8, 15),   # failed partner sign-ins per IP and email
     "join": (10, 60),     # failed partner sign-ups (wrong access codes) per IP
     "booking": (30, 10),  # checkouts started per IP: each one holds a room
+    "ask": (20, 10),      # 'Ask the hotel' enquiries recorded per IP (past it, WhatsApp still opens, unrecorded)
 }
 MESSAGES = {
     "admin": "Too many failed sign-ins. Try again in 15 minutes.",

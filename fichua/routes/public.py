@@ -7,8 +7,8 @@ from fastapi import APIRouter, Form, Request
 from fastapi.responses import RedirectResponse, Response
 
 from ..db import db
-from ..services import (bookings, catalog, currency, dates, legal, notify, partners, payments, policies,
-                        ratelimit, stay_calendar)
+from ..services import (bookings, catalog, currency, dates, enquiries, legal, notify, partners, payments,
+                        policies, ratelimit, seo, stay_calendar, ways_in)
 from ..services.search import SORTS, Filters, search
 from ..web import base_url, qs, render
 
@@ -37,7 +37,8 @@ def home(request: Request):
     with db.connect() as conn:
         destinations = catalog.destinations(conn)
     stay = dates.parse_stay(None, None, 2)
-    return render(request, "pages/home.html", destinations=destinations, stay=stay, presets=dates.presets())
+    return render(request, "pages/home.html", destinations=destinations, stay=stay, presets=dates.presets(),
+                  ways_in=ways_in.available(destinations))
 
 
 @router.get("/search")
@@ -71,8 +72,46 @@ def hotel(request: Request, hotel_id: str):
             return render(request, "pages/not_found.html", status_code=404)
         rooms = catalog.hotel_rooms(conn, hotel_id, stay)
     back = request.query_params.get("destination") or h["city"]
-    return render(request, "pages/hotel.html", hotel=h, rooms=rooms, stay=stay,
+    cheapest = next((r for r in rooms if r["available"]), None)
+    rules = (policies.timeline(h.get("cancellation_policy"), cheapest["free_cancellation"], stay.check_in,
+                               cheapest["total_price"]) if cheapest else [])
+    base = base_url(request)
+    canonical = f"{base}/hotels/{h['id']}"  # one address per hotel, whatever dates are in the link
+    return render(request, "pages/hotel.html", hotel=h, rooms=rooms, stay=stay, cheapest=cheapest, rules=rules,
+                  can_ask=bool(enquiries.hotel_number(h)), canonical=canonical, summary=seo.summary(h),
+                  share_image=seo.absolute((h.get("images") or [None])[0], base),
+                  structured=seo.lodging(h, rooms, canonical, base),
+                  policy=policies.POLICIES.get(h.get("cancellation_policy") or "flexible", policies.POLICIES["flexible"]),
                   back_qs=qs({"destination": back, **stay.as_params()}), date_note=_date_note(request, stay))
+
+
+@router.get("/sitemap.xml")
+def sitemap_xml(request: Request):
+    with db.connect() as conn:
+        body = seo.sitemap(conn, base_url(request))
+    return Response(body, media_type="application/xml")
+
+
+@router.get("/robots.txt")
+def robots_txt(request: Request):
+    return Response(seo.robots(base_url(request)), media_type="text/plain")
+
+
+@router.post("/hotels/{hotel_id}/ask")
+def ask_hotel(request: Request, hotel_id: str, check_in: str = Form(""), check_out: str = Form(""),
+              guests: str = Form("2"), rooms: str = Form("1")):
+    """'Ask the hotel on WhatsApp': record an enquiry with a reference, then open WhatsApp (Brief 2 §6.2)."""
+    stay = dates.parse_stay(check_in, check_out, guests, rooms)
+    ip = ratelimit.client_ip(request)
+    with db.connect() as conn:
+        h = catalog.get_hotel(conn, hotel_id)
+        if not h or not enquiries.hotel_number(h):
+            return render(request, "pages/not_found.html", status_code=404)
+        reference = None
+        if not ratelimit.blocked(conn, "ask", ip):  # past the limit, WhatsApp still opens, unrecorded
+            reference = enquiries.create(conn, h, stay)
+            ratelimit.record(conn, "ask", ip)
+    return RedirectResponse(enquiries.whatsapp_link(h, stay, reference), status_code=303)
 
 
 def _nights_text(stay: dates.Stay, offer: dict | None) -> str:
@@ -99,7 +138,9 @@ def _checkout_context(conn, stay: dates.Stay, room_id: str):
     policy = (hotel or {}).get("cancellation_policy")
     return {"room": room, "hotel": hotel, "offer": offer, "stay": stay,
             "policy": partners.POLICIES.get(policy or "flexible"), "nights_text": _nights_text(stay, offer),
-            "free_until": policies.open_until(policy, room["free_cancellation"], stay.check_in)}
+            "free_until": policies.open_until(policy, room["free_cancellation"], stay.check_in),
+            "rules": policies.timeline(policy, room["free_cancellation"], stay.check_in,
+                                       offer["total_price"]) if offer else []}
 
 
 @router.get("/book")

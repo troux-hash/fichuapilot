@@ -73,6 +73,28 @@ P2 improvements:
 All 18 improvements are shipped. Still open: one setup task (SET-01: Fichua's WhatsApp number in Admin → Settings, once WhatsApp is connected).
 Not covered by IMP-18: mixing room types in one booking (e.g. 1 Double + 1 Family), which needs a booking-lines table.
 
+## 🎨 Persona-led redesign — 21 Nov 2026
+
+From the operator and traveller briefs and the 18 premium-tier personas. Recommendations and decisions for the founders:
+[Fichua — Persona-led experience and go-to-market](https://claude.ai/artifact/LJyFZLKbs8hfWLJH58t8rG).
+
+Shipped now (needed no decision):
+
+| Area | Change |
+|---|---|
+| Look | Editorial theme: white pages, Ink / Clay / Verified green / Surface, Newsreader headings; the dark Aurora look stays at `?theme=aurora` |
+| Trust | No generated guest ratings or review counts anywhere (cards, hotel page, checkout, API, "Top rated" sort, rating filter); no "Only N left"; no unprovable claims |
+| Home | "Know who's behind the door": ways in by trip purpose, "What we check before a place goes live", how booking works, a line for owners |
+| Hotel page | "Reviewed by the Fichua team" strip, "Good to know", price and cancellation rules first on phones, the rules drawn as a bar with dates and dollars (also at checkout) |
+| Ask the hotel | "Ask the hotel on WhatsApp" before booking, with the dates and an `ASK-` reference recorded in `enquiries` (needs the hotel's reception phone) |
+| Confirmation | "You're booked. {Hotel} is expecting you on {date}." |
+| Search and AI | schema.org Hotel data (no ratings), canonical address, link previews for WhatsApp and social, `/sitemap.xml`, `/robots.txt` |
+| Partners | Landing rewritten for owners: their story and control first, agents and tour operators kept; reception-phone hint says guests may call or WhatsApp |
+
+Waiting on founder decisions: money flow ("Fichua never holds your money" or "held until you arrive"), cancellation presets
+(7 / 14 / 30 days), one pricing rule for owners, Côte d'Ivoire in the pilot, the founding properties (real photos, host
+portraits and stories to replace the demo catalogue). Waiting on WhatsApp: the build-first "reveal" flow for owners.
+
 ## 🔜 P1 — next
 
 | # | Feature | Needs |

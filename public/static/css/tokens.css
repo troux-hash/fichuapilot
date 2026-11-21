@@ -1,15 +1,210 @@
 /* ==========================================================================
    Fichua design tokens — THE file to edit to re-skin the product.
-   Two themes share one set of token names:
-     :root        → "Aurora": the guest site. Dark, glass panels, light-on-dark gradients.
-     .theme-pro   → Partners portal + admin. Light, calm, professional, same brand accents.
+     :root                 → "Editorial": the guest site. Light, warm and photo-led, like a well-edited
+                             travel magazine (Brief 2 §9): Ink, Clay, Verified green, Surface, serif headings.
+     .theme-pro            → Partners portal + admin: the same palette, quieter (Brief 1 §7).
+     [data-theme="aurora"] → the earlier dark glass look, kept for comparison: open a guest page with ?theme=aurora.
    Components never use raw colours; see design/DESIGN_PRINCIPLES.md.
    ========================================================================== */
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 
-  /* Brand spectrum */
+  /* Brand palette (Briefs 1 and 2) */
+  --ink: #2B1D19;
+  --clay: #B5462F;
+  --verified: #2F5D46;
+  --surface: #F1F3F1;
+  --whatsapp: #1F7A4D;
+
+  /* Older names a few components still read, mapped onto the palette */
+  --violet: var(--clay);
+  --cyan: var(--clay);
+  --pink: var(--clay);
+  --peach: #D9A066;
+  --mint: var(--verified);
+  --gradient-brand: linear-gradient(120deg, var(--clay), var(--clay));
+  --gradient-cool: linear-gradient(120deg, var(--surface), var(--surface));
+  --gradient-mint: linear-gradient(120deg, var(--verified), var(--verified));
+
+  /* Page + surfaces */
+  --color-bg: #FFFFFF;
+  --page-bg: #FFFFFF;
+  --band-bg: var(--surface);                 /* alternating section bands */
+  --color-surface: #FFFFFF;
+  --color-surface-2: var(--surface);
+  --color-surface-solid: #FFFFFF;
+  --glass-blur: none;
+  --glass-highlight: 0 0 0 transparent;
+  --header-bg: rgba(255, 255, 255, 0.94);
+  --input-bg: #FFFFFF;
+  --color-border: #E4E0DA;
+  --color-border-strong: #CDC6BE;
+
+  /* Text */
+  --color-ink: var(--ink);
+  --color-ink-soft: #5A4A44;
+  --color-muted: #6E625C;
+
+  /* Semantic */
+  --color-primary: var(--clay);
+  --color-primary-soft: #F7ECE8;
+  --color-accent: var(--clay);
+  --color-accent-soft: #F7ECE8;
+  --color-success: var(--verified);
+  --color-success-soft: #E6F0EA;
+  --color-warning: #8A5A00;
+  --color-warning-soft: #FBF1DC;
+  --color-danger: #A4262C;
+  --color-danger-soft: #FBEBEB;
+  --color-star: var(--ink);
+  --color-whatsapp: var(--whatsapp);
+  --color-whatsapp-fg: #FFFFFF;
+
+  /* Buttons + chips */
+  --btn-primary-bg: var(--clay);
+  --btn-primary-fg: #FFFFFF;
+  --btn-primary-shadow: none;
+  --btn-hover-filter: brightness(0.92);
+  --chip-active-bg: var(--ink);
+  --chip-active-fg: #FFFFFF;
+  --price-fill: linear-gradient(var(--ink), var(--ink));
+
+  /* Marks, photo overlays and states */
+  --logo-mark-bg: var(--clay);
+  --logo-mark-fg: #FFFFFF;
+  --logo-mark-shadow: none;
+  --overlay-bg: rgba(43, 29, 25, 0.62);       /* a small label on a photo */
+  --overlay-fg: #FFFFFF;
+  --overlay-glass: rgba(255, 255, 255, 0.10);
+  --overlay-glass-border: rgba(255, 255, 255, 0.18);
+  --photo-fade: linear-gradient(180deg, transparent 40%, rgba(43, 29, 25, 0.82));
+  --scrim: rgba(43, 29, 25, 0.45);
+  --card-hover-border: var(--color-border-strong);
+  --icon-tile-bg: var(--color-primary-soft);
+  --icon-tile-fg: var(--color-primary);
+  --icon-tile-shadow: none;
+  --confirm-bg: var(--verified);
+  --confirm-fg: #FFFFFF;
+  --confirm-glow: 0 0 0 10px var(--color-success-soft);
+  --pending-bg: var(--surface);
+  --pending-fg: var(--ink);
+  --pending-glow: 0 0 0 10px var(--color-surface-2);
+  --paycard-bg: var(--ink);
+  --paycard-fg: #FFFFFF;
+  --hero-decor: none;
+  --hero-em-style: italic;
+  --hero-em-fill: linear-gradient(var(--clay), var(--clay));
+
+  /* "Built at MIT" logos sit on plain tiles in every theme (white; dark for reversed files), so official files are never recoloured. */
+  --logo-plate-bg: #FFFFFF;
+  --logo-plate-fg: #10132B;
+  --logo-plate-border: rgba(16, 19, 43, 0.10);
+  --logo-plate-dark-bg: #113A69;               /* for reversed (white) logos: the Kuo Sharper Center navy */
+  --logo-plate-dark-border: rgba(255, 255, 255, 0.16);
+
+  /* Typography: a serif for names, headings and stories; a quiet sans for interface and prices.
+     Both carry French accents; test Fon and Baoulé letters (ɛ ɔ ɖ) with real names before launch. */
+  --font-display: "Newsreader", Georgia, "Times New Roman", serif;
+  --font-body: "Manrope", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --weight-display: 500;
+  --tracking-display: -0.012em;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-md: 1.0625rem;                        /* 17 px body (Brief 2 §9) */
+  --text-lg: 1.1875rem;
+  --text-xl: 1.375rem;
+  --text-2xl: clamp(1.5rem, 3vw, 1.875rem);    /* H2: 24 → 30 px */
+  --text-3xl: clamp(1.875rem, 4vw, 2.75rem);   /* H1: 30 → 44 px */
+  --text-hero: clamp(2.5rem, 6vw, 4.25rem);
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-bold: 700;
+  --weight-heavy: 800;
+  --leading-tight: 1.12;
+  --leading-normal: 1.55;
+
+  /* Spacing (4px scale) */
+  --space-1: 4px;  --space-2: 8px;  --space-3: 12px; --space-4: 16px; --space-5: 20px;
+  --space-6: 24px; --space-7: 32px; --space-8: 48px; --space-9: 80px;
+
+  /* Shape & depth: 8 px cards and inputs, 12 px photos, pills; one soft elevation level */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 12px;
+  --radius-pill: 999px;
+  --radius-btn: 8px;
+  --shadow-sm: 0 1px 2px rgba(43, 29, 25, 0.06);
+  --shadow-md: 0 1px 3px rgba(43, 29, 25, 0.06);
+  --shadow-lg: 0 18px 44px -20px rgba(43, 29, 25, 0.38);
+  --shadow-glow: 0 12px 30px -16px rgba(43, 29, 25, 0.30);
+  --focus-ring: 0 0 0 3px rgba(181, 70, 47, 0.35);
+
+  /* Layout & motion: calm, 150–250 ms */
+  --container: 1200px;
+  --header-h: 64px;
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --speed: 180ms;
+}
+
+/* --------------------------------------------------------------------------
+   Pro theme: partner portal + admin. The same palette, quieter: Surface page, white cards,
+   an Ink sidebar, Clay for the one main action.
+   -------------------------------------------------------------------------- */
+.theme-pro {
+  color-scheme: light;
+  --color-bg: var(--surface);
+  --page-bg: var(--surface);
+  --band-bg: #E9ECE9;
+  --color-surface: #FFFFFF;
+  --color-surface-2: #EEF0EE;
+  --color-surface-solid: #FFFFFF;
+  --glass-blur: none;
+  --glass-highlight: 0 0 0 transparent;
+  --header-bg: rgba(255, 255, 255, 0.9);
+  --input-bg: #FFFFFF;
+  --color-border: #E1DDD7;
+  --color-border-strong: #CBC4BC;
+  --color-ink: var(--ink);
+  --color-ink-soft: #5A4A44;
+  --color-muted: #6E625C;
+  --color-primary: var(--clay);
+  --color-primary-soft: #F7ECE8;
+  --color-accent: var(--clay);
+  --color-accent-soft: #F7ECE8;
+  --color-success: var(--verified);
+  --color-success-soft: #E3EFE7;
+  --color-warning: #8A5A00;
+  --color-warning-soft: #FBF1DC;
+  --color-danger: #A4262C;
+  --color-danger-soft: #FBEBEB;
+  --color-star: var(--ink);
+  --btn-primary-bg: var(--clay);
+  --btn-primary-fg: #FFFFFF;
+  --btn-primary-shadow: none;
+  --btn-hover-filter: brightness(0.92);
+  --chip-active-bg: var(--ink);
+  --chip-active-fg: #FFFFFF;
+  --price-fill: linear-gradient(var(--ink), var(--ink));
+  --text-md: 1rem;                             /* dense tables in the portal and admin */
+  --radius-lg: 12px;
+  --shadow-sm: 0 1px 2px rgba(43, 29, 25, 0.06);
+  --shadow-md: 0 8px 24px -16px rgba(43, 29, 25, 0.28);
+  --shadow-lg: 0 24px 60px -24px rgba(43, 29, 25, 0.3);
+  --focus-ring: 0 0 0 3px rgba(181, 70, 47, 0.3);
+  --sidebar-bg: var(--ink);
+  --sidebar-fg: #F3EEEA;
+  --sidebar-muted: #BFB2AA;
+  --sidebar-accent: #9FD3B4;                   /* ticks and checks on the Ink sidebar and pitch panel */
+  --pitch-bg: radial-gradient(60% 50% at 10% 10%, rgba(181, 70, 47, 0.38), transparent 60%), var(--ink);
+}
+
+/* --------------------------------------------------------------------------
+   Comparison: the earlier "Aurora" guest theme. Open any guest page with ?theme=aurora.
+   -------------------------------------------------------------------------- */
+[data-theme="aurora"] {
+  color-scheme: dark;
   --violet: #8F7CFF;
   --cyan: #4CD7F6;
   --pink: #FF5FA2;
@@ -18,14 +213,13 @@
   --gradient-brand: linear-gradient(120deg, #8F7CFF 0%, #FF5FA2 55%, #FFB36B 100%);
   --gradient-cool: linear-gradient(120deg, #4CD7F6 0%, #8F7CFF 100%);
   --gradient-mint: linear-gradient(120deg, #3BE8B0 0%, #4CD7F6 100%);
-
-  /* Page + surfaces (glass) */
   --color-bg: #06071A;
   --page-bg:
     radial-gradient(60% 45% at 12% 0%, rgba(143, 124, 255, 0.38), transparent 62%),
     radial-gradient(45% 40% at 92% 12%, rgba(76, 215, 246, 0.24), transparent 60%),
     radial-gradient(55% 45% at 70% 100%, rgba(255, 95, 162, 0.20), transparent 62%),
     #06071A;
+  --band-bg: rgba(255, 255, 255, 0.04);
   --color-surface: rgba(255, 255, 255, 0.06);
   --color-surface-2: rgba(255, 255, 255, 0.09);
   --color-surface-solid: #11132E;
@@ -35,13 +229,9 @@
   --input-bg: rgba(255, 255, 255, 0.07);
   --color-border: rgba(255, 255, 255, 0.12);
   --color-border-strong: rgba(255, 255, 255, 0.24);
-
-  /* Text */
   --color-ink: #F5F4FF;
   --color-ink-soft: #CFCDEB;
   --color-muted: #A5A2CC;
-
-  /* Semantic */
   --color-primary: #A99BFF;
   --color-primary-soft: rgba(143, 124, 255, 0.18);
   --color-accent: #FF5FA2;
@@ -53,133 +243,48 @@
   --color-danger: #FF7A8F;
   --color-danger-soft: rgba(255, 107, 129, 0.15);
   --color-star: #FFCB5C;
-
-  /* Buttons + chips */
   --btn-primary-bg: var(--gradient-brand);
   --btn-primary-fg: #0A0A1F;
   --btn-primary-shadow: 0 10px 30px -10px rgba(255, 95, 162, 0.65);
+  --btn-hover-filter: brightness(1.08) saturate(1.05);
   --chip-active-bg: #F5F4FF;
   --chip-active-fg: #0A0A1F;
   --price-fill: var(--gradient-brand);
-
-  /* "Built at MIT" logos sit on plain tiles in every theme (white; dark for reversed files), so official files are never recoloured. */
-  --logo-plate-bg: #FFFFFF;
-  --logo-plate-fg: #10132B;
-  --logo-plate-border: rgba(16, 19, 43, 0.10);
-  --logo-plate-dark-bg: #113A69;               /* for reversed (white) logos: the Kuo Sharper Center navy */
-  --logo-plate-dark-border: rgba(255, 255, 255, 0.16);
-
-  /* Typography */
+  --logo-mark-bg: var(--gradient-brand);
+  --logo-mark-fg: #0A0A1F;
+  --logo-mark-shadow: 0 6px 18px -6px rgba(255, 95, 162, 0.8);
+  --overlay-bg: rgba(6, 7, 26, 0.55);
+  --overlay-fg: #F5F4FF;
+  --photo-fade: linear-gradient(180deg, transparent 35%, rgba(6, 7, 26, 0.9));
+  --scrim: rgba(3, 4, 15, 0.6);
+  --card-hover-border: rgba(143, 124, 255, 0.45);
+  --icon-tile-bg: var(--gradient-brand);
+  --icon-tile-fg: #0A0A1F;
+  --icon-tile-shadow: 0 10px 24px -10px rgba(255, 95, 162, 0.8);
+  --confirm-bg: var(--gradient-mint);
+  --confirm-fg: #06071A;
+  --confirm-glow: 0 0 0 10px rgba(59, 232, 176, 0.14), 0 0 50px rgba(59, 232, 176, 0.6);
+  --pending-bg: var(--gradient-cool);
+  --pending-fg: #06071A;
+  --pending-glow: 0 0 0 10px rgba(143, 124, 255, 0.18), 0 0 50px rgba(76, 215, 246, 0.5);
+  --paycard-bg: var(--gradient-cool);
+  --paycard-fg: #06071A;
+  --hero-decor:
+    linear-gradient(to top, rgba(143, 124, 255, 0.18) 1px, transparent 1px) 0 0 / 100% 36px,
+    linear-gradient(to right, rgba(143, 124, 255, 0.14) 1px, transparent 1px) 0 0 / 56px 100%;
+  --hero-em-style: normal;
+  --hero-em-fill: var(--gradient-brand);
   --font-display: "Sora", "Segoe UI", system-ui, sans-serif;
-  --font-body: "Manrope", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  --text-xs: 0.75rem;
-  --text-sm: 0.875rem;
+  --weight-display: 600;
+  --tracking-display: -0.03em;
   --text-md: 1rem;
-  --text-lg: 1.125rem;
-  --text-xl: 1.375rem;
-  --text-2xl: 1.75rem;
-  --text-3xl: clamp(2rem, 4.5vw, 3rem);
-  --text-hero: clamp(2.6rem, 7vw, 5rem);
-  --weight-regular: 400;
-  --weight-medium: 500;
-  --weight-bold: 700;
-  --weight-heavy: 800;
-  --leading-tight: 1.08;
-  --leading-normal: 1.55;
-
-  /* Spacing (4px scale) */
-  --space-1: 4px;  --space-2: 8px;  --space-3: 12px; --space-4: 16px; --space-5: 20px;
-  --space-6: 24px; --space-7: 32px; --space-8: 48px; --space-9: 72px;
-
-  /* Shape & depth */
   --radius-sm: 10px;
   --radius-md: 16px;
   --radius-lg: 24px;
-  --radius-pill: 999px;
+  --radius-btn: 999px;
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 12px 32px -14px rgba(0, 0, 0, 0.7);
   --shadow-lg: 0 30px 70px -24px rgba(0, 0, 0, 0.8);
   --shadow-glow: 0 0 0 1px rgba(143, 124, 255, 0.35), 0 18px 50px -18px rgba(143, 124, 255, 0.7);
   --focus-ring: 0 0 0 3px rgba(76, 215, 246, 0.55);
-
-  /* Layout & motion */
-  --container: 1200px;
-  --header-h: 68px;
-  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
-  --speed: 180ms;
-}
-
-/* --------------------------------------------------------------------------
-   Pro theme: partner portal + admin. Light, high-clarity, same brand accents.
-   -------------------------------------------------------------------------- */
-.theme-pro {
-  color-scheme: light;
-  --color-bg: #F3F5FA;
-  --page-bg: #F3F5FA;
-  --color-surface: #FFFFFF;
-  --color-surface-2: #EEF1F8;
-  --color-surface-solid: #FFFFFF;
-  --glass-blur: none;
-  --glass-highlight: 0 0 0 transparent;
-  --header-bg: rgba(255, 255, 255, 0.85);
-  --input-bg: #FFFFFF;
-  --color-border: #E2E6F0;
-  --color-border-strong: #CBD1E1;
-  --color-ink: #10132B;
-  --color-ink-soft: #454A67;
-  --color-muted: #5E6380;
-  --color-primary: #5B4BFF;
-  --color-primary-soft: #EEEBFF;
-  --color-accent: #D6337A;
-  --color-accent-soft: #FDEAF3;
-  --color-success: #05704F;
-  --color-success-soft: #E3F7EF;
-  --color-warning: #8A5A00;
-  --color-warning-soft: #FFF3D9;
-  --color-danger: #C21F3A;
-  --color-danger-soft: #FDEBEE;
-  --color-star: #C98A00;
-  --btn-primary-bg: #5B4BFF;
-  --btn-primary-fg: #FFFFFF;
-  --btn-primary-shadow: 0 8px 20px -10px rgba(91, 75, 255, 0.8);
-  --chip-active-bg: #10132B;
-  --chip-active-fg: #FFFFFF;
-  --price-fill: linear-gradient(120deg, #10132B, #10132B);
-  --shadow-sm: 0 1px 2px rgba(16, 19, 43, 0.06);
-  --shadow-md: 0 10px 30px -16px rgba(16, 19, 43, 0.25);
-  --shadow-lg: 0 24px 60px -24px rgba(16, 19, 43, 0.3);
-  --focus-ring: 0 0 0 3px rgba(91, 75, 255, 0.3);
-  --sidebar-bg: #0F1229;
-  --sidebar-fg: #E8E7FF;
-  --sidebar-muted: #9D9CC4;
-}
-
-/* --------------------------------------------------------------------------
-   Theme experiments: open any guest page with ?theme=<name>.
-   -------------------------------------------------------------------------- */
-[data-theme="daylight"] {
-  color-scheme: light;
-  --color-bg: #F6F4FF;
-  --page-bg:
-    radial-gradient(60% 45% at 10% 0%, rgba(143, 124, 255, 0.30), transparent 60%),
-    radial-gradient(45% 40% at 95% 10%, rgba(76, 215, 246, 0.25), transparent 60%),
-    radial-gradient(55% 45% at 70% 100%, rgba(255, 95, 162, 0.18), transparent 60%),
-    #F6F4FF;
-  --color-surface: rgba(255, 255, 255, 0.62);
-  --color-surface-2: rgba(255, 255, 255, 0.8);
-  --color-surface-solid: #FFFFFF;
-  --header-bg: rgba(255, 255, 255, 0.6);
-  --input-bg: rgba(255, 255, 255, 0.75);
-  --color-border: rgba(16, 19, 43, 0.10);
-  --color-border-strong: rgba(16, 19, 43, 0.2);
-  --color-ink: #10132B;
-  --color-ink-soft: #3E4263;
-  --color-muted: #5E6380;
-  --color-primary: #5B4BFF;
-  --color-success: #05704F;
-  --color-warning: #8A5A00;
-  --color-danger: #C21F3A;
-  --chip-active-bg: #10132B;
-  --chip-active-fg: #FFFFFF;
 }

@@ -80,7 +80,7 @@ def hydrate_room(row: dict, photos: list[str] | None = None) -> dict:
 
 # What the public JSON API may show. Everything else on a hotel or room row (owner, commission, contact
 # details, review notes, plan, stock) is internal: add a field here only if a guest may see it.
-PUBLIC_HOTEL_FIELDS = ("id", "name", "property_type", "star_rating", "guest_rating", "review_count", "city", "area",
+PUBLIC_HOTEL_FIELDS = ("id", "name", "property_type", "star_rating", "city", "area",
                        "country", "address", "lat", "lng", "description", "amenities", "images", "currency",
                        "check_in_time", "check_out_time", "cancellation_policy", "children_allowed",
                        "pets_allowed", "smoking_allowed")
@@ -250,7 +250,7 @@ def hotel_rooms(conn: Connection, hotel_id: str, stay: Stay) -> list[dict]:
 def destinations(conn: Connection) -> list[dict]:
     """Cities with live hotels, most hotels first, each with a cover image."""
     rows = conn.all("SELECT id, city, country, image_urls FROM hotels WHERE is_active = TRUE "
-                    "ORDER BY guest_rating DESC")
+                    "ORDER BY COALESCE(star_rating, 0) DESC, name")
     photos = media_urls(conn, "hotel", [r["id"] for r in rows])
     cities: dict[tuple, dict] = {}
     used: set[str] = set()

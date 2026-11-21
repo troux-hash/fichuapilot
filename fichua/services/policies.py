@@ -38,3 +38,22 @@ def open_until(policy: str | None, free_cancellation, check_in: date | str,
     """free_until, but only while that day hasn't passed: what someone booking or cancelling today gets."""
     until = free_until(policy, free_cancellation, check_in)
     return until if until is not None and until >= (today or date.today()) else None
+
+
+def timeline(policy: str | None, free_cancellation, check_in: date | str, total: float,
+             today: date | None = None) -> list[dict]:
+    """The rules beside the price, drawn as a bar (Brief 2: "plain rules beside the price"): what a
+    cancellation refunds, in dollars, and until when. Each part's `days` sizes its share of the bar."""
+    today = today or date.today()
+    arrival = _day(check_in)
+    until = open_until(policy, free_cancellation, arrival, today)
+    parts = []
+    if until:
+        parts.append({"kind": "free", "label": "Free cancellation", "refund": total, "until": until,
+                      "days": max(1, (until - today).days + 1)})
+        after = until + timedelta(days=1)
+        parts.append({"kind": "none", "label": "No refund", "refund": 0, "starts": after,
+                      "days": max(1, (arrival - after).days)})
+    else:
+        parts.append({"kind": "none", "label": "No refund", "refund": 0, "starts": None, "days": 1})
+    return parts

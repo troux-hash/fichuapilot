@@ -199,8 +199,23 @@ CREATE TABLE IF NOT EXISTS admin_users (
 -- Rate limits (failed sign-ins, sign-ups, checkouts), kept in the database so they hold across instances.
 CREATE TABLE IF NOT EXISTS login_attempts (
     id              TEXT PRIMARY KEY,
-    scope           TEXT NOT NULL,                        -- admin | partner | join | booking
+    scope           TEXT NOT NULL,                        -- admin | partner | join | booking | ask
     key             TEXT NOT NULL,                        -- IP address, or IP + email
     created_at      TIMESTAMP NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_login_attempts ON login_attempts (scope, key, created_at);
+
+-- "Ask the hotel" before booking: WhatsApp opens with the stay and this reference (Brief 2 §6.2),
+-- so what Fichua brings in can be counted by code (Brief 1 §5.4).
+CREATE TABLE IF NOT EXISTS enquiries (
+    id              TEXT PRIMARY KEY,
+    reference       TEXT NOT NULL UNIQUE,                 -- e.g. ASK-7K2Q9M, quoted in the guest's message
+    hotel_id        TEXT NOT NULL REFERENCES hotels(id),
+    check_in        DATE,
+    check_out       DATE,
+    guests          INTEGER,
+    rooms           INTEGER DEFAULT 1,
+    channel         TEXT NOT NULL DEFAULT 'whatsapp',
+    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_enquiries_hotel ON enquiries (hotel_id, created_at);

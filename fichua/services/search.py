@@ -11,10 +11,11 @@ from ..db import Connection
 from . import catalog, policies
 from .dates import Stay
 
+# No "Top rated" sort or rating filter: imported guest ratings are not shown or used (Brief 2 allows only
+# reviews from verified Fichua stays). Properties cannot pay to rank higher.
 SORTS = {
     "recommended": "Recommended",
     "price": "Lowest price",
-    "rating": "Top rated",
     "stars": "Most stars",
 }
 
@@ -23,7 +24,6 @@ SORTS = {
 class Filters:
     price_max: float | None = None          # per night
     stars: list[int] = field(default_factory=list)
-    rating_min: float | None = None
     free_cancellation: bool = False
     breakfast: bool = False
     amenities: list[str] = field(default_factory=list)
@@ -43,7 +43,6 @@ class Filters:
         return cls(
             price_max=num("price_max"),
             stars=[int(s) for s in q.getlist("stars") if s.isdigit()],
-            rating_min=num("rating_min"),
             free_cancellation=q.get("free_cancellation") == "1",
             breakfast=q.get("breakfast") == "1",
             amenities=[a for a in q.getlist("amenity") if a],
@@ -54,7 +53,7 @@ class Filters:
     @property
     def active_count(self) -> int:
         return sum([
-            self.price_max is not None, bool(self.stars), self.rating_min is not None,
+            self.price_max is not None, bool(self.stars),
             self.free_cancellation, self.breakfast, bool(self.amenities), bool(self.property_types),
         ])
 
@@ -99,8 +98,6 @@ def _matches(o: dict, f: Filters) -> bool:
         return False
     if f.stars and (h.get("star_rating") or 0) not in f.stars:
         return False
-    if f.rating_min is not None and (h.get("guest_rating") or 0) < f.rating_min:
-        return False
     if f.property_types and h.get("property_type") not in f.property_types:
         return False
     have = {a.lower() for a in h["amenities"]}
@@ -110,20 +107,17 @@ def _matches(o: dict, f: Filters) -> bool:
 def _sort(results: list[dict], sort: str) -> list[dict]:
     if sort == "price":
         return sorted(results, key=lambda o: o["per_night"])
-    if sort == "rating":
-        return sorted(results, key=lambda o: -(o["hotel"].get("guest_rating") or 0))
     if sort == "stars":
         return sorted(results, key=lambda o: (-(o["hotel"].get("star_rating") or 0), o["per_night"]))
     if not results:
         return results
-    # Recommended: quality per dollar — rating and stars up, price relative to the set down.
+    # Recommended: value for the class — stars up, price relative to the set down. Nothing paid,
+    # and no imported guest ratings.
     prices = sorted(o["per_night"] for o in results)
     median = prices[len(prices) // 2] or 1
 
     def score(o):
-        h = o["hotel"]
-        return ((h.get("guest_rating") or 7) + 0.4 * (h.get("star_rating") or 3)
-                - 1.5 * (o["per_night"] / median))
+        return 0.4 * (o["hotel"].get("star_rating") or 3) - 1.5 * (o["per_night"] / median)
     return sorted(results, key=score, reverse=True)
 
 
