@@ -8,7 +8,7 @@ from fastapi.testclient import TestClient
 
 from fichua.db import db
 from fichua.main import app
-from fichua.services import policies, ways_in
+from fichua.services import catalog, policies, ways_in
 
 guest = TestClient(app)
 CI = date.today() + timedelta(days=30)
@@ -75,13 +75,35 @@ def test_pages_are_readable_by_search_engines_and_assistants():
     hotel_id = _offer()["hotel"]["id"]
     page = guest.get(f"/hotels/{hotel_id}", params=STAY).text
     data = json.loads(re.search(r'<script type="application/ld\+json">(.+?)</script>', page, re.S).group(1))
-    assert data["@context"] == "https://schema.org" and data["url"].endswith(f"/hotels/{hotel_id}")
+    assert data["@context"] == "https://schema.org"
     assert data["address"]["addressCountry"] and "aggregateRating" not in data and "review" not in data
-    assert f'rel="canonical" href="http://testserver/hotels/{hotel_id}"' in page and 'property="og:title"' in page
+    path = _offer()["hotel"]["path"]
+    assert data["url"] == f"http://testserver{path}"
+    assert f'rel="canonical" href="http://testserver{path}"' in page and 'property="og:title"' in page
     sitemap = guest.get("/sitemap.xml")
-    assert sitemap.headers["content-type"].startswith("application/xml") and f"/hotels/{hotel_id}</loc>" in sitemap.text
+    assert sitemap.headers["content-type"].startswith("application/xml") and f"{path}</loc>" in sitemap.text
     robots = guest.get("/robots.txt").text
     assert "Disallow: /admin" in robots and "Sitemap: http://testserver/sitemap.xml" in robots
+
+
+def test_readable_hotel_addresses():
+    assert catalog.slugify("Hôtel Lagune Bleue") == "hotel-lagune-bleue"
+    assert catalog.slugify("Côte d'Ivoire") == "cote-d-ivoire"
+    hotel = _offer()["hotel"]
+    path = hotel["path"]
+    assert re.fullmatch(r"/stays/[a-z0-9-]+/[a-z0-9-]+/[a-z0-9-]+", path) and path.endswith(catalog.slugify(hotel["id"]))
+    # Old links and admin links move to the readable address, dates kept.
+    r = guest.get(f"/hotels/{hotel['id']}", params=STAY, follow_redirects=False)
+    assert r.status_code == 301 and r.headers["location"].startswith(path + "?") and STAY["check_in"] in r.headers["location"]
+    page = guest.get(path, params=STAY)
+    assert page.status_code == 200 and "Choose your room" in page.text and f'action="{path}"' in page.text
+    # A wrong city or an old name in the link still finds the hotel by its id, and redirects.
+    old = f"/stays/{path.split('/')[2]}/somewhere/old-name-{catalog.slugify(hotel['id'])}"
+    moved = guest.get(old, follow_redirects=False)
+    assert moved.status_code == 301 and moved.headers["location"] == path
+    assert guest.get("/stays/rwanda/kigali/no-such-hotel-xyz-999").status_code == 404
+    results = guest.get("/search", params={"destination": "Kigali", **STAY}).text
+    assert f'href="{path}?' in results
 
 
 def test_ways_in_lead_to_searches_that_exist():

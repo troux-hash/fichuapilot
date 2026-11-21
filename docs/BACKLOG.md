@@ -90,6 +90,10 @@ Shipped now (needed no decision):
 | Confirmation | "You're booked. {Hotel} is expecting you on {date}." |
 | Search and AI | schema.org Hotel data (no ratings), canonical address, link previews for WhatsApp and social, `/sitemap.xml`, `/robots.txt` |
 | Partners | Landing rewritten for owners: their story and control first, agents and tour operators kept; reception-phone hint says guests may call or WhatsApp |
+| Addresses | Readable hotel addresses, e.g. `/stays/rwanda/musanze/volcano-view-lodge-mus-002`; the id at the end keeps them unique and rename-proof; old `/hotels/<id>` links redirect |
+| Hosts | Optional "Host profile" in the partner portal (first name, role, languages, welcome, photo), shown only while the owner's consent box is ticked: "Your host" on the hotel page, "With Eric" on result cards, the host's name on the confirmation |
+| Business travel | "I need an invoice" at checkout (company, tax number, address, PO), shown to the hotel in its bookings list; a printable payment receipt; the hotel's registered name and tax number (optional, in Hotel details) printed on it |
+| Arrival | "Show at the door": the booking on one screen, big enough to read across a desk, and plainly void when cancelled |
 
 Waiting on founder decisions: money flow ("Fichua never holds your money" or "held until you arrive"), cancellation presets
 (7 / 14 / 30 days), one pricing rule for owners, Côte d'Ivoire in the pilot, the founding properties (real photos, host

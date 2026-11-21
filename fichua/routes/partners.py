@@ -208,6 +208,61 @@ def photo_cover(request: Request, media_id: str):
     return RedirectResponse("/partners/photos", status_code=303)
 
 
+# --------------------------------------------------------------------------- host profile (optional)
+
+def _host_page(request: Request, conn, user, hotel, status_code: int = 200, errors=None, form=None):
+    photo = (catalog.media_urls(conn, "host", [hotel["id"]]).get(hotel["id"]) or [None])[0]
+    preview = catalog.host_profile(hotel, photo)
+    return _page(request, conn, user, hotel, "partners/host.html", "host", status_code=status_code,
+                 errors=errors or [], form=form, photo=photo, preview=preview,
+                 roles=partners.HOST_ROLES, languages=partners.HOST_LANGUAGES, max_welcome=partners.MAX_HOST_WELCOME)
+
+
+@router.get("/host")
+def host_form(request: Request):
+    with db.connect() as conn:
+        user, hotel = _current(conn, request)
+        if not hotel:
+            return _login_redirect()
+        return _host_page(request, conn, user, hotel)
+
+
+@router.post("/host")
+async def host_save(request: Request):
+    form = await request.form()
+    data = {k: form.get(k) for k in form.keys()}
+    data["host_languages"] = form.getlist("host_languages")
+    files, thumbs = [f for f in form.getlist("files") if getattr(f, "filename", "")], form.getlist("thumbs")
+    with db.connect() as conn:
+        user, hotel = _current(conn, request)
+        if not hotel:
+            return _login_redirect()
+        errors = partners.update_host(conn, hotel, data)
+        if not errors and files:
+            old = [m["id"] for m in partners.media_list(conn, "host", hotel["id"])]
+            error = await _save_uploads(conn, "host", hotel["id"], files[:1], thumbs[:1])
+            if error:
+                errors = [error]
+            else:  # one portrait: the new one replaces the old
+                for media_id in old:
+                    partners.delete_photo(conn, media_id, [hotel["id"]])
+        if errors:
+            conn.raw.rollback()
+            return _host_page(request, conn, user, hotel, status_code=422, errors=errors, form=data)
+    return RedirectResponse("/partners/host?saved=1", status_code=303)
+
+
+@router.post("/host/photo/delete")
+def host_photo_delete(request: Request):
+    with db.connect() as conn:
+        user, hotel = _current(conn, request)
+        if not hotel:
+            return _login_redirect()
+        for media in partners.media_list(conn, "host", hotel["id"]):
+            partners.delete_photo(conn, media["id"], [hotel["id"]])
+    return RedirectResponse("/partners/host?saved=1", status_code=303)
+
+
 @router.get("/rooms")
 def rooms(request: Request):
     with db.connect() as conn:

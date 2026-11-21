@@ -10,6 +10,7 @@
   {% for key, label in steps %}
   <a class="navlink{% if active == key %} is-active{% endif %}" href="/partners/{{ key }}">{{ i.icon(step_icons[key]) }}{{ label }}{% if step_done[key] %}<span class="tick">{{ i.icon('check', 16) }}</span>{% endif %}</a>
   {% endfor %}
+  <a class="navlink{% if active == 'host' %} is-active{% endif %}" href="/partners/host">{{ i.icon('users') }}Host profile{% if hotel.host %}<span class="tick">{{ i.icon('check', 16) }}</span>{% endif %}</a>
   <span class="sidebar__group">Run your hotel</span>
   <a class="navlink{% if active == 'calendar' %} is-active{% endif %}" href="/partners/calendar">{{ i.icon('calendar') }}Calendar and prices</a>
   <a class="navlink{% if active == 'bookings' %} is-active{% endif %}" href="/partners/bookings">{{ i.icon('list') }}Bookings</a>
@@ -21,7 +22,7 @@
     <strong style="color:#fff;font-size:var(--text-sm)">{{ hotel.name }}</strong>
     <span class="mono">{{ hotel.id }}</span>
     <span class="pill pill--{{ hotel.status }}" style="justify-self:start">{{ status_labels.get(hotel.status, hotel.status) }}</span>
-    {% if hotel.status == 'live' %}<a href="/hotels/{{ hotel.id }}" target="_blank" rel="noopener" style="color:#C9C3FF">See it as a guest ↗</a>{% endif %}
+    {% if hotel.status == 'live' %}<a href="{{ hotel.path }}" target="_blank" rel="noopener" style="color:var(--sidebar-accent)">See it as a guest ↗</a>{% endif %}
   </div>
   <form method="post" action="/partners/logout"><button class="btn btn-secondary btn-sm btn-block" type="submit">Log out</button></form>
 {% endblock %}

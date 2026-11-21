@@ -59,6 +59,15 @@
         <div class="field"><label for="check_out_time">Check-out until</label><input id="check_out_time" name="check_out_time" type="time" value="{{ hotel.check_out_time or '11:00' }}"></div>
       </div>
     </section>
+
+    <section class="panel panel-pad" style="display:grid;gap:var(--space-4)">
+      <h2>Business details <span class="muted small" style="font-weight:400">(optional)</span></h2>
+      <p class="muted small" style="margin:0">Printed on guests' receipts, so people travelling for work can claim their stay.</p>
+      <div class="form-grid-2">
+        <div class="field"><label for="legal_name">Registered business name</label><input id="legal_name" name="legal_name" value="{{ hotel.legal_name or '' }}" maxlength="120" autocomplete="organization"></div>
+        <div class="field"><label for="tax_id">Tax number</label><input id="tax_id" name="tax_id" value="{{ hotel.tax_id or '' }}" maxlength="40"><span class="hint">TIN in Rwanda, IFU in Benin, NCC in Côte d'Ivoire.</span></div>
+      </div>
+    </section>
   </div>
   <aside class="panel panel-pad" style="position:sticky;top:var(--space-5);display:grid;gap:var(--space-3)">
     <h2>Save and continue</h2>

@@ -1,0 +1,54 @@
+{% extends "partners/_layout.html" %}
+{% import "components/ui.html" as ui %}
+{% block ptitle %}Host profile{% endblock %}
+{% block page_title %}Host profile{% endblock %}
+{% block page_sub %}<p>Optional · Guests trust a face and a name. Nothing shows until you tick the box at the bottom.</p>{% endblock %}
+{% block partner_content %}
+{% set v = form or {} %}
+{% set name = v.get('host_name') if form else hotel.host_name %}
+{% set role = v.get('host_role') if form else hotel.host_role %}
+{% set langs = v.get('host_languages', []) if form else (hotel.host_languages or '').split(', ') %}
+{% set welcome = v.get('host_welcome') if form else hotel.host_welcome %}
+{% set consent = (v.get('host_consent') == '1') if form else hotel.host_consent_at %}
+<form id="host-photo-delete" method="post" action="/partners/host/photo/delete"></form>
+<form method="post" action="/partners/host" enctype="multipart/form-data" class="split" data-upload>
+  <div style="display:grid;gap:var(--space-5)">
+    {% if errors %}<div class="alert alert-error" role="alert"><strong>Almost there:</strong><ul>{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul></div>{% endif %}
+    {% if request.query_params.get('saved') %}<div class="alert alert-success" role="status">Saved.{% if preview %} Your profile shows on your page.{% else %} Your profile stays hidden until you tick the box.{% endif %}</div>{% endif %}
+    <section class="panel panel-pad" style="display:grid;gap:var(--space-4)">
+      <h2>Who guests will meet</h2>
+      <div class="form-grid-2">
+        <div class="field"><label for="host_name">First name</label><input id="host_name" name="host_name" value="{{ name or '' }}" maxlength="40" autocomplete="given-name"><span class="hint">Your first name, or the person who welcomes guests.</span></div>
+        <div class="field"><label for="host_role">Role</label>
+          <select id="host_role" name="host_role"><option value="">Choose…</option>{% for r in roles %}<option value="{{ r }}" {% if role == r %}selected{% endif %}>{{ r }}</option>{% endfor %}</select></div>
+      </div>
+      <div class="field">
+        <span class="label" id="lang-label">Languages you speak with guests</span>
+        <div class="choice-grid" role="group" aria-labelledby="lang-label">
+          {% for l in languages %}<label class="choice"><input type="checkbox" name="host_languages" value="{{ l }}" {% if l in langs %}checked{% endif %}>{{ l }}</label>{% endfor %}
+        </div>
+      </div>
+      <div class="field"><label for="host_welcome">Your welcome, in your own words</label>
+        <textarea id="host_welcome" name="host_welcome" maxlength="{{ max_welcome }}" placeholder="Two sentences. For example: I grew up here. My brother and I built the lodge in 2011.">{{ welcome or '' }}</textarea>
+        <span class="hint">Up to {{ max_welcome }} characters. Write it the way you would say it at the door.</span></div>
+      <div class="field">
+        <span class="label">Your photo</span>
+        <div class="row" style="gap:var(--space-4);align-items:center;flex-wrap:wrap">
+          {% if photo %}<img class="host__photo" src="{{ photo }}?size=card" alt="Your current photo">
+          <button class="btn btn-ghost btn-sm" type="submit" form="host-photo-delete">Remove photo</button>{% endif %}
+          <input type="file" name="files" accept="image/jpeg,image/png,image/webp" aria-label="Choose a photo">
+        </div>
+        <span class="hint">A real photo of you, ideally at the property. It replaces the current one.</span>
+        <span class="hint" data-upload-status aria-live="polite"></span>
+      </div>
+      <label class="check consent"><input type="checkbox" name="host_consent" value="1" {% if consent %}checked{% endif %}>
+        <span>Show my first name, photo, languages and welcome on my Fichua page. Untick any time to hide them.</span></label>
+    </section>
+  </div>
+  <aside class="panel panel-pad" style="position:sticky;top:var(--space-5);display:grid;gap:var(--space-3)">
+    <h2>How guests see it</h2>
+    {% if preview %}{{ ui.host_card(preview) }}{% else %}<p class="muted small" style="margin:0">Hidden. Tick the box and save to show it on your page.</p>{% endif %}
+    <button class="btn btn-primary btn-block" type="submit">Save profile</button>
+  </aside>
+</form>
+{% endblock %}

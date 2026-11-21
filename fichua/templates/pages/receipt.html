@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Receipt {{ booking.reference }} · {{ app_name }}{% endblock %}
+{% block meta %}<meta name="robots" content="noindex">{% endblock %}
+{% block body_class %}receipt-page{% endblock %}
+{% block content %}
+{# A payment receipt for the guest's records and their finance team (Brief 2, D3). It is not the hotel's tax invoice. #}
+<div class="container receipt">
+  <div class="receipt__actions no-print">
+    <a class="back-link" href="/bookings/{{ booking.reference }}?t={{ token }}">← Back to your booking</a>
+    <button class="btn btn-secondary btn-sm" type="button" onclick="window.print()">Print or save as PDF</button>
+  </div>
+  <article class="card card-pad receipt__sheet">
+    <header class="receipt__head">
+      <div>
+        <p class="receipt__eyebrow">Payment receipt</p>
+        <h1>{{ booking.reference }}</h1>
+      </div>
+      <div class="receipt__from">
+        <strong>{{ company.company }}</strong>
+        {% if company.address %}<span>{{ company.address }}</span>{% endif %}
+        {% if company.email %}<span>{{ company.email }}</span>{% endif %}
+      </div>
+    </header>
+
+    <dl class="receipt__grid">
+      <div><dt>Paid on</dt><dd>{{ (booking.paid_at or (payment and payment.created_at))|nice_date('%d %b %Y') }}</dd></div>
+      <div><dt>Paid by</dt><dd>{{ booking.guest_name }}<br><span class="muted">{{ booking.guest_email }}</span></dd></div>
+      {% if booking.invoice_company %}
+      <div><dt>For</dt><dd>{{ booking.invoice_company }}{% if booking.invoice_tax_id %}<br><span class="muted">Tax number {{ booking.invoice_tax_id }}</span>{% endif %}{% if booking.invoice_address %}<br><span class="muted">{{ booking.invoice_address }}</span>{% endif %}{% if booking.invoice_reference %}<br><span class="muted">Reference {{ booking.invoice_reference }}</span>{% endif %}</dd></div>
+      {% endif %}
+      <div><dt>Stay at</dt><dd>{{ booking.hotel_name }}{% if booking.hotel_legal_name %}<br><span class="muted">{{ booking.hotel_legal_name }}{% if booking.hotel_tax_id %} · Tax number {{ booking.hotel_tax_id }}{% endif %}</span>{% endif %}<br><span class="muted">{{ booking.full_address or booking.city }}</span></dd></div>
+    </dl>
+
+    <table class="receipt__lines">
+      <thead><tr><th scope="col">Description</th><th scope="col" class="num">Amount</th></tr></thead>
+      <tbody>
+        <tr><td>{{ booking.room_name }}{% if (booking.rooms or 1) > 1 %} × {{ booking.rooms }}{% endif %}, {{ booking.nights }} night{{ 's' if booking.nights != 1 }}
+          ({{ booking.check_in|nice_date('%d %b %Y') }} to {{ booking.check_out|nice_date('%d %b %Y') }}), {{ booking.guests }} guest{{ 's' if booking.guests != 1 }}</td>
+          <td class="num">{{ booking.total_price|usd }}</td></tr>
+      </tbody>
+      <tfoot>
+        <tr><th scope="row">Total paid by card</th><td class="num">{{ booking.total_price|usd }}</td></tr>
+        {% if booking.payment_status == 'refunded' %}<tr><th scope="row">Refunded</th><td class="num">−{{ booking.total_price|usd }}</td></tr>{% endif %}
+      </tfoot>
+    </table>
+    <p class="muted small receipt__note">Prices are in US dollars and include every charge for the stay. This receipt confirms your payment through {{ company.company }} for the stay above. For a tax invoice in the hotel's name, ask {{ booking.hotel_name }} and quote {{ booking.reference }}.</p>
+  </article>
+</div>
+{% endblock %}

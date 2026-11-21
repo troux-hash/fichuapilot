@@ -8,7 +8,7 @@ from __future__ import annotations
 from xml.sax.saxutils import escape
 
 from ..db import Connection
-from . import currency
+from . import catalog, currency
 
 LODGING_TYPES = {"Hotel": "Hotel", "Boutique": "Hotel", "Resort": "Resort"}  # everything else: LodgingBusiness
 PUBLIC_PAGES = ["/", "/partners", "/terms", "/privacy", "/partners/terms"]
@@ -59,9 +59,9 @@ def lodging(hotel: dict, rooms: list[dict], url: str, base: str) -> dict:
 
 
 def sitemap(conn: Connection, base: str) -> str:
-    rows = conn.all("SELECT id, updated_at FROM hotels WHERE is_active = TRUE ORDER BY id")
+    rows = conn.all("SELECT id, name, city, country, updated_at FROM hotels WHERE is_active = TRUE ORDER BY id")
     urls = [(base + path, None) for path in PUBLIC_PAGES]
-    urls += [(f"{base}/hotels/{r['id']}", str(r.get("updated_at") or "")[:10] or None) for r in rows]
+    urls += [(base + catalog.hotel_path(r), str(r.get("updated_at") or "")[:10] or None) for r in rows]
     items = []
     for loc, modified in urls:
         lastmod = f"<lastmod>{modified}</lastmod>" if modified else ""

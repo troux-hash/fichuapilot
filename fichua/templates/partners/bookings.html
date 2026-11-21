@@ -24,7 +24,8 @@
   {% for b in rows %}
   <tr>
     <td data-label="Booking">{% if b.source == 'offline' %}<span class="pill pill--offline">{{ b.offline_source or 'Offline' }}</span>{% else %}<span class="mono">{{ b.reference }}</span>{% endif %}</td>
-    <td data-label="Guest">{{ b.guest_name }}{% if b.guest_phone %}<br><span class="muted small">{{ b.guest_phone }}</span>{% endif %}</td>
+    <td data-label="Guest">{{ b.guest_name }}{% if b.guest_phone %}<br><span class="muted small">{{ b.guest_phone }}</span>{% endif %}
+      {% if b.invoice_company %}<br><span class="muted small" title="{{ b.invoice_address or '' }}">Invoice: {{ b.invoice_company }}{% if b.invoice_tax_id %} · tax no. {{ b.invoice_tax_id }}{% endif %}{% if b.invoice_reference %} · ref {{ b.invoice_reference }}{% endif %}</span>{% endif %}</td>
     <td data-label="Room">{{ b.room_name }}{% if (b.rooms or 1) > 1 %} <strong>× {{ b.rooms }}</strong>{% endif %}<br><span class="muted small">{{ b.guests }} guest{{ 's' if b.guests != 1 }}</span></td>
     <td data-label="Dates">{{ b.check_in|nice_date }} – {{ b.check_out|nice_date }}<br><span class="muted small">{{ b.nights }} night{{ 's' if b.nights != 1 }}</span></td>
     <td class="num" data-label="Guest paid">{% if b.source == 'offline' %}<span class="muted">{{ b.total_price|usd if b.total_price else '—' }}</span>{% else %}{{ b.total_price|usd }}{% endif %}</td>

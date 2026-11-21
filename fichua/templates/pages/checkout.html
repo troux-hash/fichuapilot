@@ -19,7 +19,7 @@
 </div>
 {% endmacro %}
 <div class="container" style="padding-bottom:var(--space-8)">
-  <a class="back-link" href="/hotels/{{ hotel.id }}?{{ qs(stay.as_params()) }}#rooms">← Back to {{ hotel.name }}</a>
+  <a class="back-link" href="{{ hotel.path }}?{{ qs(stay.as_params()) }}#rooms">← Back to {{ hotel.name }}</a>
   <h1 class="page-title">Confirm and pay</h1>
   <p class="muted">One step. No account needed.</p>
 
@@ -29,7 +29,7 @@
       {% for k, v in stay.as_params().items() %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endfor %}
       {% if date_note %}<div class="alert alert-info date-note" role="status">{{ date_note }}</div>{% endif %}
       {% if errors.general %}<div class="alert alert-error" role="alert">{{ errors.general }}</div>{% endif %}
-      {% if not offer and not errors.general %}<div class="alert alert-error" role="alert">This room is no longer available for these dates. <a href="/hotels/{{ hotel.id }}?{{ qs(stay.as_params()) }}#rooms">Choose another room</a>.</div>{% endif %}
+      {% if not offer and not errors.general %}<div class="alert alert-error" role="alert">This room is no longer available for these dates. <a href="{{ hotel.path }}?{{ qs(stay.as_params()) }}#rooms">Choose another room</a>.</div>{% endif %}
 
       <h2 style="font-size:var(--text-xl)">Who's checking in?</h2>
       <div class="form-grid">
@@ -46,6 +46,19 @@
           </select>
         </div>
         {{ field('special_requests', 'Special requests', 'textarea', required=false) }}
+        {# Business travellers need a receipt their finance team accepts (Brief 2, D3). Hidden until asked for. #}
+        <details class="invoice"{% if errors.invoice_company or form.get('invoice_company') or form.get('invoice_tax_id') %} open{% endif %}>
+          <summary>I need an invoice for my company</summary>
+          <div class="form-grid">
+            <div class="form-grid form-grid--2">
+              {{ field('invoice_company', 'Company name', autocomplete='organization', required=false) }}
+              {{ field('invoice_tax_id', 'Tax or VAT number', required=false) }}
+            </div>
+            {{ field('invoice_address', 'Billing address', 'textarea', required=false) }}
+            {{ field('invoice_reference', 'Purchase order or reference', required=false) }}
+            <p class="muted small" style="margin:0">Your receipt shows these details. The hotel sees them too, to issue an invoice in its name.</p>
+          </div>
+        </details>
       </div>
 
       <div class="pay-box">

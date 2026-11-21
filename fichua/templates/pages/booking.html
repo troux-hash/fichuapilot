@@ -22,7 +22,7 @@
   {% elif is_new and booking.status == 'confirmed' %}
   <div class="confirm-hero">
     <div class="confirm-check" aria-hidden="true"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></div>
-    <h1>You're booked. {{ booking.hotel_name }} is expecting you on {{ booking.check_in|nice_date('%a %d %b') }}.</h1>
+    <h1>You're booked. {{ booking.host_name if booking.host_consent_at and booking.host_name else booking.hotel_name }} is expecting you on {{ booking.check_in|nice_date('%a %d %b') }}.</h1>
     <p class="muted">Paid and confirmed.{% if whatsapp_ready %} We've sent the details to your WhatsApp.{% endif %} Bookmark this page: it's your booking.</p>
   </div>
   {% else %}
@@ -54,6 +54,7 @@
       </dl>
       <p class="small"><strong>Lead guest:</strong> {{ booking.guest_name }} · {{ booking.guest_email }}{% if booking.guest_phone %} · {{ booking.guest_phone }}{% endif %}</p>
       {% if booking.special_requests %}<p class="small"><strong>Requests:</strong> {{ booking.special_requests }}</p>{% endif %}
+      {% if booking.invoice_company %}<p class="small"><strong>Invoice for:</strong> {{ booking.invoice_company }}{% if booking.invoice_tax_id %} · tax number {{ booking.invoice_tax_id }}{% endif %}{% if booking.invoice_reference %} · ref {{ booking.invoice_reference }}{% endif %}</p>{% endif %}
 
       {% if booking.status == 'confirmed' %}
       {# What guests need on arrival day (IMP-02). #}
@@ -62,6 +63,8 @@
         {% if booking.hotel_wa %}<a class="stay-action" href="{{ booking.hotel_wa }}" target="_blank" rel="noopener">{{ i.icon('chat', 20) }}<span><strong>WhatsApp the hotel</strong><small>{{ booking.hotel_whatsapp or booking.hotel_phone }}</small></span></a>{% endif %}
         {% if booking.hotel_tel %}<a class="stay-action" href="tel:{{ booking.hotel_tel }}">{{ i.icon('phone', 20) }}<span><strong>Call reception</strong><small>{{ booking.hotel_phone }}</small></span></a>{% endif %}
         {% if calendar %}<a class="stay-action" href="{{ calendar.ics }}">{{ i.icon('calendar', 20) }}<span><strong>Add to calendar</strong><small>iPhone, Outlook and more</small></span></a>{% endif %}
+        <a class="stay-action" href="/bookings/{{ booking.reference }}/door?t={{ token }}">{{ i.icon('key', 20) }}<span><strong>Show at the door</strong><small>Your booking on one screen</small></span></a>
+        {% if booking.payment_status == 'paid' %}<a class="stay-action" href="/bookings/{{ booking.reference }}/receipt?t={{ token }}">{{ i.icon('list', 20) }}<span><strong>Receipt</strong><small>{{ 'For ' ~ booking.invoice_company if booking.invoice_company else 'Print or save as PDF' }}</small></span></a>{% endif %}
       </div>
       {% if calendar %}<p class="muted small" style="margin:0">Use Google Calendar? <a href="{{ calendar.google }}" target="_blank" rel="noopener">Add your stay there</a>.</p>{% endif %}
       <p class="small cancel-note">

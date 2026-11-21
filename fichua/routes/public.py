@@ -63,20 +63,36 @@ def results(request: Request):
                   date_note=_date_note(request, stay), **data)
 
 
+def _same_query(path: str, request: Request) -> str:
+    return f"{path}?{request.url.query}" if request.url.query else path
+
+
 @router.get("/hotels/{hotel_id}")
 def hotel(request: Request, hotel_id: str):
-    stay = _stay_from(request)
+    """Old and admin links: on to the hotel's readable address, dates kept."""
     with db.connect() as conn:
         h = catalog.get_hotel(conn, hotel_id)
+    if not h:
+        return render(request, "pages/not_found.html", status_code=404)
+    return RedirectResponse(_same_query(h["path"], request), status_code=301)
+
+
+@router.get("/stays/{country}/{city}/{slug}")
+def hotel_page(request: Request, country: str, city: str, slug: str):
+    stay = _stay_from(request)
+    with db.connect() as conn:
+        h = catalog.hotel_by_slug(conn, slug)
         if not h:
             return render(request, "pages/not_found.html", status_code=404)
-        rooms = catalog.hotel_rooms(conn, hotel_id, stay)
+        if request.url.path != h["path"]:  # renamed, or the country or city in the link is off
+            return RedirectResponse(_same_query(h["path"], request), status_code=301)
+        rooms = catalog.hotel_rooms(conn, h["id"], stay)
     back = request.query_params.get("destination") or h["city"]
     cheapest = next((r for r in rooms if r["available"]), None)
     rules = (policies.timeline(h.get("cancellation_policy"), cheapest["free_cancellation"], stay.check_in,
                                cheapest["total_price"]) if cheapest else [])
     base = base_url(request)
-    canonical = f"{base}/hotels/{h['id']}"  # one address per hotel, whatever dates are in the link
+    canonical = base + h["path"]  # one address per hotel, whatever dates are in the link
     return render(request, "pages/hotel.html", hotel=h, rooms=rooms, stay=stay, cheapest=cheapest, rules=rules,
                   can_ask=bool(enquiries.hotel_number(h)), canonical=canonical, summary=seo.summary(h),
                   share_image=seo.absolute((h.get("images") or [None])[0], base),
@@ -159,11 +175,14 @@ def place_booking(request: Request, room: str = Form(...), check_in: str = Form(
                   check_out: str = Form(...), guests: int = Form(...), rooms: int = Form(1),
                   guest_name: str = Form(""), guest_email: str = Form(""),
                   guest_phone: str = Form(""), special_requests: str = Form(""),
-                  guest_language: str = Form("en")):
+                  guest_language: str = Form("en"), invoice_company: str = Form(""), invoice_tax_id: str = Form(""),
+                  invoice_address: str = Form(""), invoice_reference: str = Form("")):
     stay = dates.parse_stay(check_in, check_out, guests, rooms)
     form = {"guest_name": guest_name, "guest_email": guest_email, "guest_phone": guest_phone,
-            "special_requests": special_requests, "guest_language": guest_language}
-    errors = bookings.validate_guest(guest_name, guest_email, guest_phone)
+            "special_requests": special_requests, "guest_language": guest_language,
+            "invoice_company": invoice_company, "invoice_tax_id": invoice_tax_id,
+            "invoice_address": invoice_address, "invoice_reference": invoice_reference}
+    errors = {**bookings.validate_guest(guest_name, guest_email, guest_phone), **bookings.validate_invoice(form)}
     redirect_to = None
     ip = ratelimit.client_ip(request)
     with db.connect() as conn:
@@ -269,6 +288,29 @@ def booking_calendar(request: Request, reference: str, t: str = ""):
         return render(request, "pages/not_found.html", status_code=404)
     return Response(stay_calendar.ics(b, f"{base_url(request)}/manage"), media_type="text/calendar; charset=utf-8",
                     headers={"Content-Disposition": f'attachment; filename="fichua-{b["reference"]}.ics"'})
+
+
+@router.get("/bookings/{reference}/door")
+def booking_door(request: Request, reference: str, t: str = ""):
+    """'Show at the door' (Brief 2, D2): the booking on one screen, big enough to read across a desk."""
+    with db.connect() as conn:
+        b = bookings.get_booking(conn, reference, t)
+    if not b or b["status"] == "pending":
+        return render(request, "pages/not_found.html", status_code=404)
+    return render(request, "pages/door.html", booking=b, token=t)
+
+
+@router.get("/bookings/{reference}/receipt")
+def booking_receipt(request: Request, reference: str, t: str = ""):
+    """A printable payment receipt, with the guest's company details when they gave them (Brief 2, D3)."""
+    with db.connect() as conn:
+        b = bookings.get_booking(conn, reference, t)
+        if not b or b["payment_status"] not in ("paid", "refunded"):
+            return render(request, "pages/not_found.html", status_code=404)
+        payment = conn.one("SELECT provider, amount, currency, status, created_at FROM payments "
+                           "WHERE booking_id = :b ORDER BY created_at DESC", {"b": b["id"]})
+        company = legal.facts(conn)
+    return render(request, "pages/receipt.html", booking=b, token=t, payment=payment, company=company)
 
 
 @router.post("/bookings/{reference}/cancel")

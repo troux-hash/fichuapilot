@@ -8,6 +8,8 @@ Rooms left = rooms to sell − confirmed bookings − unpaid checkouts still ins
 """
 from __future__ import annotations
 
+import re
+import unicodedata
 from datetime import date, timedelta
 from urllib.parse import urlencode
 
@@ -21,6 +23,30 @@ WEEKEND = (4, 5)  # Friday and Saturday nights
 
 def split_list(value: str | None) -> list[str]:
     return [v.strip() for v in (value or "").split(",") if v.strip()]
+
+
+def slugify(text) -> str:
+    """'Hôtel Lagune Bleue' → 'hotel-lagune-bleue': plain ASCII words joined by hyphens."""
+    text = unicodedata.normalize("NFKD", str(text or "")).encode("ascii", "ignore").decode("ascii")
+    return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
+
+
+def hotel_path(hotel: dict) -> str:
+    """The hotel's readable address, e.g. /stays/rwanda/musanze/volcano-view-lodge-mus-002 (Brief 2 §10).
+    It ends with the hotel's id, so every address is unique and an old link still finds the hotel
+    after a rename (it then redirects to the new address)."""
+    key = slugify(hotel["id"])
+    name = slugify(hotel.get("name"))
+    tail = f"{name}-{key}" if name and name != key else key
+    return f"/stays/{slugify(hotel.get('country')) or 'anywhere'}/{slugify(hotel.get('city')) or 'stay'}/{tail}"
+
+
+def hotel_by_slug(conn: Connection, slug: str) -> dict | None:
+    """The live hotel a readable address points to: the one whose id ends the slug."""
+    slug = slug.lower()
+    ids = [r["id"] for r in conn.all("SELECT id FROM hotels WHERE is_active = TRUE")]
+    matches = [i for i in ids if slugify(i) and (slug == slugify(i) or slug.endswith("-" + slugify(i)))]
+    return get_hotel(conn, max(matches, key=len)) if matches else None
 
 
 def media_urls(conn: Connection, owner_type: str, ids: list[str]) -> dict[str, list[str]]:
@@ -62,8 +88,19 @@ def map_links(hotel: dict) -> dict:
     return {"map_url": url, "map_embed": embed}
 
 
+def host_profile(row: dict, photo: str | None = None) -> dict | None:
+    """The host guests meet ("face before price"), only while the owner's consent is on record."""
+    name = (row.get("host_name") or "").strip()
+    if not row.get("host_consent_at") or not name:
+        return None
+    return {"name": name, "role": row.get("host_role") or "", "languages": split_list(row.get("host_languages")),
+            "welcome": (row.get("host_welcome") or "").strip(), "photo": photo}
+
+
 def hydrate_hotel(row: dict, photos: list[str] | None = None) -> dict:
     row = dict(row)
+    row["path"] = hotel_path(row)
+    row["host"] = host_profile(row)
     row["amenities"] = split_list(row.get("amenities"))
     row["images"] = (photos or []) + split_list(row.get("image_urls")) or [PLACEHOLDER_IMAGE]
     row["full_address"] = full_address(row)
@@ -80,7 +117,7 @@ def hydrate_room(row: dict, photos: list[str] | None = None) -> dict:
 
 # What the public JSON API may show. Everything else on a hotel or room row (owner, commission, contact
 # details, review notes, plan, stock) is internal: add a field here only if a guest may see it.
-PUBLIC_HOTEL_FIELDS = ("id", "name", "property_type", "star_rating", "city", "area",
+PUBLIC_HOTEL_FIELDS = ("id", "path", "name", "property_type", "star_rating", "city", "area",
                        "country", "address", "lat", "lng", "description", "amenities", "images", "currency",
                        "check_in_time", "check_out_time", "cancellation_policy", "children_allowed",
                        "pets_allowed", "smoking_allowed")
@@ -221,7 +258,10 @@ def get_hotel(conn: Connection, hotel_id: str, include_inactive: bool = False) -
     row = conn.one(sql, {"id": hotel_id})
     if not row:
         return None
-    return hydrate_hotel(row, media_urls(conn, "hotel", [hotel_id]).get(hotel_id))
+    hotel = hydrate_hotel(row, media_urls(conn, "hotel", [hotel_id]).get(hotel_id))
+    if hotel["host"]:
+        hotel["host"]["photo"] = (media_urls(conn, "host", [hotel_id]).get(hotel_id) or [None])[0]
+    return hotel
 
 
 def hotel_rooms(conn: Connection, hotel_id: str, stay: Stay) -> list[dict]:

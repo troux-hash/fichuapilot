@@ -25,6 +25,10 @@ AMENITIES = ["Free WiFi", "Pool", "Restaurant", "Bar", "Breakfast", "Free parkin
              "Beachfront", "Family rooms", "Laundry", "Conference room"]
 ROOM_AMENITIES = ["Wi-Fi", "Hot shower", "TV", "Desk", "Air conditioning", "Fan", "Mosquito net", "Balcony",
                   "Minibar", "Safe", "Kettle", "Bathtub"]
+HOST_ROLES = ["Owner", "Co-owner", "General manager", "Manager", "Host"]
+HOST_LANGUAGES = ["English", "French", "Kinyarwanda", "Swahili", "Fon", "Yoruba", "Baoulé", "Dioula",
+                  "Spanish", "German", "Italian", "Portuguese", "Arabic"]
+MAX_HOST_WELCOME = 300
 # Rough bounding boxes (lat_min, lat_max, lng_min, lng_max) for the "pin is in the country" check.
 COUNTRY_BOXES = {
     "Rwanda": (-2.95, -1.0, 28.8, 30.95),
@@ -163,6 +167,9 @@ def update_identity(conn: Connection, hotel_id: str, form: dict) -> list[str]:
     if lat is None or lng is None:
         errors.append("Drop the pin on your entrance on the map.")
     amenities = ", ".join(a for a in form.get("amenities", []) if a in AMENITIES)
+    conn.run("UPDATE hotels SET legal_name = :legal, tax_id = :tax WHERE id = :id",
+             {"legal": (form.get("legal_name") or "").strip()[:120] or None,
+              "tax": (form.get("tax_id") or "").strip()[:40] or None, "id": hotel_id})
     conn.run("UPDATE hotels SET name = :name, property_type = :ptype, country = :country, city = :city, area = :area, "
              "address = :address, lat = :lat, lng = :lng, phone = :phone, whatsapp = :whatsapp, email = :email, "
              "check_in_time = :cin, check_out_time = :cout, description = :description, amenities = :amenities, "
@@ -261,6 +268,27 @@ def delete_room(conn: Connection, hotel_id: str, room_id: str) -> str | None:
 
 
 # --------------------------------------------------------------------------- photos
+
+def update_host(conn: Connection, hotel: dict, form: dict) -> list[str]:
+    """The host guests meet on the hotel page. Saved either way; shown only while consent is ticked."""
+    name = (form.get("host_name") or "").strip()[:40]
+    welcome = " ".join((form.get("host_welcome") or "").split())
+    consent = form.get("host_consent") == "1"
+    errors = []
+    if consent and not name:
+        errors.append("Enter the first name guests will see, or untick the box to keep the profile hidden.")
+    if len(welcome) > MAX_HOST_WELCOME:
+        errors.append(f"Keep the welcome to {MAX_HOST_WELCOME} characters: two sentences is plenty.")
+    if errors:
+        return errors
+    role = form.get("host_role") if form.get("host_role") in HOST_ROLES else None
+    languages = ", ".join(lang for lang in HOST_LANGUAGES if lang in form.get("host_languages", []))
+    conn.run("UPDATE hotels SET host_name = :n, host_role = :r, host_languages = :l, host_welcome = :w, "
+             "host_consent_at = :c, updated_at = CURRENT_TIMESTAMP WHERE id = :id",
+             {"n": name or None, "r": role, "l": languages or None, "w": welcome or None,
+              "c": (hotel.get("host_consent_at") or utcnow()) if consent else None, "id": hotel["id"]})
+    return []
+
 
 def media_list(conn: Connection, owner_type: str, owner_id: str) -> list[dict]:
     return conn.all("SELECT id, label, sort FROM media WHERE owner_type = :t AND owner_id = :o "

@@ -41,6 +41,8 @@
     Address, contact number, photos and prices were checked before it went live. <a href="/#checks">What we check</a></span>
   </p>
 
+  {% if hotel.host %}{{ ui.host_card(hotel.host, hotel, stay, can_ask) }}{% endif %}
+
   <div class="hotel-layout">
     <div class="hotel-main">
       <section class="hotel-story">
@@ -79,7 +81,7 @@
 
       <section id="rooms">
         <h2>Choose your room</h2>
-        <form class="stay-form" method="get" action="/hotels/{{ hotel.id }}" data-stay-form>
+        <form class="stay-form" method="get" action="{{ hotel.path }}" data-stay-form>
           <div class="field"><label for="ci">Check-in</label><input class="input" id="ci" type="date" name="check_in" value="{{ stay.check_in }}" data-check-in></div>
           <div class="field"><label for="co">Check-out</label><input class="input" id="co" type="date" name="check_out" value="{{ stay.check_out }}" data-check-out></div>
           <div class="field"><label for="g">Guests</label><input class="input" id="g" type="number" name="guests" min="1" max="12" value="{{ stay.guests }}"></div>
@@ -111,7 +113,7 @@
               <a class="btn btn-primary" href="/book?{{ qs(stay.as_params(), room=r.id) }}">Reserve{% if stay.rooms > 1 %} {{ stay.rooms }} rooms{% endif %}</a>
             {% elif not r.fits_party %}
               <span class="muted small">Sleeps {{ r.max_guests }}{{ ' per room' if stay.rooms > 1 }}: not enough for {{ stay.guests }} guests{% if stay.rooms > 1 %} in {{ stay.rooms }} rooms{% endif %}</span>
-              {% if r.rooms_needed <= 8 %}<a class="btn btn-secondary btn-sm" href="/hotels/{{ hotel.id }}?{{ qs(stay.as_params(), rooms=r.rooms_needed) }}#rooms">Show {{ r.rooms_needed }} rooms</a>{% endif %}
+              {% if r.rooms_needed <= 8 %}<a class="btn btn-secondary btn-sm" href="{{ hotel.path }}?{{ qs(stay.as_params(), rooms=r.rooms_needed) }}#rooms">Show {{ r.rooms_needed }} rooms</a>{% endif %}
             {% elif stay.rooms > 1 %}
               <span class="muted small">Fewer than {{ stay.rooms }} rooms left for these dates</span>
             {% else %}
@@ -144,7 +146,7 @@
           <p class="muted small">for {{ ui.stay_summary(stay) }}</p>
           <a class="btn btn-secondary btn-block" href="#rooms">Change dates</a>
         {% endif %}
-        {% if can_ask %}{{ ui.ask_form(hotel, stay) }}{% endif %}
+        {% if can_ask %}{{ ui.ask_form(hotel, stay, label=('Ask ' ~ hotel.host.name ~ ' on WhatsApp') if hotel.host else 'Ask the hotel on WhatsApp') }}{% endif %}
         <ul class="trust-list">
           <li>The price you see is the price you pay</li>
           <li>Secure card payment, no account needed</li>

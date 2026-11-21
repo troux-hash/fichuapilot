@@ -58,6 +58,20 @@ COLUMN_MIGRATIONS: list[tuple[str, str, str]] = [
     ("bookings", "offline_source", "TEXT"),
     ("bookings", "guest_language", "TEXT"),
     ("bookings", "stripe_session_id", "TEXT"),
+    # The host guests meet, shown only once the owner ticks consent (Briefs 1 and 2).
+    ("hotels", "host_name", "TEXT"),
+    ("hotels", "host_role", "TEXT"),
+    ("hotels", "host_languages", "TEXT"),
+    ("hotels", "host_welcome", "TEXT"),
+    ("hotels", "host_consent_at", "TIMESTAMP"),
+    # The business behind the hotel, printed on guests' receipts.
+    ("hotels", "legal_name", "TEXT"),
+    ("hotels", "tax_id", "TEXT"),
+    # Who the guest's invoice is for, when they book for work (Brief 2, D3).
+    ("bookings", "invoice_company", "TEXT"),
+    ("bookings", "invoice_tax_id", "TEXT"),
+    ("bookings", "invoice_address", "TEXT"),
+    ("bookings", "invoice_reference", "TEXT"),
 ]
 
 

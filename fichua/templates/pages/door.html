@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}{{ booking.reference }} · {{ booking.hotel_name }}{% endblock %}
+{% block meta %}<meta name="robots" content="noindex">{% endblock %}
+{% block header %}{% endblock %}
+{% block footer %}{% endblock %}
+{% block body_class %}door-page{% endblock %}
+{% block content %}
+{# Show at the door: one screen with the booking, readable across a reception desk. A screenshot keeps it offline. #}
+<div class="door{% if booking.status != 'confirmed' %} door--void{% endif %}">
+  <p class="door__brand"><span class="logo-mark" aria-hidden="true">F</span>Fichua booking</p>
+  {% if booking.status == 'confirmed' %}
+  <p class="door__status">Paid in full · confirmed</p>
+  {% else %}
+  <p class="door__status">Cancelled{% if booking.payment_status == 'refunded' %} · refunded{% endif %}: not valid for a stay</p>
+  {% endif %}
+  <p class="door__ref" aria-label="Booking reference">{{ booking.reference }}</p>
+  <h1 class="door__hotel">{{ booking.hotel_name }}</h1>
+  <dl class="door__facts">
+    <div><dt>Guest</dt><dd>{{ booking.guest_name }}</dd></div>
+    <div><dt>Check-in</dt><dd>{{ booking.check_in|nice_date('%a %d %b %Y') }}, from {{ booking.check_in_time or '14:00' }}</dd></div>
+    <div><dt>Check-out</dt><dd>{{ booking.check_out|nice_date('%a %d %b %Y') }}, until {{ booking.check_out_time or '11:00' }}</dd></div>
+    <div><dt>Room</dt><dd>{{ booking.room_name }}{% if (booking.rooms or 1) > 1 %} × {{ booking.rooms }}{% endif %} · {{ booking.guests }} guest{{ 's' if booking.guests != 1 }}</dd></div>
+    {% if booking.status == 'confirmed' %}<div><dt>Paid</dt><dd>{{ booking.total_price|usd }}. Nothing more to pay.</dd></div>{% endif %}
+  </dl>
+  {% if booking.hotel_tel %}<p class="door__contact">Reception: <a href="tel:{{ booking.hotel_tel }}">{{ booking.hotel_phone }}</a></p>{% endif %}
+  <p class="door__tip">Take a screenshot to keep this card without a connection.</p>
+  <a class="door__back" href="/bookings/{{ booking.reference }}?t={{ token }}">← Back to your booking</a>
+</div>
+{% endblock %}

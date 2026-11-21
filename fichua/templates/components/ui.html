@@ -21,6 +21,21 @@
 {% endif %}
 {% endmacro %}
 
+{# The host guests meet: a face before the price (Brief 2 §5). Only with the owner's consent (catalog.host_profile). #}
+{% macro host_card(host, hotel=none, stay=none, can_ask=false) %}
+<section class="host" aria-label="Your host">
+  {% if host.photo %}<img class="host__photo" src="{{ host.photo }}?size=card" alt="{{ host.name }}" loading="lazy">
+  {% else %}<span class="host__photo host__photo--initial" aria-hidden="true">{{ host.name[:1] }}</span>{% endif %}
+  <div class="host__body">
+    <p class="host__eyebrow">Your host</p>
+    <h2 class="host__name">{{ host.name }}{% if host.role %}<span>, {{ host.role|lower }}</span>{% endif %}</h2>
+    {% if host.welcome %}<blockquote class="host__welcome">“{{ host.welcome }}”</blockquote>{% endif %}
+    {% if host.languages %}<ul class="host__langs" aria-label="Speaks">{% for l in host.languages %}<li>{{ l }}</li>{% endfor %}</ul>{% endif %}
+    {% if can_ask and hotel and stay %}{{ ask_form(hotel, stay, label='Ask ' ~ host.name ~ ' on WhatsApp', note=false, cls='') }}{% endif %}
+  </div>
+</section>
+{% endmacro %}
+
 {# "Ask the hotel" before booking: WhatsApp opens with the dates and a reference code (Brief 2 §6.2). #}
 {% macro ask_form(hotel, stay, label='Ask the hotel on WhatsApp', note=true, cls='btn-block') %}
 <form class="ask" method="post" action="/hotels/{{ hotel.id }}/ask" target="_blank">
@@ -88,7 +103,7 @@
 
 {% macro hotel_card(o, stay, destination) %}
 {% set h = o.hotel %}
-<a class="card hotel-card" href="/hotels/{{ h.id }}?{{ qs(stay.as_params(), destination=destination) }}">
+<a class="card hotel-card" href="{{ h.path }}?{{ qs(stay.as_params(), destination=destination) }}">
   <div class="hotel-card__media">
     <img src="{{ h.images[0]|card_img }}" alt="{{ h.name }}" loading="lazy">
     {% if o.free_until %}<span class="badge badge--glass hotel-card__badge">Free cancellation until {{ o.free_until|nice_date('%d %b') }}</span>{% endif %}
@@ -98,6 +113,7 @@
       <div>
         <h3 class="hotel-card__name">{{ h.name }}</h3>
         <p class="muted small" style="margin:2px 0 0">{{ stars(h.star_rating) }} {{ h.property_type or 'Hotel' }} · {{ h.city }}</p>
+        {% if h.host %}<p class="hotel-card__host">With {{ h.host.name }}{% if h.host.languages %} · {{ h.host.languages|join(', ') }}{% endif %}</p>{% endif %}
       </div>
     </div>
     {% if h.amenities %}<ul class="tags">{% for a in h.amenities[:3] %}<li>{{ a }}</li>{% endfor %}</ul>{% endif %}

@@ -50,10 +50,21 @@ def validate_guest(name: str, email: str, phone: str, phone_required: bool = Tru
     return errors
 
 
+INVOICE_FIELDS = {"invoice_company": 120, "invoice_tax_id": 40, "invoice_address": 300, "invoice_reference": 60}
+
+
+def validate_invoice(form: dict) -> dict[str, str]:
+    """Invoice details are optional; once any is given, the company name is what makes them usable."""
+    given = any((form.get(k) or "").strip() for k in INVOICE_FIELDS)
+    if given and not (form.get("invoice_company") or "").strip():
+        return {"invoice_company": "Enter the company name for the invoice, or leave the invoice details empty."}
+    return {}
+
+
 def create_booking(conn: Connection, stay: Stay, room_type_id: str, *, guest_name: str, guest_email: str = "",
                    guest_phone: str = "", special_requests: str = "", guest_language: str = "en",
                    source: str = "fichua", offline_source: str | None = None,
-                   agreed_amount: float | None = None) -> dict:
+                   agreed_amount: float | None = None, **invoice: str) -> dict:
     # Lock the room type so two checkouts can't take the last room at once (Postgres).
     room = conn.one("SELECT id, hotel_id FROM room_types WHERE id = :rt" + conn.lock_clause(), {"rt": room_type_id})
     if not room:
@@ -89,14 +100,18 @@ def create_booking(conn: Connection, stay: Stay, room_type_id: str, *, guest_nam
         "hold_expires_at": None if offline else utcnow() + timedelta(minutes=hold),
         "offline_source": offline_source if offline else None,
         "guest_language": guest_language if guest_language in ("en", "fr") else "en",
+        # Who the receipt is for when the guest travels for work; the hotel sees it to issue its own invoice.
+        **{k: (str(invoice.get(k) or "").strip()[:size] or None) for k, size in INVOICE_FIELDS.items()},
     }
     conn.run(
         "INSERT INTO bookings (id, reference, access_token, hotel_id, room_type_id, check_in, check_out, nights, "
         "guests, rooms, total_price, currency, guest_name, guest_email, guest_phone, special_requests, status, source, "
-        "payment_status, hold_expires_at, offline_source, guest_language) VALUES (:id, :reference, :access_token, "
+        "payment_status, hold_expires_at, offline_source, guest_language, invoice_company, invoice_tax_id, "
+        "invoice_address, invoice_reference) VALUES (:id, :reference, :access_token, "
         ":hotel_id, :room_type_id, :check_in, :check_out, :nights, :guests, :rooms, :total_price, :currency, "
         ":guest_name, :guest_email, :guest_phone, :special_requests, :status, :source, :payment_status, "
-        ":hold_expires_at, :offline_source, :guest_language)", booking)
+        ":hold_expires_at, :offline_source, :guest_language, :invoice_company, :invoice_tax_id, :invoice_address, "
+        ":invoice_reference)", booking)
     conn.run_many(
         "INSERT INTO booking_nights (booking_id, room_type_id, stay_date, units) VALUES (:b, :rt, :d, :u)",
         [{"b": booking["id"], "rt": room_type_id, "d": stay.check_in + timedelta(days=i), "u": stay.rooms}
@@ -138,6 +153,7 @@ BOOKING_DETAIL_SQL = """
 SELECT b.*, h.name AS hotel_name, h.city, h.country, h.address, h.area, h.lat, h.lng, h.image_urls,
        h.whatsapp AS hotel_whatsapp, h.phone AS hotel_phone, h.cancellation_policy,
        h.check_in_time, h.check_out_time, rt.name AS room_name,
+       h.host_name, h.host_consent_at, h.legal_name AS hotel_legal_name, h.tax_id AS hotel_tax_id,
        rt.free_cancellation, rt.breakfast_included
 FROM bookings b
 JOIN hotels h ON h.id = b.hotel_id
