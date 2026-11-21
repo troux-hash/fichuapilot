@@ -9,7 +9,8 @@
 | Hosting | Vercel project `fichuapilot`, functions in `pdx1` (Oregon) |
 | Database | Supabase Postgres, us-west-2 (Oregon), via the transaction pooler |
 | Payments | Stripe, **test mode** (US account, USD). Webhook `https://fichuapilot.vercel.app/api/stripe/webhook` (checkout.session.completed / async_payment_succeeded), created through the API; its signing secret is `STRIPE_WEBHOOK_SECRET` |
-| WhatsApp | Not connected yet (messages are logged in Admin → WhatsApp messages) |
+| WhatsApp | Not connected yet (messages are logged in Admin → WhatsApp messages). Messages are sent as approved **templates** (`fichua/services/whatsapp_templates.py`, English + French). To connect: put `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID` and `WHATSAPP_BUSINESS_ACCOUNT_ID` in `.env` and on Vercel, run `python scripts/whatsapp_templates.py create`, wait until `python scripts/whatsapp_templates.py list` shows `APPROVED`, then set your number in Admin → Settings. `WHATSAPP_SEND_MODE=text` sends free text instead (only reaches people who wrote to you in the last 24 h) |
+| Legal pages | `/terms`, `/privacy`, `/partners/terms`. Fill in the legal company name and contact email in Admin → Settings, and have a lawyer review the text before taking real bookings |
 | Payout job | Vercel Cron, daily 06:00 UTC → `/api/cron/payouts` (protected by `CRON_SECRET`) |
 
 **Every push to `main` deploys automatically.** Check a deploy with

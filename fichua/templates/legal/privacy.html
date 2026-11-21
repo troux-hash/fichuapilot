@@ -1,0 +1,62 @@
+{% extends "legal/_layout.html" %}
+{% block ltitle %}Privacy policy{% endblock %}
+{% block intro %}
+<p class="legal__intro">This policy explains what personal data Fichua{% if legal.company != 'Fichua' %} ({{ legal.company }}){% endif %} collects, why, who we share it with, and the rights you have. It covers guests who book and hotels that list on Fichua.</p>
+{% endblock %}
+{% block toc %}<a href="#collect">What we collect</a><a href="#why">Why</a><a href="#share">Who we share it with</a><a href="#stored">Where it is stored</a><a href="#keep">How long</a><a href="#rights">Your rights</a><a href="#security">Security</a><a href="#contact">Contact</a>{% endblock %}
+{% block body %}
+<section id="collect" class="legal__section">
+  <h2>1. What we collect</h2>
+  <ul>
+    <li><strong>When you book:</strong> your name, email, WhatsApp number, your stay (hotel, room, dates, guests), any special requests and the language you choose for messages.</li>
+    <li><strong>Payment:</strong> Stripe collects your card details. We receive the payment result and a reference, never your full card number.</li>
+    <li><strong>Hotels:</strong> the name, email, phone and WhatsApp numbers of the people who manage the hotel, the hotel's details and photos, and the bank or mobile-money account we pay into, which we confirm with you after approval.</li>
+    <li><strong>Technical data:</strong> our servers log IP addresses and browser details to keep the service secure. Hotels and Fichua staff who sign in get a sign-in cookie. Guests don't need an account, and we use no advertising cookies.</li>
+  </ul>
+</section>
+<section id="why" class="legal__section">
+  <h2>2. Why we use it</h2>
+  <ul>
+    <li>To make, confirm and manage bookings, take payment and handle refunds.</li>
+    <li>To send booking messages by WhatsApp to the guest, the hotel and Fichua.</li>
+    <li>To pay hotels and keep accounting records.</li>
+    <li>To check new hotels before they go live, and to prevent fraud and misuse.</li>
+  </ul>
+  <p>We use your data because we need it to give you the booking you asked for, because the law requires some records, and because we have a legitimate interest in running a safe service.</p>
+</section>
+<section id="share" class="legal__section">
+  <h2>3. Who we share it with</h2>
+  <ul>
+    <li><strong>The hotel you book:</strong> your name, WhatsApp number, dates, number of guests and requests.</li>
+    <li><strong>Stripe:</strong> to take payments and make refunds.</li>
+    <li><strong>Meta (WhatsApp Business):</strong> to deliver messages.</li>
+    <li><strong>Vercel and Supabase:</strong> the hosting and database services that run Fichua.</li>
+  </ul>
+  <p>We don't sell personal data. We share it with authorities only when the law requires it.</p>
+</section>
+<section id="stored" class="legal__section">
+  <h2>4. Where your data is stored</h2>
+  <p>Fichua runs on servers in the United States, so your data leaves your country. Our providers protect it with encryption and contractual safeguards.</p>
+</section>
+<section id="keep" class="legal__section">
+  <h2>5. How long we keep it</h2>
+  <ul>
+    <li>Booking and payment records: as long as tax and accounting law requires.</li>
+    <li>Hotel accounts: while the hotel lists on Fichua, then as long as the law requires.</li>
+    <li>Server logs: a few weeks.</li>
+  </ul>
+</section>
+<section id="rights" class="legal__section">
+  <h2>6. Your rights</h2>
+  <p>You can ask to see the data we hold about you, correct it, delete it where we don't have to keep it, or object to how we use it. Contact us using the details below.</p>
+  <p>You can also complain to your data protection authority: in Rwanda, the National Cyber Security Authority (NCSA); in Benin, the Autorité de Protection des Données Personnelles (APDP); in Côte d'Ivoire, the ARTCI.</p>
+</section>
+<section id="security" class="legal__section">
+  <h2>7. Security</h2>
+  <p>Connections to Fichua are encrypted. Passwords are stored only as one-way hashes. Card details never reach our servers. A booking page opens only with its private link, or with the booking reference and the email it was made with.</p>
+</section>
+<section id="age" class="legal__section">
+  <h2>8. Age</h2>
+  <p>You must be 18 or older to book on Fichua.</p>
+</section>
+{% endblock %}

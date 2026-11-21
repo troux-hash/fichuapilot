@@ -1,6 +1,7 @@
 """Fichua Admin: dashboard, approvals, hotels, finance, messages, access codes, settings, Excel."""
 from __future__ import annotations
 
+import re
 from datetime import date
 
 from fastapi import APIRouter, Form, Request, UploadFile
@@ -316,10 +317,15 @@ async def settings_save(request: Request):
         return r
     form = await request.form()
     errors = []
-    numeric = {"commission_pct": (0, 50), "payout_delay_hours": (0, 720), "rate_RWF": (1, 100000),
-               "rate_XOF": (1, 100000), "manager_fee_usd": (0, 10000), "hold_minutes": (10, 120)}
+    # key: (label, lowest, highest, unit) — the label and unit make the error read like the form.
+    numeric = {"commission_pct": ("Default commission", 0, 50, "%"),
+               "payout_delay_hours": ("Hours after check-in", 0, 720, " hours"),
+               "rate_RWF": ("The Rwandan franc rate", 1, 100000, ""),
+               "rate_XOF": ("The CFA franc rate", 1, 100000, ""),
+               "manager_fee_usd": ("The Hotel Manager fee", 0, 10000, " USD"),
+               "hold_minutes": ("The room hold", 10, 120, " minutes")}
     with db.connect() as conn:
-        for key, (lo, hi) in numeric.items():
+        for key, (label, lo, hi, unit) in numeric.items():
             raw = (form.get(key) or "").replace(",", "").strip()
             try:
                 value = float(raw)
@@ -327,11 +333,17 @@ async def settings_save(request: Request):
                     raise ValueError
                 app_settings.put(conn, key, f"{value:g}")
             except ValueError:
-                errors.append(f"{key.replace('_', ' ').capitalize()} must be a number between {lo} and {hi}.")
+                errors.append(f"{label} must be between {lo}{unit} and {hi}{unit}.")
         timing = form.get("payout_timing")
         if timing in app_settings.PAYOUT_TIMINGS:
             app_settings.put(conn, "payout_timing", timing)
         app_settings.put(conn, "admin_whatsapp", (form.get("admin_whatsapp") or "").strip())
+        email = (form.get("contact_email") or "").strip()
+        if email and not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
+            errors.append("Enter the contact email like name@company.com.")
+        app_settings.put(conn, "contact_email", email[:160])
+        app_settings.put(conn, "company_name", (form.get("company_name") or "").strip()[:120] or "Fichua")
+        app_settings.put(conn, "company_address", (form.get("company_address") or "").strip()[:200])
         if errors:
             conn.raw.rollback()
             return _page(request, conn, "admin/settings.html", "settings", status_code=422, errors=errors,

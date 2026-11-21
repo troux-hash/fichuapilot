@@ -363,3 +363,19 @@ input[type="range"] { width: 100%; accent-color: var(--pink); }
 .paycard__amount { font-family: var(--font-display); font-size: 2.6rem; font-weight: 700; letter-spacing: -0.04em; }
 .paycard__card { padding: var(--space-5); border-radius: var(--radius-md); background: var(--gradient-cool); color: #06071A; display: grid; gap: var(--space-3); box-shadow: var(--shadow-glow); }
 .paycard__card .mono { font-size: 1.15rem; letter-spacing: 0.12em; font-weight: 700; }
+
+/* Legal pages (terms, privacy, partner terms) and the small legal lines on forms */
+.legal { max-width: 780px; padding-block: var(--space-8); display: grid; gap: var(--space-4); }
+.legal__eyebrow { margin: 0; font-size: var(--text-xs); font-weight: var(--weight-heavy); letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-muted); }
+.legal__intro { margin: 0; max-width: 65ch; font-size: var(--text-lg); line-height: var(--leading-normal); color: var(--color-ink-soft); }
+.legal__toc { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.legal__toc a { font-size: var(--text-sm); padding: var(--space-1) var(--space-3); border-radius: var(--radius-pill); border: 1px solid var(--color-border); color: var(--color-ink-soft); }
+.legal__toc a:hover { text-decoration: none; color: var(--color-ink); border-color: var(--color-border-strong); }
+.legal__section { display: grid; gap: var(--space-3); padding-top: var(--space-5); border-top: 1px solid var(--color-border); scroll-margin-top: calc(var(--header-h) + var(--space-4)); }
+.legal__section h2 { font-size: var(--text-xl); }
+.legal__section p, .legal__section li { margin: 0; max-width: 68ch; line-height: 1.7; color: var(--color-ink-soft); }
+.legal__section ul { margin: 0; padding-left: var(--space-5); display: grid; gap: var(--space-2); }
+.legal__section strong { color: var(--color-ink); }
+.legal__links { margin: 0; padding-top: var(--space-4); font-size: var(--text-sm); color: var(--color-muted); }
+.legal-note { margin: 0; font-size: var(--text-xs); line-height: var(--leading-normal); color: var(--color-muted); }
+.legal-note a { color: inherit; text-decoration: underline; }

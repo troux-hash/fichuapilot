@@ -37,7 +37,7 @@
       {% if hotel.plan == 'manager' %}<div class="alert alert-info">Your access code includes the Fichua Hotel Manager (calendar, offline bookings){% if hotel.manager_free_until %} free until {{ hotel.manager_free_until|nice_date('%d %B %Y') }}{% else %} free{% endif %}.</div>{% endif %}
     </section>
     <label class="radio-card"><input type="checkbox" name="accept_terms" value="1" {% if hotel.terms_accepted_at %}checked{% endif %}>
-      <span>I agree to the Fichua partner terms and the {{ '%g'|format(pct) }}% commission on bookings made through Fichua.</span></label>
+      <span>I agree to the <a href="/partners/terms" target="_blank" rel="noopener">Fichua partner terms</a> and the {{ '%g'|format(pct) }}% commission on bookings made through Fichua.</span></label>
   </div>
   <aside class="panel panel-pad" style="position:sticky;top:var(--space-5);display:grid;gap:var(--space-3)">
     <h2>Save and review</h2>

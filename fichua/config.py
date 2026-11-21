@@ -50,6 +50,7 @@ class Settings:
     whatsapp_token: str
     whatsapp_phone_id: str
     whatsapp_api_version: str
+    whatsapp_send_mode: str
     cron_secret: str
 
 
@@ -81,6 +82,9 @@ def load_settings() -> Settings:
         whatsapp_token=os.getenv("WHATSAPP_TOKEN", "").strip(),
         whatsapp_phone_id=os.getenv("WHATSAPP_PHONE_NUMBER_ID", "").strip(),
         whatsapp_api_version=os.getenv("WHATSAPP_API_VERSION", "v23.0").strip(),
+        # "template" (default): approved templates, delivered to anyone. "text": free text, which Meta
+        # only delivers within 24 h of the person's last message (useful for a first test).
+        whatsapp_send_mode=os.getenv("WHATSAPP_SEND_MODE", "template").strip().lower(),
         cron_secret=os.getenv("CRON_SECRET", "").strip(),
     )
 

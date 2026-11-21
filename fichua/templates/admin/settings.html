@@ -37,6 +37,15 @@
       </div>
     </section>
     <section class="panel panel-pad" style="display:grid;gap:var(--space-4)">
+      <h2>Company details</h2>
+      <p class="muted small" style="margin:0">Shown on the <a href="/terms" target="_blank" rel="noopener">terms of service</a>, <a href="/privacy" target="_blank" rel="noopener">privacy policy</a> and <a href="/partners/terms" target="_blank" rel="noopener">partner terms</a>. Fill them in before you take real bookings.</p>
+      <div class="form-grid-2">
+        <div class="field"><label for="company_name">Legal company name</label><input id="company_name" name="company_name" value="{{ values.company_name }}" placeholder="Fichua Inc." maxlength="120"></div>
+        <div class="field"><label for="contact_email">Contact email</label><input id="contact_email" name="contact_email" type="email" value="{{ values.contact_email }}" placeholder="hello@yourdomain.com" maxlength="160"><span class="hint">Guests and hotels write here about bookings and their data.</span></div>
+      </div>
+      <div class="field"><label for="company_address">Postal address (optional)</label><input id="company_address" name="company_address" value="{{ values.company_address }}" maxlength="200"></div>
+    </section>
+    <section class="panel panel-pad" style="display:grid;gap:var(--space-4)">
       <h2>WhatsApp and checkout</h2>
       <div class="form-grid-2">
         <div class="field"><label for="admin_whatsapp">Your WhatsApp number</label><input id="admin_whatsapp" name="admin_whatsapp" type="tel" value="{{ values.admin_whatsapp }}" placeholder="+1 555 000 0000"><span class="hint">Where your "payment received" alerts go.</span></div>

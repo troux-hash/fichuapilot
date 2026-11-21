@@ -12,6 +12,9 @@ DEFAULTS: dict[str, str] = {
     "admin_whatsapp": "",              # where Fichua's own payment alerts go
     "manager_fee_usd": "0",            # monthly Hotel Manager fee (not charged yet)
     "hold_minutes": "35",              # how long an unpaid checkout holds the room
+    "company_name": "Fichua",          # legal name shown on the terms and privacy pages
+    "contact_email": "",               # where guests and hotels write about bookings and their data
+    "company_address": "",             # optional postal address for the legal pages
 }
 
 PAYOUT_TIMINGS = {

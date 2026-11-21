@@ -163,6 +163,8 @@ CREATE TABLE IF NOT EXISTS messages (
     language        TEXT,
     kind            TEXT,
     body            TEXT NOT NULL,
+    template        TEXT,                                 -- approved WhatsApp template name
+    params          TEXT,                                 -- JSON list of its parameters
     status          TEXT NOT NULL,                        -- queued | sent | failed | not_sent
     error           TEXT,
     created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

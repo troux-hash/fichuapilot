@@ -113,7 +113,7 @@ def test_full_payment_commission_payout_and_messages():
     guest_msg = next(m for m in msgs if m["role"] == "guest")
     assert "Paid in full" in guest_msg["body"] and "RWF" in guest_msg["body"]
     hotel_msg = next(m for m in msgs if m["role"] == "hotel")
-    assert "commission (7%)" in hotel_msg["body"]
+    assert "Fichua commission: 7% · $" in hotel_msg["body"]
     assert all(m["status"] == "not_sent" for m in msgs)  # WhatsApp not connected in tests
 
 

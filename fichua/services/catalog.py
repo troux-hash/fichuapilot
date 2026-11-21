@@ -47,6 +47,24 @@ def hydrate_room(row: dict, photos: list[str] | None = None) -> dict:
     return row
 
 
+# What the public JSON API may show. Everything else on a hotel or room row (owner, commission, contact
+# details, review notes, plan, stock) is internal: add a field here only if a guest may see it.
+PUBLIC_HOTEL_FIELDS = ("id", "name", "property_type", "star_rating", "guest_rating", "review_count", "city", "area",
+                       "country", "address", "lat", "lng", "description", "amenities", "images", "currency",
+                       "check_in_time", "check_out_time", "cancellation_policy", "children_allowed",
+                       "pets_allowed", "smoking_allowed")
+PUBLIC_ROOM_FIELDS = ("id", "hotel_id", "name", "room_kind", "max_guests", "bed_type", "size_sqm", "description",
+                      "amenities", "images", "breakfast_included", "free_cancellation")
+
+
+def public_hotel(hotel: dict) -> dict:
+    return {k: hotel.get(k) for k in PUBLIC_HOTEL_FIELDS}
+
+
+def public_room(room: dict) -> dict:
+    return {k: room.get(k) for k in PUBLIC_ROOM_FIELDS}
+
+
 def night_grid(conn: Connection, rooms: list[dict], start: date, end: date,
                exclude_booking_id: str | None = None) -> dict[tuple[str, str], dict]:
     """Price, rooms to sell, closed flag and rooms booked for every room × night in [start, end)."""

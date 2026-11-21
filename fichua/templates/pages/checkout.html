@@ -53,6 +53,7 @@
         {% if offer %}Pay {{ offer.total_price|usd }} and confirm{% else %}Not available{% endif %}
       </button>
       {% if offer %}{% set loc = offer.total_price|local(hotel.country) %}{% if loc %}<p class="muted small" style="text-align:center;margin:0">{{ loc }} at today's rate. Your card is charged in US dollars.</p>{% endif %}{% endif %}
+      <p class="legal-note" style="text-align:center">By paying, you accept the <a href="/terms" target="_blank" rel="noopener">terms of service</a> and this room's cancellation policy. The <a href="/privacy" target="_blank" rel="noopener">privacy policy</a> explains how we use your details.</p>
     </form>
 
     <aside class="card summary-card">

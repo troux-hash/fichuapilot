@@ -1,0 +1,57 @@
+{% extends "legal/_layout.html" %}
+{% block ltitle %}Partner terms{% endblock %}
+{% block eyebrow %}Fichua Partners{% endblock %}
+{% block intro %}
+<p class="legal__intro">These terms apply to hotels that list on Fichua. They are between your hotel and {{ legal.company }}. You accept them when you create a partner account and submit your hotel.</p>
+{% endblock %}
+{% block toc %}<a href="#listing">Your listing</a><a href="#prices">Prices and availability</a><a href="#payment">Payment and commission</a><a href="#cancellations">Cancellations</a><a href="#guest-data">Guest data</a><a href="#tools">Partner tools</a><a href="#ending">Ending</a><a href="#changes">Changes</a><a href="#contact">Contact</a>{% endblock %}
+{% block body %}
+<section id="listing" class="legal__section">
+  <h2>1. Your listing</h2>
+  <ul>
+    <li>Fichua checks every hotel before it goes live, and may ask for changes or decline a listing.</li>
+    <li>Your description, photos, rooms, prices and rules must be accurate, and the photos must be yours to use. Keep them up to date.</li>
+    <li>We may hide a listing that is misleading or unsafe, or that guests report, and we tell you why.</li>
+  </ul>
+</section>
+<section id="prices" class="legal__section">
+  <h2>2. Prices and availability</h2>
+  <ul>
+    <li>You set your prices in US dollars in the Fichua calendar. Guests see the total before they pay.</li>
+    <li>Keep your calendar accurate: add the bookings you take yourself (walk-ins, phone, WhatsApp, other websites) so a room is never sold twice.</li>
+    <li>You must honor every Fichua booking at the price and conditions shown to the guest.</li>
+  </ul>
+</section>
+<section id="payment" class="legal__section">
+  <h2>3. Payment and commission</h2>
+  <ul>
+    <li>Guests pay Fichua in full when they book.</li>
+    <li>Fichua keeps a commission of {{ legal.commission }}% of the booking amount, or the rate agreed for your hotel and shown in your partner portal, and pays you the rest.</li>
+    <li>Payouts follow the schedule shown in your partner portal, to the bank or mobile-money account we confirm with you after approval. Fichua never asks for bank details by WhatsApp.</li>
+    <li>Bookings you take yourself are free of commission.</li>
+  </ul>
+</section>
+<section id="cancellations" class="legal__section">
+  <h2>4. Cancellations</h2>
+  <ul>
+    <li>Your cancellation policy (Flexible, Moderate or Non-refundable) applies to your guests. When a guest cancels in time, Fichua refunds them and no payout is due for that booking. If we have already paid you, we deduct it from your next payout.</li>
+    <li>If you cannot host a guest, tell Fichua at once. We refund the guest and may recover the payout and any extra cost of rehousing them.</li>
+  </ul>
+</section>
+<section id="guest-data" class="legal__section">
+  <h2>5. Guest data</h2>
+  <p>Use guests' details only for their stay, keep them safe, and don't use them for marketing without the guest's consent. Our <a href="/privacy">privacy policy</a> explains how Fichua handles personal data.</p>
+</section>
+<section id="tools" class="legal__section">
+  <h2>6. Partner tools</h2>
+  <p>The partner portal (calendar, bookings and Hotel Manager) is free with your access code, as shown in your portal. If we introduce a fee, we tell you at least 30 days before, and you can stop using the paid tools.</p>
+</section>
+<section id="ending" class="legal__section">
+  <h2>7. Ending the partnership</h2>
+  <p>You can close your listing at any time by contacting us. Bookings already confirmed must still be honored. We can end the partnership if these terms are broken, with notice except in cases of fraud.</p>
+</section>
+<section id="changes" class="legal__section">
+  <h2>8. Changes to these terms</h2>
+  <p>We tell you at least 30 days before any important change, by WhatsApp or email.</p>
+</section>
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{# Shared frame for the terms, privacy and partner-terms pages. `legal` comes from services/legal.py. #}
+{% block title %}{% block ltitle %}{% endblock %} · {{ app_name }}{% endblock %}
+{% block content %}
+<article class="container legal">
+  <p class="legal__eyebrow">{% block eyebrow %}Legal{% endblock %}</p>
+  <h1 class="page-title">{{ self.ltitle() }}</h1>
+  <p class="muted small" style="margin:0">Last updated {{ legal.updated|nice_date('%d %B %Y') }} · {{ legal.company }}</p>
+  {% block intro %}{% endblock %}
+  <nav class="legal__toc" aria-label="On this page">{% block toc %}{% endblock %}</nav>
+  {% block body %}{% endblock %}
+  <section id="contact" class="legal__section">
+    <h2>Contact</h2>
+    {% if legal.email %}
+    <p>Write to {{ legal.company }} at <a href="mailto:{{ legal.email }}">{{ legal.email }}</a>{% if legal.address %}, or by post to {{ legal.address }}{% endif %}.</p>
+    {% else %}
+    <p>Questions about a booking? Open it from <a href="/manage">Manage booking</a>.{% if legal.address %} Post: {{ legal.address }}.{% endif %}</p>
+    {% endif %}
+  </section>
+  <p class="legal__links"><a href="/terms">Terms of service</a> · <a href="/privacy">Privacy policy</a> · <a href="/partners/terms">Partner terms</a></p>
+</article>
+{% endblock %}

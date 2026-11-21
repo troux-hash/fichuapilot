@@ -7,7 +7,7 @@ from fastapi import APIRouter, Form, Request
 from fastapi.responses import RedirectResponse, Response
 
 from ..db import db
-from ..services import bookings, catalog, dates, notify, partners, payments
+from ..services import bookings, catalog, dates, legal, notify, partners, payments
 from ..services.search import SORTS, Filters, search
 from ..web import base_url, qs, render
 
@@ -205,6 +205,24 @@ def manage_lookup(request: Request, reference: str = Form(""), email: str = Form
                       error="We couldn't find a booking with that reference and email.",
                       form={"reference": reference, "email": email})
     return RedirectResponse(f"/bookings/{b['reference']}?t={b['access_token']}", status_code=303)
+
+
+@router.get("/terms")
+def terms_page(request: Request):
+    with db.connect() as conn:
+        return render(request, "legal/terms.html", legal=legal.facts(conn))
+
+
+@router.get("/privacy")
+def privacy_page(request: Request):
+    with db.connect() as conn:
+        return render(request, "legal/privacy.html", legal=legal.facts(conn))
+
+
+@router.get("/partners/terms")
+def partner_terms_page(request: Request):
+    with db.connect() as conn:
+        return render(request, "legal/partner_terms.html", legal=legal.facts(conn))
 
 
 @router.get("/media/{media_id}")

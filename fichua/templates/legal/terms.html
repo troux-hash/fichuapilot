@@ -1,0 +1,60 @@
+{% extends "legal/_layout.html" %}
+{% block ltitle %}Terms of service{% endblock %}
+{% block intro %}
+<p class="legal__intro">These terms apply when you book a stay on Fichua{% if legal.company != 'Fichua' %}, which {{ legal.company }} runs{% endif %}. We take your booking and your payment and pass the booking to the hotel. The hotel provides your stay.</p>
+{% endblock %}
+{% block toc %}<a href="#booking">Booking</a><a href="#payment">Payment</a><a href="#cancelling">Cancelling and refunds</a><a href="#hotel-cancels">If the hotel can't host you</a><a href="#at-the-hotel">At the hotel</a><a href="#your-details">Your details</a><a href="#responsibility">Responsibility</a><a href="#changes">Changes</a><a href="#contact">Contact</a>{% endblock %}
+{% block body %}
+<section id="booking" class="legal__section">
+  <h2>1. Booking</h2>
+  <ul>
+    <li>Prices are in US dollars and are the total for your stay. The amount in Rwandan francs or CFA francs is only an estimate at today's rate.</li>
+    <li>While you pay, we hold the room for {{ legal.hold_minutes }} minutes. Your booking is confirmed only when your payment succeeds.</li>
+    <li>After payment you get a booking page, and we send the confirmation to the WhatsApp number you give us. You can always find your booking again with your reference and email on <a href="/manage">Manage booking</a>.</li>
+    <li>Check the guest name, dates and number of guests before you pay.</li>
+  </ul>
+</section>
+<section id="payment" class="legal__section">
+  <h2>2. Payment</h2>
+  <ul>
+    <li>You pay the full amount when you book. Nothing more is due to the hotel for the room. Extras you buy at the hotel are paid to the hotel.</li>
+    <li>Payments are processed by Stripe. Your card is charged in US dollars, and your bank may add a currency conversion fee. Fichua never sees or stores your full card number.</li>
+  </ul>
+</section>
+<section id="cancelling" class="legal__section">
+  <h2>3. Cancelling and refunds</h2>
+  <p>Each room shows its cancellation policy before you pay:</p>
+  <ul>
+    {% for key, item in legal.policies.items() %}<li><strong>{{ item[0] }}:</strong> {{ item[1] }}</li>{% endfor %}
+  </ul>
+  <ul>
+    <li>Cancel from your booking page. If you cancel in time, we refund the full amount to the card you paid with. Banks usually take 5 to 10 working days to show it.</li>
+    <li>If you don't arrive and didn't cancel in time, there is no refund.</li>
+    <li>To change dates, cancel (if your policy allows it) and book again.</li>
+  </ul>
+</section>
+<section id="hotel-cancels" class="legal__section">
+  <h2>4. If the hotel can't host you</h2>
+  <p>If the hotel cancels or can't give you the room you booked, we refund you in full and, where we can, help you find a similar stay nearby.</p>
+</section>
+<section id="at-the-hotel" class="legal__section">
+  <h2>5. At the hotel</h2>
+  <ul>
+    <li>Check-in and check-out times and house rules (children, pets, smoking) are on the hotel page and in your booking.</li>
+    <li>The hotel may ask for identification at check-in, as the law requires.</li>
+    <li>Anything you buy at the hotel (meals not included in your room, drinks, transport) is between you and the hotel.</li>
+  </ul>
+</section>
+<section id="your-details" class="legal__section">
+  <h2>6. Your details</h2>
+  <p>Give your real name, email and WhatsApp number: we use them to confirm and manage your booking. The <a href="/privacy">privacy policy</a> explains how we handle your data.</p>
+</section>
+<section id="responsibility" class="legal__section">
+  <h2>7. Responsibility</h2>
+  <p>Fichua is responsible for your booking and your payment. The hotel is responsible for the stay itself and for its description, photos and rules, which we check before it goes live. Where the law allows, our responsibility for a booking is limited to the amount you paid for it. Nothing in these terms takes away rights you have under the consumer law of your country.</p>
+</section>
+<section id="changes" class="legal__section">
+  <h2>8. Changes to these terms</h2>
+  <p>We may update these terms. The version on this page on the day you book applies to your booking.</p>
+</section>
+{% endblock %}
