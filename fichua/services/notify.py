@@ -59,6 +59,11 @@ def _guests(count, lang: str) -> str:
     return f"{n} guest{'' if n == 1 else 's'}"
 
 
+def _hotel_phone(hotel: dict) -> str:
+    """The hotel's WhatsApp (or reception) number with its country code: Meta needs it international."""
+    return currency.international_phone(hotel.get("whatsapp") or hotel.get("phone"), hotel.get("country"))
+
+
 def whatsapp_ready() -> bool:
     return bool(settings.whatsapp_token and settings.whatsapp_phone_id)
 
@@ -155,7 +160,7 @@ def booking_paid(conn: Connection, booking: dict, hotel: dict, room_name: str) -
                   _money(total, country, rates, guest_lang), hotel.get("check_in_time") or "14:00",
                   hotel.get("address") or hotel.get("city") or "-"],
           booking_id=booking["id"], hotel_id=hotel["id"])
-    queue(conn, role="hotel", to_phone=hotel.get("whatsapp") or hotel.get("phone"), language=hotel_lang,
+    queue(conn, role="hotel", to_phone=_hotel_phone(hotel), language=hotel_lang,
           kind="booking_paid", template="fichua_new_booking",
           params=[hotel["name"], booking["reference"], f"{name}, {_guests(booking['guests'], hotel_lang)}{phone}",
                   f"{room_name} × 1", stay(hotel_lang), _money(total, country, rates, hotel_lang), fee(hotel_lang),
@@ -183,7 +188,7 @@ def booking_cancelled(conn: Connection, booking: dict, hotel: dict, refunded: bo
     queue(conn, role="guest", to_phone=booking.get("guest_phone"), language=guest_lang, kind="booking_cancelled",
           template="fichua_booking_cancelled", params=[booking["reference"], hotel["name"], refund(guest_lang)],
           booking_id=booking["id"], hotel_id=hotel["id"])
-    queue(conn, role="hotel", to_phone=hotel.get("whatsapp") or hotel.get("phone"), language=hotel_lang,
+    queue(conn, role="hotel", to_phone=_hotel_phone(hotel), language=hotel_lang,
           kind="booking_cancelled", template="fichua_booking_cancelled_hotel",
           params=[booking["reference"], booking.get("guest_name") or "-", _date(booking["check_in"], hotel_lang)],
           booking_id=booking["id"], hotel_id=hotel["id"])
@@ -201,5 +206,5 @@ def hotel_decision(conn: Connection, hotel: dict, decision: str, note: str = "")
         default = {"changes": ("Please review your listing.", "Merci de revoir votre annonce."),
                    "rejected": ("No reason was given.", "Aucune raison n’a été donnée.")}[decision]
         params.append(note.strip() or (default[1] if lang == "fr" else default[0]))
-    queue(conn, role="hotel", to_phone=hotel.get("whatsapp") or hotel.get("phone"), language=lang,
+    queue(conn, role="hotel", to_phone=_hotel_phone(hotel), language=lang,
           kind=f"hotel_{decision}", template=template, params=params, hotel_id=hotel["id"])

@@ -103,6 +103,19 @@
     scrim?.addEventListener("click", () => open(false));
   }
 
+  // A field's error goes away as soon as the guest starts fixing it; its hint comes back.
+  $$(".field.has-error").forEach((field) => {
+    const input = $("input, textarea, select", field);
+    input?.addEventListener("input", () => {
+      field.classList.remove("has-error");
+      $(".error", field)?.remove();
+      const hint = $(".hint", field);
+      if (hint) { hint.hidden = false; input.setAttribute("aria-describedby", hint.id); }
+      else input.removeAttribute("aria-describedby");
+      input.removeAttribute("aria-invalid");
+    }, { once: true });
+  });
+
   // Confirm destructive actions; prevent double submits.
   $$("form[data-confirm]").forEach((f) => f.addEventListener("submit", (e) => { if (!confirm(f.dataset.confirm)) e.preventDefault(); }));
   $$("[data-checkout]").forEach((f) => f.addEventListener("submit", () => {

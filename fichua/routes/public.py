@@ -7,7 +7,8 @@ from fastapi import APIRouter, Form, Request
 from fastapi.responses import RedirectResponse, Response
 
 from ..db import db
-from ..services import bookings, catalog, dates, legal, notify, partners, payments, ratelimit
+from ..services import (bookings, catalog, currency, dates, legal, notify, partners, payments, policies,
+                        ratelimit, stay_calendar)
 from ..services.search import SORTS, Filters, search
 from ..web import base_url, qs, render
 
@@ -17,6 +18,12 @@ router = APIRouter()
 def _stay_from(request: Request) -> dates.Stay:
     q = request.query_params
     return dates.parse_stay(q.get("check_in"), q.get("check_out"), q.get("guests"))
+
+
+def _date_note(request: Request, stay: dates.Stay) -> str | None:
+    """'We changed your dates to …' when the link asked for impossible dates (IMP-01)."""
+    q = request.query_params
+    return dates.adjustment(q.get("check_in"), q.get("check_out"), q.get("guests"), stay)
 
 
 def _flush_messages() -> None:
@@ -47,7 +54,7 @@ def results(request: Request):
     base = {"destination": destination, **stay.as_params()}
     return render(request, "pages/results.html", destination=destination, stay=stay,
                   filters=filters, sorts=SORTS, base=base, presets=dates.presets(),
-                  destinations=destinations, largest_room=largest, **data)
+                  destinations=destinations, largest_room=largest, date_note=_date_note(request, stay), **data)
 
 
 @router.get("/hotels/{hotel_id}")
@@ -60,7 +67,18 @@ def hotel(request: Request, hotel_id: str):
         rooms = catalog.hotel_rooms(conn, hotel_id, stay)
     back = request.query_params.get("destination") or h["city"]
     return render(request, "pages/hotel.html", hotel=h, rooms=rooms, stay=stay,
-                  back_qs=qs({"destination": back, **stay.as_params()}))
+                  back_qs=qs({"destination": back, **stay.as_params()}), date_note=_date_note(request, stay))
+
+
+def _nights_text(stay: dates.Stay, offer: dict | None) -> str:
+    """'2 nights × $65' when every night costs the same, '3 nights (average $70)' when they differ."""
+    nights = f"{stay.nights} night{'' if stay.nights == 1 else 's'}"
+    prices = (offer or {}).get("nightly") or []
+    if not prices:
+        return nights
+    if len(set(prices)) == 1:
+        return f"{nights} × {currency.usd(prices[0])}"
+    return f"{nights} (average {currency.usd(round(offer['total_price'] / stay.nights, 2))})"
 
 
 def _checkout_context(conn, stay: dates.Stay, room_id: str):
@@ -69,8 +87,11 @@ def _checkout_context(conn, stay: dates.Stay, room_id: str):
         return None
     hotel = catalog.get_hotel(conn, room["hotel_id"])
     live = catalog.availability(conn, stay, room_type_id=room_id)
-    return {"room": room, "hotel": hotel, "offer": live[0] if live else None, "stay": stay,
-            "policy": partners.POLICIES.get((hotel or {}).get("cancellation_policy") or "flexible")}
+    offer = live[0] if live else None
+    policy = (hotel or {}).get("cancellation_policy")
+    return {"room": room, "hotel": hotel, "offer": offer, "stay": stay,
+            "policy": partners.POLICIES.get(policy or "flexible"), "nights_text": _nights_text(stay, offer),
+            "free_until": policies.open_until(policy, room["free_cancellation"], stay.check_in)}
 
 
 @router.get("/book")
@@ -80,7 +101,8 @@ def checkout(request: Request, room: str):
         ctx = _checkout_context(conn, stay, room)
     if not ctx or not ctx["hotel"]:
         return render(request, "pages/not_found.html", status_code=404)
-    return render(request, "pages/checkout.html", form={"guest_language": "en"}, errors={}, **ctx)
+    return render(request, "pages/checkout.html", form={"guest_language": "en"}, errors={},
+                  date_note=_date_note(request, stay), **ctx)
 
 
 @router.post("/book")
@@ -181,8 +203,23 @@ def booking_detail(request: Request, reference: str, t: str = "", new: int = 0, 
     if cancelled and b["status"] == "cancelled":
         message = ("Your booking is cancelled and your payment is being refunded. Refunds reach your card in "
                    "5 to 10 working days." if b["payment_status"] == "refunded" else "Your booking is cancelled.")
+    calendar = None
+    if b["status"] == "confirmed":
+        calendar = {"ics": f"/bookings/{b['reference']}/calendar.ics?{qs({'t': t})}",
+                    "google": stay_calendar.google_link(b, f"{base_url(request)}/manage")}
     return render(request, "pages/booking.html", booking=b, token=t, is_new=bool(new) or confirmed_now,
-                  pay_url=pay_url, whatsapp_ready=notify.whatsapp_ready(), message=message)
+                  pay_url=pay_url, whatsapp_ready=notify.whatsapp_ready(), message=message, calendar=calendar)
+
+
+@router.get("/bookings/{reference}/calendar.ics")
+def booking_calendar(request: Request, reference: str, t: str = ""):
+    """The stay as a calendar event (IMP-02): check-in to check-out at the hotel's local times."""
+    with db.connect() as conn:
+        b = bookings.get_booking(conn, reference, t)
+    if not b or b["status"] != "confirmed":
+        return render(request, "pages/not_found.html", status_code=404)
+    return Response(stay_calendar.ics(b, f"{base_url(request)}/manage"), media_type="text/calendar; charset=utf-8",
+                    headers={"Content-Disposition": f'attachment; filename="fichua-{b["reference"]}.ics"'})
 
 
 @router.post("/bookings/{reference}/cancel")
@@ -243,9 +280,9 @@ def partner_terms_page(request: Request):
 
 
 @router.get("/media/{media_id}")
-def media(media_id: str):
+def media(media_id: str, size: str = ""):
     with db.connect() as conn:
-        m = partners.get_media(conn, media_id)
+        m = partners.get_media(conn, media_id, card=size == "card")
     if not m:
         return Response(status_code=404)
     return Response(content=m["data"], media_type=m["content_type"],

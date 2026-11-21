@@ -8,7 +8,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from ..db import Connection
-from . import catalog
+from . import catalog, policies
 from .dates import Stay
 
 SORTS = {
@@ -66,13 +66,16 @@ def _offers(conn: Connection, stay: Stay, destination: str | None) -> list[dict]
     rooms = catalog.rooms_by_ids(conn, [a["room_type_id"] for a in avail])
     offers = []
     for a in avail:
-        room = rooms[a["room_type_id"]]
+        room, hotel = rooms[a["room_type_id"]], hotels[a["hotel_id"]]
         offers.append({
-            "hotel": hotels[a["hotel_id"]],
+            "hotel": hotel,
             "room": room,
             "total_price": round(a["total_price"], 2),
             "per_night": round(a["total_price"] / stay.nights, 2),
             "rooms_left": int(a["rooms_left"]),
+            # The last day to cancel for free, or None (non-refundable, or too close to check-in).
+            "free_until": policies.open_until(hotel.get("cancellation_policy"), room["free_cancellation"],
+                                              stay.check_in),
         })
     return offers
 
@@ -80,7 +83,7 @@ def _offers(conn: Connection, stay: Stay, destination: str | None) -> list[dict]
 def _best_per_hotel(offers: list[dict], f: Filters) -> list[dict]:
     best: dict[str, dict] = {}
     for o in offers:
-        if f.free_cancellation and not o["room"]["free_cancellation"]:
+        if f.free_cancellation and not o["free_until"]:
             continue
         if f.breakfast and not o["room"]["breakfast_included"]:
             continue

@@ -22,6 +22,7 @@ _PARAM = re.compile(r"(?<![:\w]):([a-zA-Z_]\w*)")
 # Columns added after the first release. Postgres and SQLite differ in how "add if missing"
 # works, so they are applied here instead of in schema.sql. Append only; never edit old lines.
 COLUMN_MIGRATIONS: list[tuple[str, str, str]] = [
+    ("media", "thumb", "BYTEA"),
     ("messages", "template", "TEXT"),
     ("messages", "params", "TEXT"),
     ("hotels", "status", "TEXT DEFAULT 'live'"),

@@ -22,7 +22,7 @@
     <section class="panel panel-pad" style="display:grid;gap:var(--space-4)">
       <h2>Photos</h2>
       {% if hotel.images and hotel.images[0] != '/static/img/placeholder.svg' %}
-      <div class="photo-grid">{% for img in hotel.images[:8] %}<div class="photo"><img src="{{ img }}" alt="" loading="lazy"></div>{% endfor %}</div>
+      <div class="photo-grid">{% for img in hotel.images[:8] %}<div class="photo"><img src="{{ img|card_img }}" alt="" loading="lazy"></div>{% endfor %}</div>
       {% else %}<p class="muted" style="margin:0">No photos yet.</p>{% endif %}
     </section>
     <section class="panel panel-pad" style="display:grid;gap:var(--space-3)">

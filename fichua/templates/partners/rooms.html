@@ -10,7 +10,7 @@
 <div style="display:grid;gap:var(--space-3)">
   {% for r in rooms %}
   <article class="room-row">
-    <img src="{{ r.images[0] }}" alt="">
+    <img src="{{ r.images[0]|card_img }}" alt="">
     <div style="min-width:0">
       <h3>{{ r.name }}</h3>
       <p class="muted small" style="margin:2px 0 0">{{ r.total_rooms or 0 }} room{{ 's' if (r.total_rooms or 0) != 1 }} · up to {{ r.max_guests }} guest{{ 's' if r.max_guests != 1 }}{% if r.bed_type %} · {{ r.bed_type }}{% endif %} · {{ r.photo_count }} photo{{ 's' if r.photo_count != 1 }}</p>

@@ -115,6 +115,7 @@ CREATE TABLE IF NOT EXISTS media (
     data            BYTEA NOT NULL,
     label           TEXT,
     sort            INTEGER DEFAULT 0,
+    thumb           BYTEA,                                -- ~800 px JPEG copy for cards (made in the browser)
     created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

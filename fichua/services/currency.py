@@ -1,11 +1,17 @@
-"""USD is Fichua's master currency. Guests and hotels also see their local equivalent."""
+"""USD is Fichua's master currency. Guests and hotels also see their local equivalent.
+
+Also the other facts Fichua needs per market: WhatsApp language, phone country code, time zone.
+"""
 from __future__ import annotations
 
-# Country (as stored on hotels) → ISO code, local currency, label, WhatsApp language.
+import re
+
+# Country (as stored on hotels) → ISO code, local currency, label, WhatsApp language, dialling code,
+# and UTC offset in hours (none of the three changes clocks in summer).
 COUNTRIES = {
-    "Rwanda": {"iso": "RW", "currency": "RWF", "label": "RWF", "lang": "en"},
-    "Benin": {"iso": "BJ", "currency": "XOF", "label": "FCFA", "lang": "fr"},
-    "Côte d'Ivoire": {"iso": "CI", "currency": "XOF", "label": "FCFA", "lang": "fr"},
+    "Rwanda": {"iso": "RW", "currency": "RWF", "label": "RWF", "lang": "en", "dial": "250", "utc_offset": 2},
+    "Benin": {"iso": "BJ", "currency": "XOF", "label": "FCFA", "lang": "fr", "dial": "229", "utc_offset": 1},
+    "Côte d'Ivoire": {"iso": "CI", "currency": "XOF", "label": "FCFA", "lang": "fr", "dial": "225", "utc_offset": 0},
 }
 ALIASES = {"cote d'ivoire": "Côte d'Ivoire", "côte d’ivoire": "Côte d'Ivoire", "ivory coast": "Côte d'Ivoire",
            "bénin": "Benin", "rwanda": "Rwanda", "benin": "Benin", "côte d'ivoire": "Côte d'Ivoire"}
@@ -25,6 +31,35 @@ def country_info(name: str | None) -> dict | None:
 def language_for(country: str | None) -> str:
     info = country_info(country)
     return info["lang"] if info else "en"
+
+
+def utc_offset(country: str | None) -> int:
+    info = country_info(country)
+    return info["utc_offset"] if info else 0
+
+
+def international_phone(phone: str | None, country: str | None = None) -> str:
+    """Digits with the country code, as WhatsApp needs ('250788000000'), from what a hotel typed.
+
+    '+250 788 000 000' and '00250…' are already international. A local number gets its country's code:
+    Rwanda drops the leading 0 ('0788…' → '250788…'); Benin and Côte d'Ivoire keep it, because their
+    10-digit numbers start with 0 after the code ('01 97…' → '2290197…').
+    """
+    raw = (phone or "").strip()
+    digits = re.sub(r"\D", "", raw)
+    if not digits or raw.startswith("+"):
+        return digits
+    if digits.startswith("00"):
+        return digits[2:]
+    info = country_info(country)
+    if not info:
+        return digits
+    dial = info["dial"]
+    if digits.startswith(dial) and len(digits) >= len(dial) + 8:
+        return digits
+    if info["iso"] == "RW":
+        return dial + digits.lstrip("0")
+    return dial + digits
 
 
 def usd(amount, decimals: bool = False) -> str:

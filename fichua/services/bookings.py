@@ -11,8 +11,10 @@ import secrets
 import uuid
 from datetime import date, timedelta
 
+from urllib.parse import quote, urlencode
+
 from ..db import Connection, utcnow
-from . import app_settings, catalog, notify, payments, payouts
+from . import app_settings, catalog, currency, notify, payments, payouts, policies
 from .dates import Stay
 
 _REF_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"  # no 0/O/1/I/L confusion
@@ -124,7 +126,8 @@ def confirm_payment(conn: Connection, booking_id: str, *, provider: str, provide
 
 
 BOOKING_DETAIL_SQL = """
-SELECT b.*, h.name AS hotel_name, h.city, h.country, h.address, h.image_urls, h.whatsapp AS hotel_whatsapp,
+SELECT b.*, h.name AS hotel_name, h.city, h.country, h.address, h.area, h.lat, h.lng, h.image_urls,
+       h.whatsapp AS hotel_whatsapp, h.phone AS hotel_phone, h.cancellation_policy,
        h.check_in_time, h.check_out_time, rt.name AS room_name,
        rt.free_cancellation, rt.breakfast_included
 FROM bookings b
@@ -153,9 +156,26 @@ def _decorate(conn: Connection, row: dict) -> dict:
                and row["hold_expires_at"] <= utcnow().isoformat())
     row["is_expired"] = bool(expired)
     row["awaiting_payment"] = row["status"] == "pending" and not expired
-    row["can_cancel"] = (row["status"] == "confirmed" and bool(row["free_cancellation"])
-                         and date.fromisoformat(row["check_in"]) > date.today())
+    # The same rule as the badge the guest saw before paying (services/policies.py).
+    row["free_until"] = policies.free_until(row.get("cancellation_policy"), row["free_cancellation"], row["check_in"])
+    row["can_cancel"] = (row["status"] == "confirmed" and row["free_until"] is not None
+                         and date.today() <= row["free_until"])
+    row["full_address"] = catalog.full_address(row)
+    row["map_url"] = catalog.map_links(row)["map_url"]
+    row.update(contact_links(row))
     return row
+
+
+def contact_links(row: dict) -> dict:
+    """Call and WhatsApp links for the hotel, in the international format phones need."""
+    phone = currency.international_phone(row.get("hotel_phone"), row.get("country"))
+    whatsapp = currency.international_phone(row.get("hotel_whatsapp") or row.get("hotel_phone"), row.get("country"))
+    day = lambda value: date.fromisoformat(value[:10]).strftime("%d %b")  # noqa: E731
+    hello = (f"Hello, I have a Fichua booking at {row.get('hotel_name')}: {row.get('reference')}, "
+             f"{day(row['check_in'])} to {day(row['check_out'])}.")
+    return {"hotel_tel": f"+{phone}" if phone else None,
+            # %20 rather than +: WhatsApp documents percent-encoding for the message text.
+            "hotel_wa": f"https://wa.me/{whatsapp}?" + urlencode({"text": hello}, quote_via=quote) if whatsapp else None}
 
 
 def cancel_booking(conn: Connection, reference: str, token: str) -> dict:

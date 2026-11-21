@@ -102,6 +102,7 @@
         </label>
       </div>
     </div>
+    {% if date_note %}<div class="alert alert-info date-note" role="status">{{ date_note }}</div>{% endif %}
 
     {% if results %}
       <div class="results-grid">

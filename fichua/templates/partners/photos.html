@@ -22,7 +22,7 @@
   <div class="photo-grid">
     {% for p in photos %}
     <div class="photo">
-      <img src="/media/{{ p.id }}" alt="Hotel photo {{ loop.index }}" loading="lazy">
+      <img src="{{ ('/media/' ~ p.id)|card_img }}" alt="Hotel photo {{ loop.index }}" loading="lazy">
       {% if loop.first %}<span class="pill pill--live photo__badge">Cover</span>{% endif %}
       <div class="photo__actions">
         {% if not loop.first %}<form method="post" action="/partners/photos/{{ p.id }}/cover"><button type="submit">Make cover</button></form>{% endif %}

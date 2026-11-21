@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "components/icons.html" as i %}
 
 {% block title %}Booking {{ booking.reference }} · {{ app_name }}{% endblock %}
 
@@ -32,7 +33,7 @@
 
   {% if not booking.is_expired %}
   <article class="card booking-card">
-    <img src="{{ booking.image }}" alt="{{ booking.hotel_name }}">
+    <img src="{{ booking.image|card_img }}" alt="{{ booking.hotel_name }}">
     <div class="card-pad">
       <div class="row-between">
         <div>
@@ -44,7 +45,7 @@
         {% else %}<span class="badge badge--danger">Cancelled{% if booking.payment_status == 'refunded' %} · refunded{% endif %}</span>{% endif %}
       </div>
       <h2 style="font-size:var(--text-2xl);margin-top:var(--space-5)">{{ booking.hotel_name }}</h2>
-      <p class="muted">{{ booking.room_name }} · {{ booking.address or booking.city }}{% if booking.country %}, {{ booking.country }}{% endif %}</p>
+      <p class="muted">{{ booking.room_name }} · {{ booking.full_address or booking.city }}</p>
       <dl class="detail-grid">
         <div><dt>Check-in</dt><dd>{{ booking.check_in|nice_date('%a %d %b') }}</dd><span class="muted small">from {{ booking.check_in_time or '14:00' }}</span></div>
         <div><dt>Check-out</dt><dd>{{ booking.check_out|nice_date('%a %d %b') }}</dd><span class="muted small">until {{ booking.check_out_time or '11:00' }}</span></div>
@@ -53,6 +54,22 @@
       </dl>
       <p class="small"><strong>Lead guest:</strong> {{ booking.guest_name }} · {{ booking.guest_email }}{% if booking.guest_phone %} · {{ booking.guest_phone }}{% endif %}</p>
       {% if booking.special_requests %}<p class="small"><strong>Requests:</strong> {{ booking.special_requests }}</p>{% endif %}
+
+      {% if booking.status == 'confirmed' %}
+      {# What guests need on arrival day (IMP-02). #}
+      <div class="stay-actions" aria-label="Before you go">
+        {% if booking.map_url %}<a class="stay-action" href="{{ booking.map_url }}" target="_blank" rel="noopener">{{ i.icon('pin', 20) }}<span><strong>Directions</strong><small>Opens Google Maps</small></span></a>{% endif %}
+        {% if booking.hotel_wa %}<a class="stay-action" href="{{ booking.hotel_wa }}" target="_blank" rel="noopener">{{ i.icon('chat', 20) }}<span><strong>WhatsApp the hotel</strong><small>{{ booking.hotel_whatsapp or booking.hotel_phone }}</small></span></a>{% endif %}
+        {% if booking.hotel_tel %}<a class="stay-action" href="tel:{{ booking.hotel_tel }}">{{ i.icon('phone', 20) }}<span><strong>Call reception</strong><small>{{ booking.hotel_phone }}</small></span></a>{% endif %}
+        {% if calendar %}<a class="stay-action" href="{{ calendar.ics }}">{{ i.icon('calendar', 20) }}<span><strong>Add to calendar</strong><small>iPhone, Outlook and more</small></span></a>{% endif %}
+      </div>
+      {% if calendar %}<p class="muted small" style="margin:0">Use Google Calendar? <a href="{{ calendar.google }}" target="_blank" rel="noopener">Add your stay there</a>.</p>{% endif %}
+      <p class="small cancel-note">
+        {% if booking.can_cancel %}Free cancellation until {{ booking.free_until|nice_date('%a %d %b') }}. After that, the booking can't be refunded.
+        {% elif booking.free_until %}Free cancellation ended on {{ booking.free_until|nice_date('%d %b') }}. To change your stay, contact the hotel.
+        {% else %}This rate is non-refundable. To change your stay, contact the hotel.{% endif %}
+      </p>
+      {% endif %}
 
       <div class="row" style="flex-wrap:wrap;margin-top:var(--space-5)">
         <a class="btn btn-ghost" href="/">Find another stay</a>

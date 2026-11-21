@@ -155,24 +155,29 @@ def photos(request: Request):
                      photos=partners.media_list(conn, "hotel", hotel["id"]), min_photos=partners.MIN_HOTEL_PHOTOS)
 
 
-async def _save_uploads(conn, owner_type: str, owner_id: str, files: list[UploadFile]) -> str | None:
-    for f in files:
-        if not f.filename:
+async def _save_uploads(conn, owner_type: str, owner_id: str, files: list, thumbs: list | None = None) -> str | None:
+    """Save each photo with the small card copy the browser sent in the same position (IMP-07)."""
+    thumbs = list(thumbs or [])
+    for i, f in enumerate(files):
+        if not getattr(f, "filename", ""):
             continue
+        small = thumbs[i] if i < len(thumbs) and getattr(thumbs[i], "filename", "") else None
         try:
-            partners.add_photo(conn, owner_type, owner_id, await f.read(), f.content_type or "", label="")
+            partners.add_photo(conn, owner_type, owner_id, await f.read(), f.content_type or "", label="",
+                               thumb=await small.read() if small else None)
         except partners.PartnerError as exc:
             return str(exc)
     return None
 
 
 @router.post("/photos")
-async def photos_upload(request: Request, files: list[UploadFile] = File(default=[])):
+async def photos_upload(request: Request, files: list[UploadFile] = File(default=[]),
+                        thumbs: list[UploadFile] = File(default=[])):
     with db.connect() as conn:
         user, hotel = _current(conn, request)
         if not hotel:
             return _login_redirect()
-        error = await _save_uploads(conn, "hotel", hotel["id"], files)
+        error = await _save_uploads(conn, "hotel", hotel["id"], files, thumbs)
         if error:
             return _page(request, conn, user, hotel, "partners/photos.html", "photos", status_code=422, error=error,
                          photos=partners.media_list(conn, "hotel", hotel["id"]), min_photos=partners.MIN_HOTEL_PHOTOS)
@@ -244,7 +249,8 @@ async def room_save(request: Request, room_id: str | None = None):
         room_id = None
     form = await request.form()
     data = _form_dict(form)
-    files = [f for f in form.getlist("files") if getattr(f, "filename", "")]
+    files = form.getlist("files")
+    thumbs = form.getlist("thumbs")
     with db.connect() as conn:
         user, hotel = _current(conn, request)
         if not hotel:
@@ -252,8 +258,8 @@ async def room_save(request: Request, room_id: str | None = None):
         if room_id and not partners.get_room(conn, hotel["id"], room_id):
             return RedirectResponse("/partners/rooms", status_code=303)
         saved_id, errors = partners.save_room(conn, hotel["id"], data, room_id)
-        if not errors and files:
-            error = await _save_uploads(conn, "room", saved_id, files)
+        if not errors and any(getattr(f, "filename", "") for f in files):
+            error = await _save_uploads(conn, "room", saved_id, files, thumbs)
             if error:
                 errors = [error]
         if errors:

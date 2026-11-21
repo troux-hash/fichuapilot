@@ -5,14 +5,17 @@
 
 {% block content %}
 {% macro field(name, label, type='text', autocomplete='', hint='', required=true) %}
+{# An error replaces the hint until the guest types in the field again (app.js, IMP-05). #}
 <div class="field{% if errors[name] %} has-error{% endif %}">
   <label for="{{ name }}">{{ label }}{% if not required %} <span class="muted" style="font-weight:400">(optional)</span>{% endif %}</label>
+  {% set described = (name ~ '-error') if errors[name] else ((name ~ '-hint') if hint else '') %}
   {% if type == 'textarea' %}
   <textarea id="{{ name }}" name="{{ name }}" maxlength="1000">{{ form.get(name, '') }}</textarea>
   {% else %}
-  <input id="{{ name }}" name="{{ name }}" type="{{ type }}" value="{{ form.get(name, '') }}" {% if autocomplete %}autocomplete="{{ autocomplete }}"{% endif %} {% if required %}required{% endif %}>
+  <input id="{{ name }}" name="{{ name }}" type="{{ type }}" value="{{ form.get(name, '') }}" {% if autocomplete %}autocomplete="{{ autocomplete }}"{% endif %} {% if required %}required{% endif %}{% if errors[name] %} aria-invalid="true"{% endif %}{% if described %} aria-describedby="{{ described }}"{% endif %}>
   {% endif %}
-  {% if errors[name] %}<span class="error">{{ errors[name] }}</span>{% elif hint %}<span class="hint">{{ hint }}</span>{% endif %}
+  {% if errors[name] %}<span class="error" id="{{ name }}-error">{{ errors[name] }}</span>{% endif %}
+  {% if hint %}<span class="hint" id="{{ name }}-hint"{% if errors[name] %} hidden{% endif %}>{{ hint }}</span>{% endif %}
 </div>
 {% endmacro %}
 <div class="container" style="padding-bottom:var(--space-8)">
@@ -24,6 +27,7 @@
     <form class="card card-pad stack" method="post" action="/book" novalidate data-checkout>
       <input type="hidden" name="room" value="{{ room.id }}">
       {% for k, v in stay.as_params().items() %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endfor %}
+      {% if date_note %}<div class="alert alert-info date-note" role="status">{{ date_note }}</div>{% endif %}
       {% if errors.general %}<div class="alert alert-error" role="alert">{{ errors.general }}</div>{% endif %}
       {% if not offer and not errors.general %}<div class="alert alert-error" role="alert">This room is no longer available for these dates. <a href="/hotels/{{ hotel.id }}?{{ qs(stay.as_params()) }}#rooms">Choose another room</a>.</div>{% endif %}
 
@@ -46,7 +50,10 @@
 
       <div class="pay-box">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
-        <div><strong>You pay the full amount now, by card.</strong> Nothing more to pay at the hotel. {% if room.free_cancellation %}{{ policy[1] if policy else 'Free cancellation until 24 hours before check-in.' }} Cancel in time and you are refunded in full.{% else %}This rate is non-refundable.{% endif %}</div>
+        <div><strong>You pay the full amount now, by card.</strong> Nothing more to pay at the hotel.
+          {% if free_until %}Free cancellation until {{ free_until|nice_date('%a %d %b') }}: cancel by then from your booking page and you're refunded in full.
+          {% elif room.free_cancellation %}Check-in is too close for free cancellation, so this booking can't be refunded.
+          {% else %}This rate is non-refundable.{% endif %}</div>
       </div>
 
       <button class="btn btn-primary btn-lg btn-block" type="submit" {% if not offer %}disabled{% endif %} data-submit>
@@ -57,10 +64,10 @@
     </form>
 
     <aside class="card summary-card">
-      <img src="{{ hotel.images[0] }}" alt="{{ hotel.name }}">
+      <img src="{{ hotel.images[0]|card_img }}" alt="{{ hotel.name }}">
       <div class="card-pad">
         <h3 class="display" style="font-size:var(--text-xl)">{{ hotel.name }}</h3>
-        <p class="muted small">{{ hotel.city }}{% if hotel.country %}, {{ hotel.country }}{% endif %}</p>
+        <p class="muted small">{{ hotel.full_address or hotel.city }}</p>
         {{ ui.rating_line(hotel) }}
         <dl class="summary-rows">
           <div><dt>Room</dt><dd>{{ room.name }}</dd></div>
@@ -68,12 +75,12 @@
           <div><dt>Check-out</dt><dd>{{ stay.check_out|nice_date('%a %d %b %Y') }}, until {{ hotel.check_out_time or '11:00' }}</dd></div>
           <div><dt>Guests</dt><dd>{{ stay.guests }}</dd></div>
           {% if offer %}
-          <div><dt>{{ stay.nights }} night{{ 's' if stay.nights != 1 }} (average {{ (offer.total_price / stay.nights)|usd }})</dt><dd>{{ offer.total_price|usd }}</dd></div>
+          <div><dt>{{ nights_text }}</dt><dd>{{ offer.total_price|usd }}</dd></div>
           <div class="total"><dt>Total to pay now</dt><dd>{{ offer.total_price|usd }}</dd></div>
           {% endif %}
         </dl>
         <div class="row" style="flex-wrap:wrap;gap:6px">
-          {% if room.free_cancellation %}<span class="badge badge--success">Free cancellation</span>{% endif %}
+          {% if free_until %}<span class="badge badge--success">Free cancellation until {{ free_until|nice_date('%d %b') }}</span>{% endif %}
           {% if room.breakfast_included %}<span class="badge badge--info">Breakfast included</span>{% endif %}
         </div>
       </div>

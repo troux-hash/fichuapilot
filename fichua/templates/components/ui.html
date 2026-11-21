@@ -66,8 +66,8 @@
 {% set h = o.hotel %}
 <a class="card hotel-card" href="/hotels/{{ h.id }}?{{ qs(stay.as_params(), destination=destination) }}">
   <div class="hotel-card__media">
-    <img src="{{ h.images[0] }}" alt="{{ h.name }}" loading="lazy">
-    {% if o.room.free_cancellation %}<span class="badge badge--glass hotel-card__badge">Free cancellation</span>{% endif %}
+    <img src="{{ h.images[0]|card_img }}" alt="{{ h.name }}" loading="lazy">
+    {% if o.free_until %}<span class="badge badge--glass hotel-card__badge">Free cancellation until {{ o.free_until|nice_date('%d %b') }}</span>{% endif %}
   </div>
   <div class="hotel-card__body">
     <div class="hotel-card__top">

@@ -9,17 +9,18 @@
 {% set cheapest = available[0] if available else none %}
 <div class="container">
   <a class="back-link" href="/search?{{ back_qs }}">← All stays</a>
+  {% if date_note %}<div class="alert alert-info date-note" role="status">{{ date_note }}</div>{% endif %}
   <header class="hotel-head">
     <h1>{{ hotel.name }}</h1>
     <div class="meta">
       {{ ui.stars(hotel.star_rating) }}
       {{ ui.rating_line(hotel) }}
-      <span>{{ hotel.address or hotel.city }}{% if hotel.country %}, {{ hotel.country }}{% endif %}</span>
+      <a class="hotel-head__where" href="#location">{{ hotel.full_address or hotel.city }}</a>
     </div>
   </header>
 
   <div class="gallery gallery--{{ [hotel.images|length, 5]|min }}">
-    {% for img in hotel.images[:5] %}<img src="{{ img }}" alt="{{ hotel.name }} photo {{ loop.index }}" {% if not loop.first %}loading="lazy"{% endif %}>{% endfor %}
+    {% for img in hotel.images[:5] %}<img src="{{ img if loop.first else img|card_img }}" alt="{{ hotel.name }} photo {{ loop.index }}" {% if not loop.first %}loading="lazy"{% endif %}>{% endfor %}
   </div>
 
   <div class="hotel-layout">
@@ -37,6 +38,15 @@
       </section>
       {% endif %}
 
+      {% if hotel.full_address %}
+      <section id="location" class="hotel-location">
+        <h2>Where you'll stay</h2>
+        <p style="margin:0">{{ hotel.full_address }}</p>
+        {% if hotel.map_embed %}<iframe class="map-embed" src="{{ hotel.map_embed }}" title="Map showing where {{ hotel.name }} is" loading="lazy"></iframe>{% endif %}
+        {% if hotel.map_url %}<a class="small" href="{{ hotel.map_url }}" target="_blank" rel="noopener">Open in Google Maps ↗</a>{% endif %}
+      </section>
+      {% endif %}
+
       <section id="rooms">
         <h2>Choose your room</h2>
         <form class="stay-form" method="get" action="/hotels/{{ hotel.id }}" data-stay-form>
@@ -48,14 +58,14 @@
 
         {% for r in rooms %}
         <article class="card room{% if not r.available %} is-unavailable{% endif %}">
-          <img class="room__img" src="{{ r.images[0] }}" alt="{{ r.name }}" loading="lazy">
+          <img class="room__img" src="{{ r.images[0]|card_img }}" alt="{{ r.name }}" loading="lazy">
           <div class="room__body">
             <h3>{{ r.name }}</h3>
             <p class="muted small" style="margin:0">
               {% if r.bed_type %}{{ r.bed_type }} · {% endif %}{% if r.size_sqm %}{{ r.size_sqm }} m² · {% endif %}Sleeps {{ r.max_guests }}
             </p>
             <div class="row" style="flex-wrap:wrap; gap:6px">
-              {% if r.free_cancellation %}<span class="badge badge--success">Free cancellation</span>{% else %}<span class="badge badge--muted">Non-refundable</span>{% endif %}
+              {% if r.free_until %}<span class="badge badge--success">Free cancellation until {{ r.free_until|nice_date('%d %b') }}</span>{% else %}<span class="badge badge--muted">Non-refundable</span>{% endif %}
               {% if r.breakfast_included %}<span class="badge badge--info">Breakfast included</span>{% endif %}
             </div>
             {% if r.amenities %}<ul class="tags">{% for a in r.amenities[:4] %}<li>{{ a }}</li>{% endfor %}</ul>{% endif %}

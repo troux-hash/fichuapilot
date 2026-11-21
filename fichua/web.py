@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+import re
 import time
 from datetime import date, datetime
 from pathlib import Path
@@ -32,7 +33,25 @@ def nice_date(value, fmt: str = "%a %d %b") -> str:
         return ""
     if isinstance(value, str):
         value = datetime.fromisoformat(value) if "T" in value or " " in value else date.fromisoformat(value)
-    return value.strftime(fmt)
+    return value.strftime(fmt.replace("%d", str(value.day)))  # "Fri 4 Dec", not "Fri 04 Dec"
+
+
+_WIDTH = re.compile(r"([?&])w=\d+")
+
+
+def card_img(url: str | None) -> str | None:
+    """A smaller copy of a photo (about 800 px) for cards and thumbnails, to save phone data.
+
+    Partner photos have an 800 px version saved at upload (`/media/<id>?size=card`); Unsplash
+    resizes on request. Anything else is returned as it is.
+    """
+    if not url:
+        return url
+    if url.startswith("/media/"):
+        return f"{url}{'&' if '?' in url else '?'}size=card"
+    if "images.unsplash.com" in url:
+        return _WIDTH.sub(r"\1w=800", url) if _WIDTH.search(url) else f"{url}{'&' if '?' in url else '?'}w=800"
+    return url
 
 
 def qs(params: dict, **overrides) -> str:
@@ -122,6 +141,7 @@ templates.env.filters["money"] = money
 templates.env.filters["usd"] = currency.usd
 templates.env.filters["local"] = local
 templates.env.filters["nice_date"] = nice_date
+templates.env.filters["card_img"] = card_img
 templates.env.globals["qs"] = qs
 templates.env.globals["app_name"] = settings.app_name
 

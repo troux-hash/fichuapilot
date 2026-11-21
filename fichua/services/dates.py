@@ -72,3 +72,36 @@ def parse_stay(check_in: str | None, check_out: str | None, guests: str | int | 
     except (TypeError, ValueError):
         g = 2
     return Stay(ci, co, max(1, min(MAX_GUESTS, g)))
+
+
+def _label(d: date) -> str:
+    return d.strftime(f"%a {d.day} %b")
+
+
+def adjustment(check_in: str | None, check_out: str | None, guests, stay: Stay,
+               today: date | None = None) -> str | None:
+    """One line saying how parse_stay changed what the guest asked for, or None if it kept it.
+
+    parse_stay never fails, so impossible dates (in the past, check-out first, over 30 nights)
+    quietly become a valid stay. Pages show this line so the guest knows which dates they see.
+    """
+    today = today or date.today()
+    asked_in, asked_out = _parse(check_in), _parse(check_out)
+    why = None
+    if (check_in and asked_in is None) or (check_out and asked_out is None):
+        why = "we couldn't read the dates"
+    elif asked_in and asked_in < today:
+        why = "check-in can't be in the past"
+    elif asked_in and asked_out and asked_out <= asked_in:
+        why = "check-out has to be after check-in"
+    elif asked_in and asked_out and (asked_out - asked_in).days > MAX_NIGHTS:
+        why = f"one booking covers up to {MAX_NIGHTS} nights"
+    if why:
+        return f"We changed your dates to {_label(stay.check_in)} – {_label(stay.check_out)}: {why}."
+    try:
+        asked_guests = int(guests) if guests not in (None, "") else None
+    except (TypeError, ValueError):
+        asked_guests = None
+    if asked_guests is not None and asked_guests != stay.guests:
+        return f"We changed the number of guests to {stay.guests}: one booking is for 1 to {MAX_GUESTS} guests."
+    return None

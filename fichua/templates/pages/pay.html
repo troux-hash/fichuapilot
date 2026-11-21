@@ -9,7 +9,7 @@
     <div>
       <div class="muted small">{{ booking.hotel_name }} · {{ booking.room_name }}</div>
       <div class="paycard__amount">{{ booking.total_price|usd }}</div>
-      <div class="muted small">{{ booking.check_in|nice_date }} – {{ booking.check_out|nice_date }} · {{ booking.nights }} night{{ 's' if booking.nights != 1 }} · {{ booking.reference }}</div>
+      <div class="muted small">{{ booking.check_in|nice_date }} – {{ booking.check_out|nice_date }} · {{ booking.nights }} night{{ 's' if booking.nights != 1 }} · <span class="nowrap">{{ booking.reference }}</span></div>
       {% set loc = booking.total_price|local(booking.country) %}{% if loc %}<div class="small" style="color:var(--color-ink-soft)">{{ loc }}</div>{% endif %}
     </div>
     <div class="paycard__card" aria-label="Test card">

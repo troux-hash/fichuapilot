@@ -47,8 +47,22 @@ All 3 P0 and 12 P1 fixes shipped on 21 Nov 2026:
 | FIX-14 | P1 | Named admin accounts, two-step login (TOTP), rate limits on sign-in, sign-up and checkout | ✅ Shipped |
 | FIX-15 | P1 | Big-group searches explain that no room fits that many guests | ✅ Shipped |
 
-Also done on the way: IMP-06 (refund timing), IMP-16 (French number formats in WhatsApp), IMP-17 (settings error wording).
-Still open: 15 smaller improvements (IMP-01 to IMP-18) and one setup task (SET-01), in the sheet.
+P2 improvements:
+
+| ID | Improvement | Status |
+|---|---|---|
+| IMP-01 | Search, hotel and checkout pages say "We changed your dates to …" when a link asked for impossible dates | ✅ Shipped |
+| IMP-02 | Booking page: directions, call or WhatsApp the hotel, add to calendar (.ics and Google Calendar) | ✅ Shipped |
+| IMP-03 | Hotel page: full address (area, city) and a map from the hotel's pin | ✅ Shipped |
+| IMP-04 | "Free cancellation until 29 Nov" everywhere; the guest's Cancel button follows the same date | ✅ Shipped |
+| IMP-05 | Checkout errors clear as soon as the guest fixes the field | ✅ Shipped |
+| IMP-06 | Refund timing in the cancel message | ✅ Shipped |
+| IMP-07 | Result cards and thumbnails load an ~800 px photo (partner uploads keep a small copy) | ✅ Shipped |
+| IMP-08 | Wording: "2 nights × $65", reference on one line, "Tap or click" map, "Pin set" | ✅ Shipped |
+| IMP-16 | French number formats in WhatsApp | ✅ Shipped |
+| IMP-17 | Settings error wording | ✅ Shipped |
+
+Still open: IMP-09 to IMP-15 and IMP-18, and one setup task (SET-01), in the sheet.
 
 ## 🔜 P1 — next
 

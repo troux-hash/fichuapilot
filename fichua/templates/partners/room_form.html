@@ -52,7 +52,7 @@
       {% if room.photos %}
       <div class="photo-grid">
         {% for p in room.photos %}
-        <div class="photo"><img src="/media/{{ p.id }}" alt="Room photo {{ loop.index }}" loading="lazy"></div>
+        <div class="photo"><img src="{{ ('/media/' ~ p.id)|card_img }}" alt="Room photo {{ loop.index }}" loading="lazy"></div>
         {% endfor %}
       </div>
       {% endif %}

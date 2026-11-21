@@ -42,10 +42,10 @@
       <div class="field"><label for="address">Street address</label><input id="address" name="address" value="{{ hotel.address or '' }}" required placeholder="e.g. KG 7 Ave, near the roundabout"></div>
       <div class="field">
         <span class="label">Pin your entrance on the map</span>
-        <div class="map" id="map" data-map data-lat="{{ hotel.lat if hotel.lat is not none else '' }}" data-lng="{{ hotel.lng if hotel.lng is not none else '' }}" role="application" aria-label="Map: click or drag the pin to your entrance"></div>
+        <div class="map" id="map" data-map data-lat="{{ hotel.lat if hotel.lat is not none else '' }}" data-lng="{{ hotel.lng if hotel.lng is not none else '' }}" role="application" aria-label="Map: tap or click your entrance to put the pin there, then drag the pin to adjust it"></div>
         <input type="hidden" name="lat" value="{{ hotel.lat if hotel.lat is not none else '' }}" data-lat>
         <input type="hidden" name="lng" value="{{ hotel.lng if hotel.lng is not none else '' }}" data-lng>
-        <div class="row-between"><span class="hint mono" data-coords>{% if hotel.lat is not none %}{{ '%.5f'|format(hotel.lat) }}, {{ '%.5f'|format(hotel.lng) }}{% else %}Click the map where your entrance is{% endif %}</span>
+        <div class="row-between"><span class="hint" data-coords>{% if hotel.lat is not none %}Pin set. Drag it to adjust.{% else %}Tap or click the map where your entrance is.{% endif %}</span>
           <button class="btn btn-secondary btn-sm" type="button" data-locate>Use my location</button></div>
       </div>
     </section>

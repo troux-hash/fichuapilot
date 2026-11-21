@@ -21,7 +21,7 @@
       if (!marker) { marker = L.marker(latlng, { draggable: true }).addTo(map); marker.on("dragend", () => set(marker.getLatLng())); }
       marker.setLatLng(latlng);
       latIn.value = latlng.lat.toFixed(6); lngIn.value = latlng.lng.toFixed(6);
-      coords.textContent = `${latlng.lat.toFixed(5)}, ${latlng.lng.toFixed(5)}`;
+      coords.textContent = "Pin set. Drag it to adjust.";
     };
     if (marker) marker.on("dragend", () => set(marker.getLatLng()));
     map.on("click", (e) => set(e.latlng));
@@ -31,26 +31,26 @@
       navigator.geolocation.getCurrentPosition((p) => {
         const ll = L.latLng(p.coords.latitude, p.coords.longitude);
         map.setView(ll, 18); set(ll);
-      }, () => { coords.textContent = "Location not available: click the map instead."; }, { enableHighAccuracy: true, timeout: 10000 });
+      }, () => { coords.textContent = "Location not available: tap or click the map instead."; }, { enableHighAccuracy: true, timeout: 10000 });
     });
   }
   window.addEventListener("load", initMap);
 
-  /* ---------- Photos: shrink on the phone before upload (max 1600px, JPEG) ---------- */
-  function shrink(file) {
+  /* ---------- Photos: shrink on the phone before upload (max 1600px, JPEG), plus an 800px card copy ---------- */
+  function shrink(file, max = 1600, quality = 0.82) {
     return new Promise((resolve) => {
-      if (!file.type.startsWith("image/")) return resolve(file);
+      if (!file.type.startsWith("image/")) return resolve(null);
       const img = new Image();
       const url = URL.createObjectURL(file);
       img.onload = () => {
-        const scale = Math.min(1, 1600 / Math.max(img.width, img.height));
+        const scale = Math.min(1, max / Math.max(img.width, img.height));
         const canvas = document.createElement("canvas");
         canvas.width = Math.round(img.width * scale); canvas.height = Math.round(img.height * scale);
         canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
         URL.revokeObjectURL(url);
-        canvas.toBlob((blob) => resolve(blob ? new File([blob], file.name.replace(/\.\w+$/, "") + ".jpg", { type: "image/jpeg" }) : file), "image/jpeg", 0.82);
+        canvas.toBlob((blob) => resolve(blob ? new File([blob], file.name.replace(/\.\w+$/, "") + ".jpg", { type: "image/jpeg" }) : null), "image/jpeg", quality);
       };
-      img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+      img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
       img.src = url;
     });
   }
@@ -64,11 +64,15 @@
     const data = new FormData(form);
     for (const input of inputs) {
       data.delete(input.name);
+      data.delete("thumbs");
       let i = 0;
       for (const file of input.files) {
         i += 1;
         if (status) status.textContent = `Preparing photo ${i} of ${input.files.length}…`;
-        data.append(input.name, await shrink(file));
+        // Each photo travels with its small copy in the same position: guests' result cards load that one.
+        const full = await shrink(file), card = await shrink(file, 800, 0.78);
+        data.append(input.name, full || file);
+        data.append("thumbs", card || new File([], ""));
       }
     }
     if (status) status.textContent = "Uploading…";
@@ -95,7 +99,7 @@
     input.addEventListener("input", update); update();
   });
 
-  /* ---------- Calendar: click a day, click a second day for a range ---------- */
+  /* ---------- Calendar: pick a day, pick a second day for a range ---------- */
   const cal = $("[data-calendar]"), calForm = $("[data-cal-form]");
   if (cal && calForm) {
     const days = $$(".cal__day", cal).filter((d) => !d.disabled);

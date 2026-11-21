@@ -29,7 +29,7 @@
     <div class="destinations">
       {% for d in destinations[:6] %}
       <a class="destination" href="/search?{{ qs(stay.as_params(), destination=d.city) }}">
-        <img src="{{ d.image }}" alt="" loading="lazy">
+        <img src="{{ d.image|card_img }}" alt="" loading="lazy">
         <span class="destination__text"><strong>{{ d.city }}</strong><span>{{ d.country }} · {{ d.hotels }} stays</span></span>
       </a>
       {% endfor %}

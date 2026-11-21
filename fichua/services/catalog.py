@@ -9,8 +9,10 @@ Rooms left = rooms to sell − confirmed bookings − unpaid checkouts still ins
 from __future__ import annotations
 
 from datetime import date, timedelta
+from urllib.parse import urlencode
 
 from ..db import Connection, utcnow
+from . import policies
 from .dates import Stay
 
 PLACEHOLDER_IMAGE = "/static/img/placeholder.svg"
@@ -33,10 +35,39 @@ def media_urls(conn: Connection, owner_type: str, ids: list[str]) -> dict[str, l
     return out
 
 
+def full_address(hotel: dict) -> str:
+    """'KG 7 Ave, Kimihurura, Kigali, Rwanda': the street address, plus the area, city and country
+    when it doesn't already say them."""
+    parts = [p for p in [(hotel.get("address") or "").strip()] if p]
+    for extra in (hotel.get("area"), hotel.get("city"), hotel.get("country")):
+        extra = (extra or "").strip()
+        if extra and extra.lower() not in ", ".join(parts).lower():
+            parts.append(extra)
+    return ", ".join(parts)
+
+
+def map_links(hotel: dict) -> dict:
+    """A Google Maps link (it opens the Maps app on phones) and, when the hotel dropped a pin, a small
+    OpenStreetMap embed centred on it."""
+    lat, lng = hotel.get("lat"), hotel.get("lng")
+    if lat is not None and lng is not None:
+        lat, lng = float(lat), float(lng)
+        query = f"{lat:.6f},{lng:.6f}"
+        box = f"{lng - 0.006:.6f},{lat - 0.004:.6f},{lng + 0.006:.6f},{lat + 0.004:.6f}"
+        embed = "https://www.openstreetmap.org/export/embed.html?" + urlencode(
+            {"bbox": box, "layer": "mapnik", "marker": query})
+    else:
+        query, embed = full_address(hotel), None
+    url = "https://www.google.com/maps/search/?" + urlencode({"api": 1, "query": query}) if query else None
+    return {"map_url": url, "map_embed": embed}
+
+
 def hydrate_hotel(row: dict, photos: list[str] | None = None) -> dict:
     row = dict(row)
     row["amenities"] = split_list(row.get("amenities"))
     row["images"] = (photos or []) + split_list(row.get("image_urls")) or [PLACEHOLDER_IMAGE]
+    row["full_address"] = full_address(row)
+    row.update(map_links(row))
     return row
 
 
@@ -135,7 +166,7 @@ def availability(conn: Connection, stay: Stay, *, destination: str | None = None
     grid = night_grid(conn, rooms, stay.check_in, stay.check_out, exclude_booking_id)
     out = []
     for room in rooms:
-        total, left = 0.0, None
+        total, left, nightly = 0.0, None, []
         for i in range(stay.nights):
             night = grid[(room["id"], (stay.check_in + timedelta(days=i)).isoformat())]
             if night["closed"] or night["price"] is None or night["units"] is None:
@@ -144,10 +175,11 @@ def availability(conn: Connection, stay: Stay, *, destination: str | None = None
             if free <= 0:
                 break
             total += night["price"]
+            nightly.append(night["price"])
             left = free if left is None else min(left, free)
         else:
             out.append({"room_type_id": room["id"], "hotel_id": room["hotel_id"],
-                        "total_price": round(total, 2), "rooms_left": left})
+                        "total_price": round(total, 2), "rooms_left": left, "nightly": nightly})
     return out
 
 
@@ -193,12 +225,14 @@ def hotel_rooms(conn: Connection, hotel_id: str, stay: Stay) -> list[dict]:
     rows = conn.all("SELECT * FROM room_types WHERE hotel_id = :id ORDER BY max_guests, name", {"id": hotel_id})
     photos = media_urls(conn, "room", [r["id"] for r in rows])
     live = {a["room_type_id"]: a for a in availability(conn, stay, hotel_id=hotel_id)}
+    policy = conn.scalar("SELECT cancellation_policy FROM hotels WHERE id = :id", {"id": hotel_id})
     rooms = []
     for row in rows:
         room = hydrate_room(row, photos.get(row["id"]))
         a = live.get(room["id"])
         room["available"] = a is not None
         room["fits_party"] = room["max_guests"] >= stay.guests
+        room["free_until"] = policies.open_until(policy, room["free_cancellation"], stay.check_in)
         if a:
             room["total_price"] = round(a["total_price"], 2)
             room["per_night"] = round(a["total_price"] / stay.nights, 2)

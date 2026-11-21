@@ -11,9 +11,12 @@ from datetime import date, timedelta
 from ..db import Connection, utcnow
 from . import app_settings, catalog
 from .currency import MARKETS, normalize_country
+from .policies import POLICIES  # noqa: F401  (partners.POLICIES is used by the routes)
 
 PHOTO_TYPES = {"image/jpeg", "image/png", "image/webp"}
 MAX_PHOTO_BYTES = 3 * 1024 * 1024
+MAX_THUMB_BYTES = 600 * 1024  # the ~800 px card copy the browser makes next to each photo
+JPEG_START = bytes([0xFF, 0xD8, 0xFF])
 MIN_HOTEL_PHOTOS = 3
 ROOM_KINDS = ["Single", "Double", "Twin", "Suite", "Family", "Dormitory"]
 PROPERTY_TYPES = ["Hotel", "Guesthouse", "Lodge", "Apartment", "Resort", "Boutique"]
@@ -22,11 +25,6 @@ AMENITIES = ["Free WiFi", "Pool", "Restaurant", "Bar", "Breakfast", "Free parkin
              "Beachfront", "Family rooms", "Laundry", "Conference room"]
 ROOM_AMENITIES = ["Wi-Fi", "Hot shower", "TV", "Desk", "Air conditioning", "Fan", "Mosquito net", "Balcony",
                   "Minibar", "Safe", "Kettle", "Bathtub"]
-POLICIES = {
-    "flexible": ("Flexible", "Free cancellation until 24 hours before check-in."),
-    "moderate": ("Moderate", "Free cancellation until 5 days before check-in."),
-    "strict": ("Non-refundable", "No refund once booked."),
-}
 # Rough bounding boxes (lat_min, lat_max, lng_min, lng_max) for the "pin is in the country" check.
 COUNTRY_BOXES = {
     "Rwanda": (-2.95, -1.0, 28.8, 30.95),
@@ -266,18 +264,21 @@ def media_list(conn: Connection, owner_type: str, owner_id: str) -> list[dict]:
 
 
 def add_photo(conn: Connection, owner_type: str, owner_id: str, data: bytes, content_type: str,
-              label: str = "") -> str:
+              label: str = "", thumb: bytes | None = None) -> str:
+    """Store a photo, and its small card copy when the browser made one (it is skipped if odd)."""
     if content_type not in PHOTO_TYPES:
         raise PartnerError("Upload JPG, PNG or WebP photos.")
     if len(data) > MAX_PHOTO_BYTES:
         raise PartnerError("That photo is too large (over 3 MB). Try again: the page shrinks photos before upload.")
+    if thumb is not None and not (0 < len(thumb) <= MAX_THUMB_BYTES and thumb[:3] == JPEG_START):
+        thumb = None  # the card copy is always a JPEG; anything else falls back to the full photo
     sort = (conn.scalar("SELECT MAX(sort) FROM media WHERE owner_type = :t AND owner_id = :o",
                         {"t": owner_type, "o": owner_id}) or 0) + 1
     media_id = uuid.uuid4().hex
-    conn.run("INSERT INTO media (id, owner_type, owner_id, content_type, data, label, sort) "
-             "VALUES (:id, :t, :o, :ct, :d, :l, :s)",
+    conn.run("INSERT INTO media (id, owner_type, owner_id, content_type, data, label, sort, thumb) "
+             "VALUES (:id, :t, :o, :ct, :d, :l, :s, :thumb)",
              {"id": media_id, "t": owner_type, "o": owner_id, "ct": content_type, "d": data,
-              "l": label.strip()[:60], "s": sort})
+              "l": label.strip()[:60], "s": sort, "thumb": thumb})
     return media_id
 
 
@@ -291,7 +292,13 @@ def make_cover(conn: Connection, media_id: str, hotel_id: str) -> None:
     conn.run("UPDATE media SET sort = 0 WHERE id = :id AND owner_id = :h", {"id": media_id, "h": hotel_id})
 
 
-def get_media(conn: Connection, media_id: str) -> dict | None:
+def get_media(conn: Connection, media_id: str, card: bool = False) -> dict | None:
+    """A photo; with card=True its ~800 px copy when there is one (photos uploaded before it existed
+    have none, so they get the full photo)."""
+    if card:
+        small = conn.one("SELECT thumb FROM media WHERE id = :id AND thumb IS NOT NULL", {"id": media_id})
+        if small:
+            return {"content_type": "image/jpeg", "data": small["thumb"]}
     return conn.one("SELECT content_type, data FROM media WHERE id = :id", {"id": media_id})
 
 
