@@ -28,9 +28,11 @@ def _utc(moment: datetime) -> str:
 
 def event(booking: dict, manage_url: str) -> dict:
     guests = int(booking.get("guests") or 1)
+    rooms = int(booking.get("rooms") or 1)
+    room = (booking.get("room_name") or "Room") + (f" × {rooms}" if rooms > 1 else "")
     check_in = booking.get("check_in_time") or "14:00"
     check_out = booking.get("check_out_time") or "11:00"
-    details = [f"Fichua booking {booking['reference']}: {booking.get('room_name') or 'Room'}, "
+    details = [f"Fichua booking {booking['reference']}: {room}, "
                f"{guests} guest{'' if guests == 1 else 's'}. Paid in full.",
                f"Check-in from {check_in}, check-out until {check_out}."]
     if booking.get("hotel_phone"):

@@ -78,7 +78,7 @@ def report(conn: Connection, f: FinanceFilter) -> dict:
         where.append("b.source = :source")
         params["source"] = f.source
     rows = conn.all(
-        "SELECT b.id, b.reference, b.status, b.source, b.payment_status, b.check_in, b.check_out, b.nights, "
+        "SELECT b.id, b.reference, b.status, b.source, b.payment_status, b.check_in, b.check_out, b.nights, b.rooms, "
         "b.total_price, b.commission_amount, b.payout_amount, b.commission_pct, b.paid_at, b.created_at, "
         "b.guest_name, b.offline_source, h.id AS hotel_id, h.name AS hotel_name, h.country, rt.name AS room_name, "
         "p.id AS payout_id, p.status AS payout_status, p.due_at AS payout_due, p.method AS payout_method, "

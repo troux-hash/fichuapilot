@@ -6,6 +6,7 @@ from datetime import date, timedelta
 
 MAX_NIGHTS = 30
 MAX_GUESTS = 12
+MAX_ROOMS = 8
 
 
 @dataclass(frozen=True)
@@ -13,17 +14,21 @@ class Stay:
     check_in: date
     check_out: date
     guests: int
+    rooms: int = 1  # rooms of the same type in one booking (IMP-18); the guests share them
 
     @property
     def nights(self) -> int:
         return (self.check_out - self.check_in).days
 
     def as_params(self) -> dict:
-        return {
+        params = {
             "check_in": self.check_in.isoformat(),
             "check_out": self.check_out.isoformat(),
             "guests": self.guests,
         }
+        if self.rooms > 1:  # one room is the default: links stay as they were
+            params["rooms"] = self.rooms
+        return params
 
 
 def this_weekend(today: date) -> tuple[date, date]:
@@ -56,7 +61,7 @@ def _parse(value: str | None) -> date | None:
 
 
 def parse_stay(check_in: str | None, check_out: str | None, guests: str | int | None,
-               today: date | None = None) -> Stay:
+               rooms: str | int | None = None, today: date | None = None) -> Stay:
     """Never fails: invalid or missing input falls back to sensible defaults."""
     today = today or date.today()
     ci, co = _parse(check_in), _parse(check_out)
@@ -68,10 +73,14 @@ def parse_stay(check_in: str | None, check_out: str | None, guests: str | int | 
     if (co - ci).days > MAX_NIGHTS:
         co = ci + timedelta(days=MAX_NIGHTS)
     try:
-        g = int(guests or 2)
+        g = max(1, min(MAX_GUESTS, int(guests or 2)))
     except (TypeError, ValueError):
         g = 2
-    return Stay(ci, co, max(1, min(MAX_GUESTS, g)))
+    try:
+        r = int(rooms or 1)
+    except (TypeError, ValueError):
+        r = 1
+    return Stay(ci, co, g, max(1, min(MAX_ROOMS, g, r)))  # every room has at least one guest
 
 
 def _label(d: date) -> str:
@@ -79,7 +88,7 @@ def _label(d: date) -> str:
 
 
 def adjustment(check_in: str | None, check_out: str | None, guests, stay: Stay,
-               today: date | None = None) -> str | None:
+               today: date | None = None, rooms=None) -> str | None:
     """One line saying how parse_stay changed what the guest asked for, or None if it kept it.
 
     parse_stay never fails, so impossible dates (in the past, check-out first, over 30 nights)
@@ -104,4 +113,13 @@ def adjustment(check_in: str | None, check_out: str | None, guests, stay: Stay,
         asked_guests = None
     if asked_guests is not None and asked_guests != stay.guests:
         return f"We changed the number of guests to {stay.guests}: one booking is for 1 to {MAX_GUESTS} guests."
+    try:
+        asked_rooms = int(rooms) if rooms not in (None, "") else None
+    except (TypeError, ValueError):
+        asked_rooms = None
+    if asked_rooms is not None and asked_rooms != stay.rooms:
+        why = (f"one booking is for up to {MAX_ROOMS} rooms" if asked_rooms > MAX_ROOMS
+               else "each room needs at least one guest" if asked_rooms > stay.guests
+               else "a booking has at least one room")
+        return f"We changed the number of rooms to {stay.rooms}: {why}."
     return None

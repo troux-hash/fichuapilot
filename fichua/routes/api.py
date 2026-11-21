@@ -31,13 +31,14 @@ def destinations():
 @router.get("/search")
 def api_search(request: Request):
     q = request.query_params
-    stay = dates.parse_stay(q.get("check_in"), q.get("check_out"), q.get("guests"))
+    stay = dates.parse_stay(q.get("check_in"), q.get("check_out"), q.get("guests"), q.get("rooms"))
     with db.connect() as conn:
         data = search(conn, stay, q.get("destination") or None, Filters.from_query(q))
     results = [{"hotel": catalog.public_hotel(o["hotel"]), "room": catalog.public_room(o["room"]),
-                "total_price": o["total_price"], "per_night": o["per_night"], "rooms_left": o["rooms_left"]}
-               for o in data["results"]]
-    return {"stay": {**stay.as_params(), "nights": stay.nights}, "results": results, "facets": data["facets"]}
+                "total_price": o["total_price"], "per_night": o["per_night"], "rooms_left": o["rooms_left"],
+                "rooms": stay.rooms} for o in data["results"]]
+    return {"stay": {**stay.as_params(), "rooms": stay.rooms, "nights": stay.nights}, "results": results,
+            "facets": data["facets"]}
 
 
 @router.post("/stripe/webhook")

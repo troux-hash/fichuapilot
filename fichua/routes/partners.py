@@ -1,6 +1,7 @@
 """Fichua Partners: join with a code → onboard the hotel → manage calendar, prices and bookings."""
 from __future__ import annotations
 
+import dataclasses
 from datetime import date
 
 from fastapi import APIRouter, File, Form, Request, UploadFile
@@ -446,31 +447,33 @@ def offline_save(request: Request, room: str = Form(""), check_in: str = Form(""
         if len(guest_name.strip()) < 2:
             errors.append("Enter the guest's name.")
         count = max(1, min(20, int(rooms_count or 1))) if str(rooms_count).isdigit() else 1
-        # "Guests" is the whole group: share it over the rooms, then check each room fits its share.
-        per_room = -(-stay.guests // count)
-        room_stay = dates.parse_stay(check_in, check_out, per_room)
-        if room_type and per_room > (room_type["max_guests"] or 1):
+        # "Guests" is the whole group, shared over the rooms: every room must fit its share.
+        group = dataclasses.replace(stay, rooms=count)
+        if room_type and room_type["max_guests"] * count < stay.guests:
             fits = room_type["max_guests"] or 1
             errors.append(f"A {room_type['name']} sleeps {fits}, so {stay.guests} guests need at least "
                           f"{-(-stay.guests // fits)} rooms.")
         if not errors:
-            live = catalog.availability(conn, room_stay, room_type_id=room, include_inactive=True)
+            one = dataclasses.replace(stay, rooms=1, guests=min(stay.guests, room_type["max_guests"] or 1))
+            live = catalog.availability(conn, one, room_type_id=room, include_inactive=True)
             left = live[0]["rooms_left"] if live else 0
             if left < count:
                 errors.append(f"Only {left} room{'' if left == 1 else 's'} left for those dates." if left
                               else "No rooms left for those dates (sold out or closed).")
-        if not errors:
+        agreed = None
+        if not errors and amount.strip():
             try:
-                agreed = float(amount.replace(",", "")) if amount.strip() else None
-                for _ in range(count):
-                    bookings.create_booking(conn, room_stay, room, guest_name=guest_name, guest_phone=guest_phone,
-                                            source="offline", offline_source=source if source in bookings.OFFLINE_SOURCES
-                                            else "Other website", agreed_amount=(agreed / count) if agreed else None)
+                agreed = float(amount.replace(",", ""))
+            except ValueError:
+                errors.append("Enter the amount as a number.")
+        if not errors:
+            try:  # one booking for all the rooms, so the list shows it once with one Cancel button (IMP-11)
+                bookings.create_booking(conn, group, room, guest_name=guest_name, guest_phone=guest_phone,
+                                        source="offline", offline_source=source if source in bookings.OFFLINE_SOURCES
+                                        else "Other website", agreed_amount=agreed)
             except bookings.BookingError:
                 conn.raw.rollback()
                 errors.append("Those rooms were just booked by someone else. Check the calendar and try again.")
-            except ValueError:
-                errors.append("Enter the amount as a number.")
         if errors:
             return _page(request, conn, user, hotel, "partners/offline.html", "bookings", status_code=422,
                          rooms=partners.hotel_room_list(conn, hotel["id"]), errors=errors, form=form,

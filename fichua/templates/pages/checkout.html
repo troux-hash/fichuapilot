@@ -70,10 +70,10 @@
         <p class="muted small">{{ hotel.full_address or hotel.city }}</p>
         {{ ui.rating_line(hotel) }}
         <dl class="summary-rows">
-          <div><dt>Room</dt><dd>{{ room.name }}</dd></div>
+          <div><dt>Room</dt><dd>{{ room.name }}{% if stay.rooms > 1 %} × {{ stay.rooms }}{% endif %}</dd></div>
           <div><dt>Check-in</dt><dd>{{ stay.check_in|nice_date('%a %d %b %Y') }}, from {{ hotel.check_in_time or '14:00' }}</dd></div>
           <div><dt>Check-out</dt><dd>{{ stay.check_out|nice_date('%a %d %b %Y') }}, until {{ hotel.check_out_time or '11:00' }}</dd></div>
-          <div><dt>Guests</dt><dd>{{ stay.guests }}</dd></div>
+          <div><dt>Guests</dt><dd>{{ stay.guests }}{% if stay.rooms > 1 %} in {{ stay.rooms }} rooms{% endif %}</dd></div>
           {% if offer %}
           <div><dt>{{ nights_text }}</dt><dd>{{ offer.total_price|usd }}</dd></div>
           <div class="total"><dt>Total to pay now</dt><dd>{{ offer.total_price|usd }}</dd></div>

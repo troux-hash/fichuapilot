@@ -45,11 +45,11 @@
         {% else %}<span class="badge badge--danger">Cancelled{% if booking.payment_status == 'refunded' %} · refunded{% endif %}</span>{% endif %}
       </div>
       <h2 style="font-size:var(--text-2xl);margin-top:var(--space-5)">{{ booking.hotel_name }}</h2>
-      <p class="muted">{{ booking.room_name }} · {{ booking.full_address or booking.city }}</p>
+      <p class="muted">{{ booking.room_name }}{% if (booking.rooms or 1) > 1 %} × {{ booking.rooms }}{% endif %} · {{ booking.full_address or booking.city }}</p>
       <dl class="detail-grid">
         <div><dt>Check-in</dt><dd>{{ booking.check_in|nice_date('%a %d %b') }}</dd><span class="muted small">from {{ booking.check_in_time or '14:00' }}</span></div>
         <div><dt>Check-out</dt><dd>{{ booking.check_out|nice_date('%a %d %b') }}</dd><span class="muted small">until {{ booking.check_out_time or '11:00' }}</span></div>
-        <div><dt>Guests</dt><dd>{{ booking.guests }}</dd><span class="muted small">{{ booking.nights }} night{{ 's' if booking.nights != 1 }}</span></div>
+        <div><dt>Guests</dt><dd>{{ booking.guests }}</dd><span class="muted small">{% if (booking.rooms or 1) > 1 %}{{ booking.rooms }} rooms · {% endif %}{{ booking.nights }} night{{ 's' if booking.nights != 1 }}</span></div>
         <div><dt>{{ 'Paid' if booking.payment_status == 'paid' else 'Total' }}</dt><dd>{{ booking.total_price|usd }}</dd>{% set loc = booking.total_price|local(booking.country) %}<span class="muted small">{{ loc or 'card payment' }}</span></div>
       </dl>
       <p class="small"><strong>Lead guest:</strong> {{ booking.guest_name }} · {{ booking.guest_email }}{% if booking.guest_phone %} · {{ booking.guest_phone }}{% endif %}</p>

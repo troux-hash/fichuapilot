@@ -26,6 +26,12 @@ class BookingError(Exception):
     """User-facing booking problem (validation or sold out)."""
 
 
+def room_label(name: str, rooms) -> str:
+    """'Deluxe Double' for one room, 'Deluxe Double × 2' for several."""
+    rooms = int(rooms or 1)
+    return f"{name} × {rooms}" if rooms > 1 else name
+
+
 def new_reference() -> str:
     return "FCH-" + "".join(secrets.choice(_REF_ALPHABET) for _ in range(6))
 
@@ -54,7 +60,9 @@ def create_booking(conn: Connection, stay: Stay, room_type_id: str, *, guest_nam
         raise BookingError("That room type no longer exists.")
     live = catalog.availability(conn, stay, room_type_id=room_type_id, include_inactive=(source == "offline"))
     if not live:
-        raise BookingError("Sorry — this room just sold out for these dates. Please pick another.")
+        raise BookingError("Sorry — this room just sold out for these dates. Please pick another." if stay.rooms == 1
+                           else f"Sorry — fewer than {stay.rooms} of these rooms are left for these dates. "
+                                "Please pick another room or fewer rooms.")
     offline = source == "offline"
     total = round(float(agreed_amount), 2) if offline and agreed_amount else round(live[0]["total_price"], 2)
     hold = int(app_settings.get_float(conn, "hold_minutes") or 35)
@@ -68,6 +76,7 @@ def create_booking(conn: Connection, stay: Stay, room_type_id: str, *, guest_nam
         "check_out": stay.check_out,
         "nights": stay.nights,
         "guests": stay.guests,
+        "rooms": stay.rooms,
         "total_price": total,
         "currency": "USD",
         "guest_name": guest_name.strip(),
@@ -83,14 +92,14 @@ def create_booking(conn: Connection, stay: Stay, room_type_id: str, *, guest_nam
     }
     conn.run(
         "INSERT INTO bookings (id, reference, access_token, hotel_id, room_type_id, check_in, check_out, nights, "
-        "guests, total_price, currency, guest_name, guest_email, guest_phone, special_requests, status, source, "
+        "guests, rooms, total_price, currency, guest_name, guest_email, guest_phone, special_requests, status, source, "
         "payment_status, hold_expires_at, offline_source, guest_language) VALUES (:id, :reference, :access_token, "
-        ":hotel_id, :room_type_id, :check_in, :check_out, :nights, :guests, :total_price, :currency, :guest_name, "
-        ":guest_email, :guest_phone, :special_requests, :status, :source, :payment_status, :hold_expires_at, "
-        ":offline_source, :guest_language)", booking)
+        ":hotel_id, :room_type_id, :check_in, :check_out, :nights, :guests, :rooms, :total_price, :currency, "
+        ":guest_name, :guest_email, :guest_phone, :special_requests, :status, :source, :payment_status, "
+        ":hold_expires_at, :offline_source, :guest_language)", booking)
     conn.run_many(
-        "INSERT INTO booking_nights (booking_id, room_type_id, stay_date) VALUES (:b, :rt, :d)",
-        [{"b": booking["id"], "rt": room_type_id, "d": stay.check_in + timedelta(days=i)}
+        "INSERT INTO booking_nights (booking_id, room_type_id, stay_date, units) VALUES (:b, :rt, :d, :u)",
+        [{"b": booking["id"], "rt": room_type_id, "d": stay.check_in + timedelta(days=i), "u": stay.rooms}
          for i in range(stay.nights)])
     return booking
 
@@ -215,6 +224,7 @@ def hotel_bookings(conn: Connection, hotel_id: str, show: str = "upcoming") -> l
     elif show == "cancelled":
         where += " AND b.status = 'cancelled'"
     return conn.all(
-        "SELECT b.*, rt.name AS room_name, p.status AS payout_status FROM bookings b "
+        "SELECT b.*, rt.name AS room_name, p.status AS payout_status, "
+        "b.nights * COALESCE(b.rooms, 1) AS room_nights FROM bookings b "
         "JOIN room_types rt ON rt.id = b.room_type_id LEFT JOIN payouts p ON p.booking_id = b.id "
         f"WHERE {where} ORDER BY b.check_in", {"h": hotel_id, "today": date.today()})

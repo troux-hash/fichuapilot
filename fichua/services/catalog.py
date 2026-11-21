@@ -111,7 +111,7 @@ def night_grid(conn: Connection, rooms: list[dict], start: date, end: date,
         f"WHERE room_type_id IN ({marks}) AND stay_date >= :s AND stay_date < :e", params)}
     exclude = " AND b.id <> :exclude" if exclude_booking_id else ""
     booked = {(r["room_type_id"], r["stay_date"]): int(r["n"]) for r in conn.all(
-        "SELECT bn.room_type_id, bn.stay_date, COUNT(*) AS n FROM booking_nights bn "
+        "SELECT bn.room_type_id, bn.stay_date, SUM(COALESCE(bn.units, 1)) AS n FROM booking_nights bn "
         "JOIN bookings b ON b.id = bn.booking_id "
         f"WHERE bn.room_type_id IN ({marks}) AND bn.stay_date >= :s AND bn.stay_date < :e "
         "AND (b.status = 'confirmed' OR (b.status = 'pending' AND b.hold_expires_at > :now))"
@@ -147,9 +147,12 @@ def night_grid(conn: Connection, rooms: list[dict], start: date, end: date,
 def availability(conn: Connection, stay: Stay, *, destination: str | None = None,
                  hotel_id: str | None = None, room_type_id: str | None = None,
                  include_inactive: bool = False, exclude_booking_id: str | None = None) -> list[dict]:
-    """Room types that fit the party and can be sold every night of the stay."""
-    params: dict = {"guests": stay.guests}
-    where = ["rt.max_guests >= :guests"]
+    """Room types that fit the party in the stay's rooms and have that many rooms free every night.
+
+    The price is for all the rooms; "nightly" lists one room's price for each night.
+    """
+    params: dict = {"guests": stay.guests, "rooms": stay.rooms}
+    where = ["rt.max_guests * :rooms >= :guests"]
     if not include_inactive:
         where.append("h.is_active = TRUE")
     if destination:
@@ -172,14 +175,15 @@ def availability(conn: Connection, stay: Stay, *, destination: str | None = None
             if night["closed"] or night["price"] is None or night["units"] is None:
                 break
             free = night["units"] - night["booked"]
-            if free <= 0:
+            if free < stay.rooms:
                 break
-            total += night["price"]
+            total += night["price"] * stay.rooms
             nightly.append(night["price"])
             left = free if left is None else min(left, free)
         else:
             out.append({"room_type_id": room["id"], "hotel_id": room["hotel_id"],
-                        "total_price": round(total, 2), "rooms_left": left, "nightly": nightly})
+                        "total_price": round(total, 2), "rooms_left": left, "nightly": nightly,
+                        "rooms": stay.rooms})
     return out
 
 
@@ -231,7 +235,8 @@ def hotel_rooms(conn: Connection, hotel_id: str, stay: Stay) -> list[dict]:
         room = hydrate_room(row, photos.get(row["id"]))
         a = live.get(room["id"])
         room["available"] = a is not None
-        room["fits_party"] = room["max_guests"] >= stay.guests
+        room["fits_party"] = room["max_guests"] * stay.rooms >= stay.guests
+        room["rooms_needed"] = -(-stay.guests // max(1, room["max_guests"]))  # to sleep everyone in this type
         room["free_until"] = policies.open_until(policy, room["free_cancellation"], stay.check_in)
         if a:
             room["total_price"] = round(a["total_price"], 2)

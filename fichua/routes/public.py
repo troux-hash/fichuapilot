@@ -17,13 +17,13 @@ router = APIRouter()
 
 def _stay_from(request: Request) -> dates.Stay:
     q = request.query_params
-    return dates.parse_stay(q.get("check_in"), q.get("check_out"), q.get("guests"))
+    return dates.parse_stay(q.get("check_in"), q.get("check_out"), q.get("guests"), q.get("rooms"))
 
 
 def _date_note(request: Request, stay: dates.Stay) -> str | None:
     """'We changed your dates to …' when the link asked for impossible dates (IMP-01)."""
     q = request.query_params
-    return dates.adjustment(q.get("check_in"), q.get("check_out"), q.get("guests"), stay)
+    return dates.adjustment(q.get("check_in"), q.get("check_out"), q.get("guests"), stay, rooms=q.get("rooms"))
 
 
 def _flush_messages() -> None:
@@ -51,10 +51,15 @@ def results(request: Request):
         destinations = catalog.destinations(conn)
         # With no results, say so when the real reason is the group size, not the dates.
         largest = catalog.largest_room(conn, destination or None) if not data["results"] else 0
+    # How many of the biggest rooms the group needs: offered as a one-tap search (IMP-18).
+    rooms_hint = -(-stay.guests // largest) if largest and stay.guests > largest * stay.rooms else 0
+    if rooms_hint > dates.MAX_ROOMS:
+        rooms_hint = 0
     base = {"destination": destination, **stay.as_params()}
     return render(request, "pages/results.html", destination=destination, stay=stay,
                   filters=filters, sorts=SORTS, base=base, presets=dates.presets(),
-                  destinations=destinations, largest_room=largest, date_note=_date_note(request, stay), **data)
+                  destinations=destinations, largest_room=largest, rooms_hint=rooms_hint,
+                  date_note=_date_note(request, stay), **data)
 
 
 @router.get("/hotels/{hotel_id}")
@@ -71,14 +76,17 @@ def hotel(request: Request, hotel_id: str):
 
 
 def _nights_text(stay: dates.Stay, offer: dict | None) -> str:
-    """'2 nights × $65' when every night costs the same, '3 nights (average $70)' when they differ."""
+    """'2 nights × $65' when every night costs the same, '3 nights (average $70)' when they differ;
+    with several rooms, '2 rooms × 2 nights × $65'."""
     nights = f"{stay.nights} night{'' if stay.nights == 1 else 's'}"
+    if stay.rooms > 1:
+        nights = f"{stay.rooms} rooms × {nights}"
     prices = (offer or {}).get("nightly") or []
     if not prices:
         return nights
     if len(set(prices)) == 1:
         return f"{nights} × {currency.usd(prices[0])}"
-    return f"{nights} (average {currency.usd(round(offer['total_price'] / stay.nights, 2))})"
+    return f"{nights} (average {currency.usd(round(sum(prices) / len(prices), 2))})"
 
 
 def _checkout_context(conn, stay: dates.Stay, room_id: str):
@@ -107,11 +115,11 @@ def checkout(request: Request, room: str):
 
 @router.post("/book")
 def place_booking(request: Request, room: str = Form(...), check_in: str = Form(...),
-                  check_out: str = Form(...), guests: int = Form(...),
+                  check_out: str = Form(...), guests: int = Form(...), rooms: int = Form(1),
                   guest_name: str = Form(""), guest_email: str = Form(""),
                   guest_phone: str = Form(""), special_requests: str = Form(""),
                   guest_language: str = Form("en")):
-    stay = dates.parse_stay(check_in, check_out, guests)
+    stay = dates.parse_stay(check_in, check_out, guests, rooms)
     form = {"guest_name": guest_name, "guest_email": guest_email, "guest_phone": guest_phone,
             "special_requests": special_requests, "guest_language": guest_language}
     errors = bookings.validate_guest(guest_name, guest_email, guest_phone)
@@ -131,7 +139,7 @@ def place_booking(request: Request, room: str = Form(...), check_in: str = Form(
                     booking_url = f"{base}/bookings/{b['reference']}?t={b['access_token']}"
                     session = payments.create_checkout(
                         booking={**b, "check_in": stay.check_in.isoformat(), "check_out": stay.check_out.isoformat()},
-                        hotel_name=hotel["name"], room_name=room_row["name"],
+                        hotel_name=hotel["name"], room_name=bookings.room_label(room_row["name"], stay.rooms),
                         success_url=booking_url + "&session_id={CHECKOUT_SESSION_ID}",
                         cancel_url=f"{base}/book?{qs(stay.as_params(), room=room)}")
                     conn.run("UPDATE bookings SET stripe_session_id = :s WHERE id = :id",

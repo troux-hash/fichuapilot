@@ -153,17 +153,19 @@ def booking_paid(conn: Connection, booking: dict, hotel: dict, room_name: str) -
         return f"{pct} % · {_usd(commission, 'fr', True)}" if lang == "fr" else f"{pct}% · {usd(commission, True)}"
 
     phone = f" · {booking['guest_phone']}" if booking.get("guest_phone") else ""
+    rooms = int(booking.get("rooms") or 1)
+    room = f"{room_name} × {rooms}" if rooms > 1 else room_name
     queue(conn, role="guest", to_phone=booking.get("guest_phone"), language=guest_lang, kind="booking_paid",
           template="fichua_booking_confirmed",
           params=[(name.split() or ["there"])[0], hotel["name"], booking["reference"],
-                  f"{room_name}, {_guests(booking['guests'], guest_lang)}", stay(guest_lang),
+                  f"{room}, {_guests(booking['guests'], guest_lang)}", stay(guest_lang),
                   _money(total, country, rates, guest_lang), hotel.get("check_in_time") or "14:00",
                   hotel.get("address") or hotel.get("city") or "-"],
           booking_id=booking["id"], hotel_id=hotel["id"])
     queue(conn, role="hotel", to_phone=_hotel_phone(hotel), language=hotel_lang,
           kind="booking_paid", template="fichua_new_booking",
           params=[hotel["name"], booking["reference"], f"{name}, {_guests(booking['guests'], hotel_lang)}{phone}",
-                  f"{room_name} × 1", stay(hotel_lang), _money(total, country, rates, hotel_lang), fee(hotel_lang),
+                  f"{room_name} × {rooms}", stay(hotel_lang), _money(total, country, rates, hotel_lang), fee(hotel_lang),
                   _money(payout, country, rates, hotel_lang)],
           booking_id=booking["id"], hotel_id=hotel["id"])
     queue(conn, role="admin", to_phone=app_settings.get(conn, "admin_whatsapp"), language="en",

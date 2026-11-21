@@ -17,7 +17,7 @@ def test_search_api_returns_public_fields_only():
     data = TestClient(app).get("/api/search", params={"destination": "Kigali", **STAY}).json()
     assert data["results"], "expected Kigali results"
     for offer in data["results"]:
-        assert set(offer) == {"hotel", "room", "total_price", "per_night", "rooms_left"}
+        assert set(offer) == {"hotel", "room", "total_price", "per_night", "rooms_left", "rooms"}
         assert set(offer["hotel"]) == set(catalog.PUBLIC_HOTEL_FIELDS)
         assert set(offer["room"]) == set(catalog.PUBLIC_ROOM_FIELDS)
         assert not PRIVATE & (set(offer["hotel"]) | set(offer["room"]))

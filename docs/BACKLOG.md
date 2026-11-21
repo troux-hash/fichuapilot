@@ -61,14 +61,17 @@ P2 improvements:
 | IMP-08 | Wording: "2 nights × $65", reference on one line, "Tap or click" map, "Pin set" | ✅ Shipped |
 | IMP-09 | Partner sign-up and log-in errors scroll into view and put the cursor in the field to fix | ✅ Shipped |
 | IMP-10 | Photos: styled "Choose photos" button, upload starts on choosing, "Continue" is the main button from 3 photos | ✅ Shipped |
+| IMP-11 | A walk-in for several rooms is one booking (one row, one Cancel), with "× 3" on the room | ✅ Shipped |
 | IMP-12 | A live hotel's admin page offers "Save commission" and "Hide from guests" / "Show to guests again" | ✅ Shipped |
 | IMP-13 | On submit, the hotel gets "Listing received" and Fichua gets "New hotel to review" (two new WhatsApp templates) | ✅ Shipped |
 | IMP-14 | Admin hotels list: search by name, city or ID; filter by status, country and group | ✅ Shipped |
 | IMP-15 | Access codes: "WhatsApp" link opens a chat with the code and partner link written (English and French) | ✅ Shipped |
 | IMP-16 | French number formats in WhatsApp | ✅ Shipped |
 | IMP-17 | Settings error wording | ✅ Shipped |
+| IMP-18 | Several rooms of one type in one booking: "Rooms" in search and on the hotel page, prices for every room, big groups get a "5 guests in 3 rooms" search | ✅ Shipped |
 
-Still open: IMP-11 and IMP-18 (several rooms in one booking), and one setup task (SET-01), in the sheet.
+All 18 improvements are shipped. Still open: one setup task (SET-01: Fichua's WhatsApp number in Admin → Settings, once WhatsApp is connected).
+Not covered by IMP-18: mixing room types in one booking (e.g. 1 Double + 1 Family), which needs a booking-lines table.
 
 ## 🔜 P1 — next
 

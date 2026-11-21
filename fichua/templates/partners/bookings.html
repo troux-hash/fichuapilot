@@ -14,7 +14,7 @@
 {% set fichua = rows|selectattr('source', 'equalto', 'fichua')|selectattr('status', 'equalto', 'confirmed')|list %}
 <div class="stats">
   <div class="stat"><span>Bookings shown</span><strong>{{ rows|length }}</strong></div>
-  <div class="stat"><span>Nights booked</span><strong>{{ rows|selectattr('status', 'equalto', 'confirmed')|sum(attribute='nights') }}</strong></div>
+  <div class="stat"><span>Room nights booked</span><strong>{{ rows|selectattr('status', 'equalto', 'confirmed')|sum(attribute='room_nights') }}</strong></div>
   <div class="stat stat--accent"><span>Your payouts from Fichua</span><strong>{{ fichua|sum(attribute='payout_amount')|usd }}</strong><small>after commission</small></div>
 </div>
 {% if rows %}
@@ -25,12 +25,12 @@
   <tr>
     <td data-label="Booking">{% if b.source == 'offline' %}<span class="pill pill--offline">{{ b.offline_source or 'Offline' }}</span>{% else %}<span class="mono">{{ b.reference }}</span>{% endif %}</td>
     <td data-label="Guest">{{ b.guest_name }}{% if b.guest_phone %}<br><span class="muted small">{{ b.guest_phone }}</span>{% endif %}</td>
-    <td data-label="Room">{{ b.room_name }}<br><span class="muted small">{{ b.guests }} guest{{ 's' if b.guests != 1 }}</span></td>
+    <td data-label="Room">{{ b.room_name }}{% if (b.rooms or 1) > 1 %} <strong>× {{ b.rooms }}</strong>{% endif %}<br><span class="muted small">{{ b.guests }} guest{{ 's' if b.guests != 1 }}</span></td>
     <td data-label="Dates">{{ b.check_in|nice_date }} – {{ b.check_out|nice_date }}<br><span class="muted small">{{ b.nights }} night{{ 's' if b.nights != 1 }}</span></td>
     <td class="num" data-label="Guest paid">{% if b.source == 'offline' %}<span class="muted">{{ b.total_price|usd if b.total_price else '—' }}</span>{% else %}{{ b.total_price|usd }}{% endif %}</td>
     <td class="num" data-label="Your payout">{% if b.source == 'offline' %}<span class="muted">paid to you</span>{% else %}<strong>{{ (b.payout_amount or 0)|usd }}</strong><br><span class="muted small">{{ {'sent': 'Sent', 'scheduled': 'Scheduled', 'due': 'Being sent', 'cancelled': 'Cancelled', 'recover': 'Refunded'}.get(b.payout_status, '') }}</span>{% endif %}</td>
     <td data-label="Status"><span class="pill pill--{{ b.status }}">{{ 'Confirmed' if b.status == 'confirmed' else 'Cancelled' }}</span></td>
-    <td>{% if b.source == 'offline' and b.status == 'confirmed' %}<form method="post" action="/partners/bookings/{{ b.id }}/cancel" data-confirm="Cancel this booking and put the room back on sale?"><button class="btn btn-ghost btn-sm" type="submit">Cancel</button></form>{% endif %}</td>
+    <td>{% if b.source == 'offline' and b.status == 'confirmed' %}<form method="post" action="/partners/bookings/{{ b.id }}/cancel" data-confirm="{{ 'Cancel this booking and put its ' ~ b.rooms ~ ' rooms back on sale?' if (b.rooms or 1) > 1 else 'Cancel this booking and put the room back on sale?' }}"><button class="btn btn-ghost btn-sm" type="submit">Cancel</button></form>{% endif %}</td>
   </tr>
   {% endfor %}
   </tbody>

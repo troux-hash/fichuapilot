@@ -69,7 +69,7 @@
         <span class="pill pill--{{ r.payment_status if r.payment_status in ('paid', 'refunded') else r.status }}" style="margin-top:4px">{{ {'paid': 'Paid', 'refunded': 'Refunded', 'n/a': 'Offline'}.get(r.payment_status, r.status|capitalize) }}</span></td>
       <td>{{ r.hotel_name }}<br><span class="muted small">{{ r.country }}</span></td>
       <td>{{ r.guest_name }}</td>
-      <td>{{ r.check_in|nice_date('%d %b') }} – {{ r.check_out|nice_date('%d %b') }}<br><span class="muted small">{{ r.room_name }} · {{ r.nights }}n</span></td>
+      <td>{{ r.check_in|nice_date('%d %b') }} – {{ r.check_out|nice_date('%d %b') }}<br><span class="muted small">{{ r.room_name }}{% if (r.rooms or 1) > 1 %} × {{ r.rooms }}{% endif %} · {{ r.nights }}n</span></td>
       <td>{{ (r.paid_at or r.created_at)|nice_date('%d %b, %H:%M') }}</td>
       <td class="num">{{ r.total_price|usd }}</td>
       <td class="num">{% if r.commission_amount is not none %}{{ r.commission_amount|usd }}<br><span class="muted small">{{ '%g'|format(r.commission_pct or 0) }}%</span>{% else %}—{% endif %}</td>

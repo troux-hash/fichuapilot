@@ -206,6 +206,8 @@ def test_walk_in_guests_are_the_group_total():
     r = p.post("/partners/bookings/new", data={**stay, "guests": "4"}, follow_redirects=False)
     assert r.status_code == 303
     with db.connect() as conn:
-        rows = conn.all("SELECT guests FROM bookings WHERE hotel_id = :h AND check_in = :d AND guest_name = 'Group'",
-                        {"h": state["hotel_id"], "d": day.isoformat()})
-    assert sorted(int(x["guests"]) for x in rows) == [2, 2]
+        rows = conn.all("SELECT guests, rooms FROM bookings WHERE hotel_id = :h AND check_in = :d "
+                        "AND guest_name = 'Group'", {"h": state["hotel_id"], "d": day.isoformat()})
+    assert [(int(x["guests"]), int(x["rooms"])) for x in rows] == [(4, 2)]  # one booking for both rooms (IMP-11)
+    listing = p.get("/partners/bookings").text
+    assert "<strong>× 2</strong>" in listing and "put its 2 rooms back on sale" in listing

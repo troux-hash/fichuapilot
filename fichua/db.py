@@ -23,6 +23,8 @@ _PARAM = re.compile(r"(?<![:\w]):([a-zA-Z_]\w*)")
 # works, so they are applied here instead of in schema.sql. Append only; never edit old lines.
 COLUMN_MIGRATIONS: list[tuple[str, str, str]] = [
     ("media", "thumb", "BYTEA"),
+    ("bookings", "rooms", "INTEGER DEFAULT 1"),
+    ("booking_nights", "units", "INTEGER DEFAULT 1"),
     ("messages", "template", "TEXT"),
     ("messages", "params", "TEXT"),
     ("hotels", "status", "TEXT DEFAULT 'live'"),

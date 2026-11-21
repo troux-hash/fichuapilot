@@ -58,6 +58,7 @@ CREATE TABLE IF NOT EXISTS bookings (
     check_out         DATE NOT NULL,
     nights            INTEGER NOT NULL,
     guests            INTEGER NOT NULL,
+    rooms             INTEGER DEFAULT 1,              -- rooms of this type in the booking
     total_price       NUMERIC(10,2) NOT NULL,
     currency          TEXT NOT NULL,
     guest_name        TEXT NOT NULL,
@@ -68,11 +69,12 @@ CREATE TABLE IF NOT EXISTS bookings (
     created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Nights consumed by each booking. Availability = room_rates.units - confirmed booking nights.
+-- Nights consumed by each booking. Availability = rooms to sell - the units booked that night.
 CREATE TABLE IF NOT EXISTS booking_nights (
     booking_id      TEXT NOT NULL REFERENCES bookings(id) ON DELETE CASCADE,
     room_type_id    TEXT NOT NULL REFERENCES room_types(id),
     stay_date       DATE NOT NULL,
+    units           INTEGER DEFAULT 1,                    -- rooms taken that night (the booking's rooms)
     PRIMARY KEY (booking_id, stay_date)
 );
 

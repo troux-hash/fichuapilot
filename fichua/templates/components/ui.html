@@ -39,11 +39,16 @@
     </div>
     <div class="search__field">
       <span class="label" id="guests-label">Who</span>
-      <div class="stepper" data-stepper>
-        <button type="button" class="stepper__btn" data-step="-1" aria-label="Fewer guests">−</button>
-        <input type="number" name="guests" value="{{ stay.guests }}" min="1" max="12" inputmode="numeric" aria-labelledby="guests-label">
-        <button type="button" class="stepper__btn" data-step="1" aria-label="More guests">+</button>
-        <span class="stepper__unit">guests</span>
+      <div class="search__who">
+        <div class="stepper" data-stepper>
+          <button type="button" class="stepper__btn" data-step="-1" aria-label="Fewer guests">−</button>
+          <input type="number" name="guests" value="{{ stay.guests }}" min="1" max="12" inputmode="numeric" aria-labelledby="guests-label">
+          <button type="button" class="stepper__btn" data-step="1" aria-label="More guests">+</button>
+          <span class="stepper__unit">guests</span>
+        </div>
+        <label class="search__rooms"><span class="sr-only">Rooms</span>
+          <select name="rooms">{% for n in range(1, 9) %}<option value="{{ n }}" {% if stay.rooms == n %}selected{% endif %}>{{ n }} room{{ 's' if n > 1 }}</option>{% endfor %}</select>
+        </label>
       </div>
     </div>
     <button class="btn btn-primary btn-lg search__submit" type="submit">
@@ -80,7 +85,7 @@
     {% if h.amenities %}<ul class="tags">{% for a in h.amenities[:3] %}<li>{{ a }}</li>{% endfor %}</ul>{% endif %}
     <div class="hotel-card__foot">
       <div class="small">
-        <div>{{ o.room.name }}</div>
+        <div>{% if stay.rooms > 1 %}{{ stay.rooms }} × {% endif %}{{ o.room.name }}</div>
         {% if o.room.breakfast_included %}<div class="badge badge--info" style="margin-top:4px">Breakfast included</div>{% endif %}
         {% if o.rooms_left <= 3 %}<div class="scarcity">Only {{ o.rooms_left }} left at this price</div>{% endif %}
       </div>
@@ -95,5 +100,5 @@
 {% endmacro %}
 
 {% macro stay_summary(stay) -%}
-{{ stay.check_in|nice_date }} – {{ stay.check_out|nice_date }} · {{ stay.nights }} night{{ 's' if stay.nights != 1 }} · {{ stay.guests }} guest{{ 's' if stay.guests != 1 }}
+{{ stay.check_in|nice_date }} – {{ stay.check_out|nice_date }} · {{ stay.nights }} night{{ 's' if stay.nights != 1 }} · {{ stay.guests }} guest{{ 's' if stay.guests != 1 }}{% if stay.rooms > 1 %} · {{ stay.rooms }} rooms{% endif %}
 {%- endmacro %}

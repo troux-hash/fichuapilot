@@ -108,6 +108,13 @@
 .search__presets { padding: 0 var(--space-1); }
 .search__presets .chip { min-height: 32px; }
 
+.search__who { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
+.search__rooms select {
+  border: 1px solid var(--color-border-strong); border-radius: var(--radius-pill); background: transparent;
+  color: var(--color-ink); font: inherit; font-size: var(--text-sm); font-weight: var(--weight-bold);
+  min-height: 30px; padding: 0 var(--space-3); cursor: pointer;
+}
+.search__rooms select option { color: var(--color-ink); background: var(--color-surface-solid); }
 .stepper { display: flex; align-items: center; gap: var(--space-2); }
 .stepper input {
   width: 2.2ch !important; text-align: center; -moz-appearance: textfield; font-weight: 800 !important;
@@ -304,7 +311,11 @@ input[type="range"] { width: 100%; accent-color: var(--pink); }
 .trust-list li::before { content: "✓"; color: var(--color-success); font-weight: 700; margin-right: var(--space-2); }
 .stay-form { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); margin-bottom: var(--space-5); }
 .stay-form .input { min-height: 44px; padding: var(--space-2) var(--space-3); }
-@media (min-width: 720px) { .stay-form { grid-template-columns: 1fr 1fr 110px auto; align-items: end; } }
+.stay-form .btn { grid-column: 1 / -1; }
+@media (min-width: 720px) {
+  .stay-form { grid-template-columns: 1fr 1fr 90px 90px auto; align-items: end; }
+  .stay-form .btn { grid-column: auto; }
+}
 
 .room { display: grid; gap: var(--space-4); padding: var(--space-4); margin-bottom: var(--space-4); overflow: hidden; }
 .room__img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; border-radius: var(--radius-md); background: var(--color-surface-2); }
