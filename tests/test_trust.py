@@ -18,6 +18,16 @@ def test_trust_section_on_guest_and_partner_pages():
         assert "https://kuosharper.mit.edu" in html, path
 
 
+def test_supplied_logo_files_are_used():
+    found = {p["key"]: p for p in web.trust_partners()}
+    assert found["mit"]["logo"].startswith("/static/img/trust/mit.png?v=") and found["mit"]["plate"] == "light"
+    assert found["mit-sandbox"]["logo"].startswith("/static/img/trust/mit-sandbox.png?v=")
+    assert found["kuo-sharper"]["logo"].startswith("/static/img/trust/kuo-sharper-white.png?v=")
+    assert found["kuo-sharper"]["plate"] == "dark"
+    for name in ("mit.png", "mit-sandbox.png", "kuo-sharper-white.png"):
+        assert (web.STATIC_DIR / "static" / "img" / "trust" / name).read_bytes()[:4] == b"\x89PNG", name
+
+
 def test_logos_switch_on_when_official_files_are_added(tmp_path, monkeypatch):
     monkeypatch.setattr(web, "STATIC_DIR", tmp_path)
     assert all(p["logo"] is None and p["plate"] == "light" for p in web.trust_partners())

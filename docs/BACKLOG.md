@@ -20,7 +20,7 @@ Markets: Rwanda, Benin, Côte d'Ivoire. Master currency USD (RWF / CFA shown alo
 | Admin | Access codes (free Hotel Manager licence), WhatsApp outbox, Excel bulk upload |
 | Platform | WhatsApp 3-way messages (guest, hotel, Fichua) after payment, cancellations, approval decisions |
 | Platform | Daily payout job (Vercel Cron), portable Postgres schema with automatic column migrations |
-| Trust | "Built at MIT" section (MIT, MIT Sandbox Innovation Fund, MIT Kuo Sharper Center) in the guest footer, partner landing page and partner portal; official logos switch on when their files are added ([guide](BRAND_ASSETS.md)) |
+| Trust | "Built at MIT" section with the MIT, MIT Sandbox and MIT Kuo Sharper Center logos in the guest footer, partner landing page and partner portal ([guide](BRAND_ASSETS.md)) |
 
 ## 🔜 P1 — next
 
@@ -32,7 +32,7 @@ Markets: Rwanda, Benin, Côte d'Ivoire. Master currency USD (RWF / CFA shown alo
 | 4 | Automatic payouts to hotel bank accounts (Stripe Global Payouts: Benin + CI; Rwanda on request) | Stripe access |
 | 5 | Map view on the guest results page (hotels already have pins) | — |
 | 6 | Email confirmations (needs a verified domain) | Domain |
-| 7 | Official MIT, MIT Sandbox and Kuo Sharper Center logos in the "Built at MIT" section | MIT permission + approved files ([guide](BRAND_ASSETS.md)) |
+| 7 | Get written OK from MIT for the logos, and swap in official SVG files when they arrive | ioc-useofname@mit.edu, sandbox@mit.edu, kuosharper@mit.edu ([guide](BRAND_ASSETS.md)) |
 
 ## 💡 P2 — later
 

@@ -107,16 +107,24 @@ p { margin: 0 0 var(--space-3); }
 .trust__text--promise { color: var(--color-muted); }
 .trust__logos { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--space-3); }
 .trust__plate {
-  display: inline-flex; align-items: center; justify-content: center; min-height: 56px; padding: var(--space-3) var(--space-5);
+  display: inline-flex; align-items: center; justify-content: center; height: 72px; padding: 0 var(--space-5);
   border-radius: var(--radius-md); background: var(--logo-plate-bg); color: var(--logo-plate-fg); border: 1px solid var(--logo-plate-border);
   font-size: var(--text-sm); font-weight: var(--weight-heavy); letter-spacing: -0.01em; white-space: nowrap; text-decoration: none;
   transition: transform var(--speed) var(--ease), box-shadow var(--speed) var(--ease);
 }
 .trust__plate--dark { background: var(--logo-plate-dark-bg); border-color: var(--logo-plate-dark-border); }
 .trust__plate:hover { text-decoration: none; transform: translateY(-2px); box-shadow: var(--shadow-md); }
-.trust__plate img { display: block; height: 32px; width: auto; max-width: 180px; object-fit: contain; }
-.trust__plate--sm { min-height: 36px; padding: var(--space-1) var(--space-3); border-radius: var(--radius-sm); font-size: var(--text-xs); }
-.trust__plate--sm img { height: 20px; max-width: 120px; }
+.trust__plate img { display: block; width: auto; height: auto; max-height: 44px; max-width: 200px; }
+/* The Sandbox mark is compact (not a wide lock-up), so it gets a little more height to read the same size. */
+.trust__plate--mit-sandbox img { max-height: 52px; }
+@media (max-width: 719px) {
+  .trust__plate { height: 64px; padding: 0 var(--space-4); }
+  .trust__plate img { max-height: 36px; max-width: 160px; }
+  .trust__plate--mit-sandbox img { max-height: 44px; }
+}
+.trust__plate--sm { height: 40px; padding: 0 var(--space-3); border-radius: var(--radius-sm); font-size: var(--text-xs); }
+.trust__plate--sm img { max-height: 24px; max-width: 110px; }
+.trust__plate--sm.trust__plate--mit-sandbox img { max-height: 30px; }
 .trust--compact { display: flex; flex-wrap: wrap; gap: var(--space-3) var(--space-4); padding-top: var(--space-5); border-top: 1px solid var(--color-border); }
 
 /* Buttons */

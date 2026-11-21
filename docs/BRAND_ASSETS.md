@@ -9,19 +9,25 @@ The guest footer, the partner landing page and the partner portal show a "Built 
 | `mit-sandbox` | MIT Sandbox | MIT Sandbox Innovation Fund | https://sandbox.mit.edu | sandbox@mit.edu |
 | `kuo-sharper` | MIT Kuo Sharper Center | MIT Kuo Sharper Center for Prosperity and Entrepreneurship | https://kuosharper.mit.edu | kuosharper@mit.edu |
 
-## Adding a logo (no code change)
+## Logo files (live since 21 Nov 2026, supplied by the Fichua team)
 
-Put the official file in `public/static/img/trust/`, named after its key, then commit and push:
+| File | Tile | How it was prepared |
+|---|---|---|
+| `public/static/img/trust/mit.png` | white | Trimmed, scaled to 132 px tall, white background made transparent |
+| `public/static/img/trust/mit-sandbox.png` | white | Trimmed only |
+| `public/static/img/trust/kuo-sharper-white.png` | navy `#113A69` | Trimmed, navy background made transparent (the white logo on the centre's own navy) |
 
-```
-public/static/img/trust/mit.svg            → shown on a white tile (normal colour logo)
-public/static/img/trust/mit-sandbox.png
-public/static/img/trust/kuo-sharper-white.png  → "-white" = reversed logo, shown on a dark tile
-```
+None of the marks were redrawn or recoloured.
 
-- SVG is best. PNG or WebP also work: transparent background, at least 120 px tall.
-- Each logo switches on by itself once its file exists. Until then, the name shows as text on the same tile.
-- Removing the file switches the logo off again.
+## Replacing or adding a logo (no code change)
+
+Drop the file in `public/static/img/trust/`, named after its key, then commit and push:
+
+- `<key>.svg|png|webp` shows on a white tile; `<key>-white.<ext>` (a reversed logo) on the navy tile.
+- Order of preference: `<key>.svg`, `.png`, `.webp`, then the `-white` versions. An official `mit.svg` would
+  therefore replace `mit.png` without deleting it.
+- SVG is best; PNG or WebP need a transparent background and at least 120 px of height.
+- Removing every file for a key switches that tile back to the name as text.
 
 ## Rules (read before adding a logo)
 

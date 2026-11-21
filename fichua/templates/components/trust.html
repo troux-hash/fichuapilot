@@ -6,7 +6,7 @@
 <ul class="trust__logos" aria-label="Supported by">
   {% for p in trust_partners() %}
   <li>
-    <a class="trust__plate trust__plate--{{ size }} trust__plate--{{ p.plate }}" href="{{ p.href }}" target="_blank" rel="noopener" title="{{ p.full }}">
+    <a class="trust__plate trust__plate--{{ size }} trust__plate--{{ p.plate }} trust__plate--{{ p.key }}" href="{{ p.href }}" target="_blank" rel="noopener" title="{{ p.full }}">
       {%- if p.logo %}<img src="{{ p.logo }}" alt="{{ p.full }}" loading="lazy" decoding="async">{% else %}{{ p.name }}{% endif -%}
     </a>
   </li>
