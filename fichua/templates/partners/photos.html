@@ -2,7 +2,7 @@
 {% import "components/icons.html" as i %}
 {% block ptitle %}Photos{% endblock %}
 {% block page_title %}Photos{% endblock %}
-{% block page_sub %}<p>Step 2 of 5 · Hotels with 8 or more photos get more bookings. The first photo is your cover.</p>{% endblock %}
+{% block page_sub %}<p>Step 2 of 5 · Show guests the real place: the entrance, the rooms, the view and where they eat. The first photo is your cover.</p>{% endblock %}
 {% block page_actions %}<a class="btn {{ 'btn-primary' if photos|length >= min_photos else 'btn-secondary' }}" href="/partners/rooms">Continue to rooms</a>{% endblock %}
 {% block partner_content %}
 {% if error %}<div class="alert alert-error" role="alert">{{ error }}</div>{% endif %}

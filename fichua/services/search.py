@@ -71,6 +71,8 @@ def _offers(conn: Connection, stay: Stay, destination: str | None) -> list[dict]
             "room": room,
             "total_price": round(a["total_price"], 2),
             "per_night": round(a["total_price"] / stay.nights, 2),
+            # Every night at the same price: "$165/night"; otherwise the card says it is an average.
+            "even_nights": len(set(a.get("nightly") or [])) <= 1,
             "rooms_left": int(a["rooms_left"]),
             # The last day to cancel for free, or None (non-refundable, or too close to check-in).
             "free_until": policies.open_until(hotel.get("cancellation_policy"), room["free_cancellation"],

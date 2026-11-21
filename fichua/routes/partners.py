@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import dataclasses
 from datetime import date
+from urllib.parse import urlencode
 
 from fastapi import APIRouter, File, Form, Request, UploadFile
 from fastapi.responses import RedirectResponse
@@ -447,15 +448,16 @@ def calendar_update(request: Request, room: str = Form(...), date_from: str = Fo
         room_row = conn.one("SELECT * FROM room_types WHERE id = :id AND hotel_id = :h", {"id": room, "h": hotel["id"]})
         if not room_row:
             return RedirectResponse("/partners/calendar", status_code=303)
+        query = {"room": room, "month": month}
         try:
             start = date.fromisoformat(date_from)
             end = date.fromisoformat(date_to) if date_to else start
             n = partners.update_calendar(conn, room_row, start, end, apply_to=apply_to, price=price, units=units,
                                          closed=closed == "1", reset=reset == "1")
-            note = f"saved={n}"
+            query.update(saved=n, month=f"{start:%Y-%m}")  # reopen on the month that changed, so the owner sees it
         except (ValueError, partners.PartnerError) as exc:
-            note = f"error={exc}" if isinstance(exc, partners.PartnerError) else "error=Pick valid dates."
-    return RedirectResponse(f"/partners/calendar?room={room}&month={month}&{note}", status_code=303)
+            query["error"] = str(exc) if isinstance(exc, partners.PartnerError) else "Pick valid dates."
+    return RedirectResponse("/partners/calendar?" + urlencode(query), status_code=303)
 
 
 @router.get("/bookings")

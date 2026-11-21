@@ -153,7 +153,13 @@ def _review_context(conn, hotel_id: str) -> dict | None:
         return None
     from ..services import catalog
     hotel = catalog.hydrate_hotel(hotel, catalog.media_urls(conn, "hotel", [hotel_id]).get(hotel_id))
-    return {"hotel": hotel, "rooms": partners.hotel_room_list(conn, hotel_id),
+    # The host profile goes public once the owner ticks consent: the reviewer sees it either way.
+    host = None
+    if (hotel.get("host_name") or "").strip():
+        host = catalog.host_profile({**hotel, "host_consent_at": hotel.get("host_consent_at") or "pending"},
+                                    (catalog.media_urls(conn, "host", [hotel_id]).get(hotel_id) or [None])[0])
+        host["public"] = bool(hotel.get("host_consent_at"))
+    return {"hotel": hotel, "host": host, "rooms": partners.hotel_room_list(conn, hotel_id),
             "checks": partners.review_checks(conn, hotel), "status": partners.onboarding_status(conn, hotel),
             "default_commission": app_settings.get(conn, "commission_pct"), "policies": partners.POLICIES}
 

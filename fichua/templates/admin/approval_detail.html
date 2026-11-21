@@ -5,7 +5,7 @@
 {% block page_actions %}{% if hotel.status == 'live' and not hotel.is_active %}<span class="pill pill--muted">Hidden</span>{% else %}<span class="pill pill--{{ hotel.status }}">{{ {'pending': 'Waiting for approval', 'changes': 'Changes requested', 'draft': 'Still onboarding', 'live': 'Live', 'rejected': 'Rejected'}.get(hotel.status, hotel.status) }}</span>{% endif %}{% endblock %}
 {% block app_content %}
 {% set wa = 'sent to the owner on WhatsApp' if whatsapp_ready else 'saved in WhatsApp messages (WhatsApp is not connected yet)' %}
-{% if decided == 'approve' %}<div class="alert alert-success" role="status"><strong>Approved.</strong> {{ hotel.name }} is live on Fichua. The welcome message was {{ wa }}. <a href="/hotels/{{ hotel.id }}" target="_blank">See it as a guest ↗</a></div>
+{% if decided == 'approve' %}<div class="alert alert-success" role="status"><strong>Approved.</strong> {{ hotel.name }} is live on Fichua. The welcome message was {{ wa }}. <a href="{{ hotel.path }}" target="_blank">See it as a guest ↗</a></div>
 {% elif decided == 'changes' %}<div class="alert alert-info" role="status">Your request was {{ wa }}. The hotel stays hidden until it is fixed.</div>
 {% elif decided == 'reject' %}<div class="alert alert-error" role="status">Rejected. The message was {{ wa }}. The hotel stays hidden.</div>
 {% elif decided == 'password' %}<div class="alert alert-success" role="status">Password reset. Share it with the owner by phone.</div>
@@ -49,8 +49,16 @@
         <div><span class="label">Map pin</span><br>{% if hotel.lat is not none %}<a href="https://www.openstreetmap.org/?mlat={{ hotel.lat }}&mlon={{ hotel.lng }}#map=17/{{ hotel.lat }}/{{ hotel.lng }}" target="_blank" rel="noopener">{{ '%.5f'|format(hotel.lat) }}, {{ '%.5f'|format(hotel.lng) }} ↗</a>{% else %}—{% endif %}</div>
         <div><span class="label">Cancellation</span><br>{{ policies.get(hotel.cancellation_policy or 'flexible', ('Flexible', ''))[0] }}</div>
         <div><span class="label">Check-in / out</span><br>{{ hotel.check_in_time or '14:00' }} / {{ hotel.check_out_time or '11:00' }}</div>
+        <div><span class="label">Business (on receipts)</span><br>{{ hotel.legal_name or '—' }}{% if hotel.tax_id %} · tax no. {{ hotel.tax_id }}{% endif %}</div>
       </div>
       {% if hotel.description %}<p class="small" style="margin:0">{{ hotel.description }}</p>{% endif %}
+    </section>
+    {% import "components/ui.html" as ui %}
+    <section class="panel panel-pad" style="display:grid;gap:var(--space-3)">
+      <div class="row-between"><h2>Host profile</h2>
+        {% if host %}<span class="pill pill--{{ 'live' if host.public else 'pending' }}">{{ 'Shown to guests' if host.public else 'Hidden: no consent yet' }}</span>{% endif %}</div>
+      {% if host %}{{ ui.host_card(host) }}
+      {% else %}<p class="muted small" style="margin:0">No host profile. It's optional; the owner can add one under Host profile.</p>{% endif %}
     </section>
   </div>
   <aside style="display:grid;gap:var(--space-4);position:sticky;top:var(--space-5)">

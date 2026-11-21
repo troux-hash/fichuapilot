@@ -107,7 +107,7 @@
             {% if r.available %}
               <div class="price">
                 <span class="price__total">{{ r.total_price|usd }}</span>
-                <span class="price__meta">{% if stay.rooms > 1 %}{{ stay.rooms }} rooms · {% endif %}{{ stay.nights }} night{{ 's' if stay.nights != 1 }} · {{ r.per_night|usd }}/night</span>
+                <span class="price__meta">{% if stay.rooms > 1 %}{{ stay.rooms }} rooms · {% endif %}{{ stay.nights }} night{{ 's' if stay.nights != 1 }} · {{ ui.night_price(r.per_night, r.even_nights) }}</span>
                 {% set loc = r.total_price|local(hotel.country) %}{% if loc %}<span class="price__local">{{ loc }}</span>{% endif %}
               </div>
               <a class="btn btn-primary" href="/book?{{ qs(stay.as_params(), room=r.id) }}">Reserve{% if stay.rooms > 1 %} {{ stay.rooms }} rooms{% endif %}</a>
@@ -131,12 +131,13 @@
     <aside class="hotel-aside">
       <div class="card card-pad booking-box">
         {% if cheapest %}
-          <div class="muted small">From</div>
-          <div class="from">{{ cheapest.per_night|usd }} <span class="muted small" style="font-weight:400">/ night{% if stay.rooms > 1 %} for {{ stay.rooms }} rooms{% endif %}</span></div>
+          {# One honest number first: the total for the stay (Brief 2); the nightly figure only helps compare. #}
+          <div class="muted small">Total for {{ stay.nights }} night{{ 's' if stay.nights != 1 }}{% if stay.rooms > 1 %}, {{ stay.rooms }} rooms{% endif %}</div>
+          <div class="from">{{ cheapest.total_price|usd }}</div>
+          <p class="muted small" style="margin:2px 0 0">No booking fees · {{ ui.night_price(cheapest.per_night, cheapest.even_nights, ' a night') }}</p>
           <dl class="summary-rows">
             <div><dt>Dates</dt><dd>{{ stay.check_in|nice_date }} – {{ stay.check_out|nice_date }}</dd></div>
             <div><dt>Guests</dt><dd>{{ stay.guests }}{% if stay.rooms > 1 %} · {{ stay.rooms }} rooms{% endif %}</dd></div>
-            <div class="total"><dt>Total ({{ stay.nights }} night{{ 's' if stay.nights != 1 }})</dt><dd>{{ cheapest.total_price|usd }}</dd></div>
           </dl>
           <p class="rules__title">If you cancel <span class="muted">({{ cheapest.name }})</span></p>
           {{ ui.rules_bar(rules) }}
@@ -157,9 +158,9 @@
   </div>
 </div>
 
-<div class="sticky-cta">
+<div class="sticky-cta{% if cheapest and can_ask %} sticky-cta--two{% endif %}">
   {% if cheapest %}
-  <div><strong>{{ cheapest.total_price|usd }}</strong> <span class="muted small">total</span><div class="muted small">{{ stay.check_in|nice_date('%d %b') }} – {{ stay.check_out|nice_date('%d %b') }} · {{ stay.guests }} guest{{ 's' if stay.guests != 1 }}{% if stay.rooms > 1 %} · {{ stay.rooms }} rooms{% endif %}</div></div>
+  <div class="sticky-cta__price"><strong>{{ cheapest.total_price|usd }}</strong> <span class="muted small">total</span> <span class="muted small sticky-cta__when">{{ stay.check_in|nice_date('%d %b') }} – {{ stay.check_out|nice_date('%d %b') }} · {{ stay.guests }} guest{{ 's' if stay.guests != 1 }}{% if stay.rooms > 1 %} · {{ stay.rooms }} rooms{% endif %}</span></div>
   <div class="sticky-cta__actions">
     {% if can_ask %}{{ ui.ask_form(hotel, stay, label='WhatsApp', note=false, cls='') }}{% endif %}
     <a class="btn btn-primary" href="#rooms">See rooms</a>

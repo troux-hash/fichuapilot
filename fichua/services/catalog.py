@@ -281,6 +281,7 @@ def hotel_rooms(conn: Connection, hotel_id: str, stay: Stay) -> list[dict]:
         if a:
             room["total_price"] = round(a["total_price"], 2)
             room["per_night"] = round(a["total_price"] / stay.nights, 2)
+            room["even_nights"] = len(set(a.get("nightly") or [])) <= 1
             room["rooms_left"] = int(a["rooms_left"])
         rooms.append(room)
     rooms.sort(key=lambda r: (not r["available"], r.get("total_price") or 0))

@@ -2,6 +2,12 @@
 {# No guest ratings or review counts anywhere: Fichua shows only reviews from verified Fichua stays (Brief 2), and none exist yet. #}
 {% import "components/icons.html" as i %}
 
+{# A night's price beside the total: "$165/night" when every night costs the same, else a rounded average.
+   Never "$178.33": the total is the honest number, the nightly figure only helps compare. #}
+{% macro night_price(per_night, even, suffix='/night') -%}
+  {%- if even %}{{ per_night|usd }}{{ suffix }}{% else %}avg {{ (per_night|round)|usd }}{{ suffix }}{% endif -%}
+{%- endmacro %}
+
 {# The cancellation rules beside the price, drawn as a bar with dollar amounts (policies.timeline). #}
 {% macro rules_bar(parts) %}
 {% if parts %}
@@ -124,7 +130,7 @@
       </div>
       <div class="price">
         <span class="price__total">{{ o.total_price|usd }}</span>
-        <span class="price__meta">total · {{ o.per_night|usd }}/night</span>
+        <span class="price__meta">total · {{ night_price(o.per_night, o.even_nights) }}</span>
         {% set loc = o.total_price|local(h.country) %}{% if loc %}<span class="price__local">{{ loc }}</span>{% endif %}
       </div>
     </div>

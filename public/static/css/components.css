@@ -426,6 +426,14 @@ input[type="range"] { width: 100%; accent-color: var(--color-primary); }
 .sticky-cta.is-hidden { transform: translateY(110%); opacity: 0; pointer-events: none; }
 .sticky-cta__actions { display: flex; gap: var(--space-2); align-items: center; }
 .sticky-cta .ask { margin: 0; }
+.sticky-cta__when { display: block; }
+/* With two actions (WhatsApp + See rooms) on a phone: price and dates on one line, the buttons side by side under it. */
+.sticky-cta--two { flex-wrap: wrap; row-gap: var(--space-2); }
+.sticky-cta--two .sticky-cta__price { flex: 1 1 100%; display: flex; flex-wrap: wrap; align-items: baseline; column-gap: var(--space-2); }
+.sticky-cta--two .sticky-cta__when { display: inline; }
+.sticky-cta--two .sticky-cta__actions { flex: 1 1 100%; }
+.sticky-cta--two .sticky-cta__actions > * { flex: 1 1 0; }
+.sticky-cta--two .sticky-cta__actions .btn { width: 100%; }
 .has-sticky-cta { padding-bottom: 88px; }
 @media (min-width: 1080px) { .sticky-cta { display: none; } .has-sticky-cta { padding-bottom: 0; } }
 
