@@ -184,6 +184,7 @@ def test_partner_login_and_pages():
     for path in ("/partners/hotel", "/partners/photos", "/partners/rooms", "/partners/policies", "/partners/review",
                  "/partners/calendar", "/partners/bookings", "/partners/bookings/new", f"/partners/rooms/{state['room_id']}"):
         assert c.get(path).status_code == 200, path
+    assert "Built at MIT" in c.get("/partners/calendar").text
     assert TestClient(app).get("/partners/calendar", follow_redirects=False).status_code == 303
 
 

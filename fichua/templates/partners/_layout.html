@@ -32,4 +32,5 @@
   {% elif hotel.status == 'live' and active in ('hotel', 'photos', 'rooms', 'policies') %}<div class="alert alert-success" role="status">Your hotel is live. Changes you save here show on Fichua straight away.</div>{% endif %}
   {% block partner_content %}{% endblock %}
 {% endblock %}
+{% block app_footer %}{% import "components/trust.html" as trust %}{{ trust.band('compact') }}{% endblock %}
 {% block scripts %}<script src="{{ asset('/static/js/partners.js') }}" defer></script>{% block partner_scripts %}{% endblock %}{% endblock %}

@@ -90,7 +90,34 @@ def asset(path: str) -> str:
     return f"{path}?v={version}"
 
 
+# "Built at MIT" trust section. Official logo files go in public/static/img/trust/ (only with
+# permission; see docs/BRAND_ASSETS.md). Without a file, the name is shown as text.
+TRUST_PARTNERS = [
+    {"key": "mit", "name": "MIT", "full": "Massachusetts Institute of Technology", "href": "https://www.mit.edu"},
+    {"key": "mit-sandbox", "name": "MIT Sandbox", "full": "MIT Sandbox Innovation Fund", "href": "https://sandbox.mit.edu"},
+    {"key": "kuo-sharper", "name": "MIT Kuo Sharper Center", "full": "MIT Kuo Sharper Center for Prosperity and Entrepreneurship",
+     "href": "https://kuosharper.mit.edu"},
+]
+TRUST_LOGO_EXTS = ("svg", "png", "webp")
+
+
+def trust_partners() -> list[dict]:
+    """`<key>.svg|png|webp` shows on a white plate; `<key>-white.<ext>` (a reversed logo) on a dark plate."""
+    folder = STATIC_DIR / "static" / "img" / "trust"
+    out = []
+    for p in TRUST_PARTNERS:
+        logo, plate = None, "light"
+        for name, tone in ((p["key"], "light"), (f"{p['key']}-white", "dark")):
+            ext = next((e for e in TRUST_LOGO_EXTS if (folder / f"{name}.{e}").exists()), None)
+            if ext:
+                logo, plate = asset(f"/static/img/trust/{name}.{ext}"), tone
+                break
+        out.append({**p, "logo": logo, "plate": plate})
+    return out
+
+
 templates.env.globals["asset"] = asset
+templates.env.globals["trust_partners"] = trust_partners
 templates.env.filters["money"] = money
 templates.env.filters["usd"] = currency.usd
 templates.env.filters["local"] = local

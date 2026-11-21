@@ -27,10 +27,14 @@
   {% endblock %}
   <main id="main">{% block content %}{% endblock %}</main>
   {% block footer %}
+  {% import "components/trust.html" as trust %}
   <footer class="site-footer">
-    <div class="container row-between">
-      <span>© {{ app_name }} · Rwanda · Benin · Côte d'Ivoire · Prices in USD, total for your stay.</span>
-      <span class="row"><a href="/manage">Manage a booking</a><a href="/partners">List your hotel</a></span>
+    <div class="container site-footer__inner">
+      {{ trust.band('guest') }}
+      <div class="row-between site-footer__bar">
+        <span>© {{ app_name }} · Rwanda · Benin · Côte d'Ivoire · Prices in USD, total for your stay.</span>
+        <span class="row"><a href="/manage">Manage a booking</a><a href="/partners">List your hotel</a></span>
+      </div>
     </div>
   </footer>
   {% endblock %}

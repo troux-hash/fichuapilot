@@ -80,4 +80,4 @@ Then change `DATABASE_URL`. The app itself runs anywhere Python runs (`uvicorn f
 | **Vercel Hobby** | Free, generous bandwidth & function time | **Non-commercial use only.** Once Fichua takes real bookings as a business, Vercel's terms require **Pro (~$20/user/month)**. Max request body 4.5 MB (Excel uploads are capped at 4 MB). |
 | **Supabase Free** | 500 MB database, 2 projects | **Pauses after 7 days without activity** (one click to resume). **No automatic backups** — see backlog. Pro is ~$25/month. |
 | **GitHub** | Free private repos | — |
-| Images (Unsplash hot-links) | Free | Fine for a demo; replace with your own photos in Supabase Storage before launch (backlog #17). |
+| Images (Unsplash hot-links) | Free | Fine for a demo; replace with your own photos in Supabase Storage before launch (backlog #16). |

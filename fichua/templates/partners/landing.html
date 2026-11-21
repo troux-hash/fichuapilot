@@ -45,5 +45,9 @@
       <p class="muted small" style="margin:0">Forgot your password? Message the Fichua team and we'll reset it.</p>
     </form>
   </section>
+  <div class="partner-landing__trust">
+    {% import "components/trust.html" as trust %}
+    {{ trust.band('partner') }}
+  </div>
 </div>
 {% endblock %}

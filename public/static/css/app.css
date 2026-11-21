@@ -194,3 +194,8 @@
 .partner-landing__forms { background: var(--color-bg); padding: var(--space-6) var(--space-5); display: flex; flex-direction: column; justify-content: center; gap: var(--space-5); }
 @media (min-width: 1024px) { .partner-landing__forms { padding: var(--space-8); } }
 .partner-landing__forms .panel { max-width: 520px; width: 100%; margin: 0 auto; }
+.partner-landing__trust { grid-column: 1 / -1; background: var(--color-bg); border-top: 1px solid var(--color-border); padding: var(--space-7) var(--space-5); }
+@media (min-width: 1024px) {
+  .partner-landing { grid-template-rows: 1fr auto; }
+  .partner-landing__trust { padding: var(--space-7) var(--space-8); }
+}

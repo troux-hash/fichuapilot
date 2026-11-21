@@ -1,0 +1,37 @@
+"""The "Built at MIT" trust section: on guest pages and the partner landing page, with names as text
+until official logo files are added (a `-white` file means a reversed logo on a dark plate)."""
+from fastapi.testclient import TestClient
+
+from fichua import web
+from fichua.main import app
+
+CENTER = "MIT Kuo Sharper Center for Prosperity and Entrepreneurship"
+
+
+def test_trust_section_on_guest_and_partner_pages():
+    c = TestClient(app)
+    for path in ("/", "/manage", "/partners"):
+        html = c.get(path).text
+        assert "Built at MIT" in html, path
+        assert "MIT Sandbox Innovation Fund" in html, path
+        assert CENTER in html, path
+        assert "https://kuosharper.mit.edu" in html, path
+
+
+def test_logos_switch_on_when_official_files_are_added(tmp_path, monkeypatch):
+    monkeypatch.setattr(web, "STATIC_DIR", tmp_path)
+    assert all(p["logo"] is None and p["plate"] == "light" for p in web.trust_partners())
+
+    folder = tmp_path / "static" / "img" / "trust"
+    folder.mkdir(parents=True)
+    (folder / "mit.svg").write_text("<svg xmlns='http://www.w3.org/2000/svg'/>")
+    (folder / "kuo-sharper-white.png").write_bytes(b"\x89PNG")
+    found = {p["key"]: p for p in web.trust_partners()}
+    assert found["mit"]["logo"].startswith("/static/img/trust/mit.svg?v=") and found["mit"]["plate"] == "light"
+    assert found["kuo-sharper"]["logo"].startswith("/static/img/trust/kuo-sharper-white.png?v=")
+    assert found["kuo-sharper"]["plate"] == "dark"
+    assert found["mit-sandbox"]["logo"] is None
+
+    html = TestClient(app).get("/").text
+    assert 'alt="Massachusetts Institute of Technology"' in html
+    assert "trust__plate--dark" in html

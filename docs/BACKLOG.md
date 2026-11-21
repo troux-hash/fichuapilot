@@ -20,6 +20,7 @@ Markets: Rwanda, Benin, Côte d'Ivoire. Master currency USD (RWF / CFA shown alo
 | Admin | Access codes (free Hotel Manager licence), WhatsApp outbox, Excel bulk upload |
 | Platform | WhatsApp 3-way messages (guest, hotel, Fichua) after payment, cancellations, approval decisions |
 | Platform | Daily payout job (Vercel Cron), portable Postgres schema with automatic column migrations |
+| Trust | "Built at MIT" section (MIT, MIT Sandbox Innovation Fund, MIT Kuo Sharper Center) in the guest footer, partner landing page and partner portal; official logos switch on when their files are added ([guide](BRAND_ASSETS.md)) |
 
 ## 🔜 P1 — next
 
@@ -31,21 +32,22 @@ Markets: Rwanda, Benin, Côte d'Ivoire. Master currency USD (RWF / CFA shown alo
 | 4 | Automatic payouts to hotel bank accounts (Stripe Global Payouts: Benin + CI; Rwanda on request) | Stripe access |
 | 5 | Map view on the guest results page (hotels already have pins) | — |
 | 6 | Email confirmations (needs a verified domain) | Domain |
+| 7 | Official MIT, MIT Sandbox and Kuo Sharper Center logos in the "Built at MIT" section | MIT permission + approved files ([guide](BRAND_ASSETS.md)) |
 
 ## 💡 P2 — later
 
 | # | Feature |
 |---|---|
-| 7 | Deposit / pay-at-hotel options per hotel |
-| 8 | Mobile money (MTN MoMo, Orange Money, Moov, Wave, Airtel) via one regional aggregator |
-| 9 | Hotel Manager subscription billing (monthly fee, deducted from payouts) |
-| 10 | Several users per hotel; one login for hotel groups |
-| 11 | Rate options: non-refundable discount, minimum stay, promotions |
-| 12 | Calendar sync with Booking.com / Airbnb (iCal) |
-| 13 | Reviews after stay, wishlists, guest accounts |
-| 14 | Request-to-book for hotels with unreliable calendars |
-| 15 | Photos to object storage (Supabase Storage / S3) instead of the database |
-| 16 | Password reset by email / WhatsApp code; Google sign-in |
+| 8 | Deposit / pay-at-hotel options per hotel |
+| 9 | Mobile money (MTN MoMo, Orange Money, Moov, Wave, Airtel) via one regional aggregator |
+| 10 | Hotel Manager subscription billing (monthly fee, deducted from payouts) |
+| 11 | Several users per hotel; one login for hotel groups |
+| 12 | Rate options: non-refundable discount, minimum stay, promotions |
+| 13 | Calendar sync with Booking.com / Airbnb (iCal) |
+| 14 | Reviews after stay, wishlists, guest accounts |
+| 15 | Request-to-book for hotels with unreliable calendars |
+| 16 | Photos to object storage (Supabase Storage / S3) instead of the database |
+| 17 | Password reset by email / WhatsApp code; Google sign-in |
 
 ## Tech debt / ops
 
