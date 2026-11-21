@@ -179,3 +179,25 @@ CREATE INDEX IF NOT EXISTS idx_room_types_hotel ON room_types (hotel_id);
 CREATE INDEX IF NOT EXISTS idx_rates_date ON room_rates (stay_date);
 CREATE INDEX IF NOT EXISTS idx_booking_nights_room_date ON booking_nights (room_type_id, stay_date);
 CREATE INDEX IF NOT EXISTS idx_bookings_email ON bookings (guest_email);
+
+-- Named Fichua admin accounts. Until the first one exists, the shared ADMIN_PASSWORD signs in.
+CREATE TABLE IF NOT EXISTS admin_users (
+    id              TEXT PRIMARY KEY,
+    email           TEXT NOT NULL UNIQUE,
+    name            TEXT NOT NULL,
+    password_hash   TEXT NOT NULL,
+    totp_secret     TEXT,                                 -- two-step login, once confirmed
+    totp_pending    TEXT,                                 -- secret being set up, not confirmed yet
+    is_active       BOOLEAN DEFAULT TRUE,
+    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_login_at   TIMESTAMP
+);
+
+-- Rate limits (failed sign-ins, sign-ups, checkouts), kept in the database so they hold across instances.
+CREATE TABLE IF NOT EXISTS login_attempts (
+    id              TEXT PRIMARY KEY,
+    scope           TEXT NOT NULL,                        -- admin | partner | join | booking
+    key             TEXT NOT NULL,                        -- IP address, or IP + email
+    created_at      TIMESTAMP NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_login_attempts ON login_attempts (scope, key, created_at);

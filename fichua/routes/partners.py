@@ -9,7 +9,7 @@ from fastapi.responses import RedirectResponse
 from .. import auth
 from ..config import settings
 from ..db import db
-from ..services import app_settings, bookings, catalog, currency, dates, partners
+from ..services import app_settings, bookings, catalog, currency, dates, partners, ratelimit
 from ..web import render
 
 router = APIRouter(prefix="/partners")
@@ -74,12 +74,17 @@ def _start_session(user_id: str, to: str):
 def join(request: Request, code: str = Form(""), name: str = Form(""), hotel_name: str = Form(""),
          email: str = Form(""), phone: str = Form(""), password: str = Form("")):
     form = {"code": code, "name": name, "hotel_name": hotel_name, "email": email, "phone": phone}
+    ip = ratelimit.client_ip(request)
     with db.connect() as conn:
+        if ratelimit.blocked(conn, "join", ip):
+            return render(request, "partners/landing.html", status_code=429, join_error=ratelimit.MESSAGES["join"],
+                          login_error=None, form=form)
         try:
             created = partners.join(conn, code=code, name=name, hotel_name=hotel_name, email=email,
                                     phone=phone, password=password)
         except partners.PartnerError as exc:
             conn.raw.rollback()
+            ratelimit.record(conn, "join", ip)  # after the rollback, so the attempt is kept
             return render(request, "partners/landing.html", status_code=422, join_error=str(exc),
                           login_error=None, form=form)
     return _start_session(created["user_id"], "/partners/hotel")
@@ -87,8 +92,16 @@ def join(request: Request, code: str = Form(""), name: str = Form(""), hotel_nam
 
 @router.post("/login")
 def login(request: Request, email: str = Form(""), password: str = Form("")):
+    key = f"{ratelimit.client_ip(request)}|{email.strip().lower()}"
     with db.connect() as conn:
+        if ratelimit.blocked(conn, "partner", key):
+            return render(request, "partners/landing.html", status_code=429, join_error=None,
+                          login_error=ratelimit.MESSAGES["partner"], form={"login_email": email})
         user = partners.authenticate(conn, email, password)
+        if not user:
+            ratelimit.record(conn, "partner", key)
+        else:
+            ratelimit.clear(conn, "partner", key)
     if not user:
         return render(request, "partners/landing.html", status_code=401, join_error=None,
                       login_error="Wrong email or password.", form={"login_email": email})

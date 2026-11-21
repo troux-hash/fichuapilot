@@ -10,15 +10,21 @@ from fastapi.responses import RedirectResponse, Response
 from .. import auth
 from ..config import settings
 from ..db import db, utcnow
-from ..services import app_settings, currency, finance, importer, notify, partners, payments, payouts
+from ..services import (admins, app_settings, currency, finance, importer, notify, partners, payments, payouts,
+                        ratelimit, totp)
 from ..web import forget_rates, render
 
 router = APIRouter(prefix="/admin")
 
 
+def _me(conn, request: Request) -> dict | None:
+    return admins.current(conn, auth.admin_subject(request))
+
+
 def _guard(request: Request):
-    if not auth.is_admin(request):
-        return RedirectResponse("/admin/login", status_code=303)
+    with db.connect() as conn:
+        if _me(conn, request) is None:
+            return RedirectResponse("/admin/login", status_code=303)
     return None
 
 
@@ -28,21 +34,40 @@ def _pending_count(conn) -> int:
 
 def _page(request: Request, conn, template: str, active: str, status_code: int = 200, **ctx):
     return render(request, template, status_code=status_code, active=active, pending=_pending_count(conn),
-                  payments_mode=payments.provider(), whatsapp_ready=notify.whatsapp_ready(), **ctx)
+                  payments_mode=payments.provider(), whatsapp_ready=notify.whatsapp_ready(),
+                  me=_me(conn, request), **ctx)
+
+
+def _login_page(request: Request, conn, status_code: int = 200, error: str | None = None, email: str = ""):
+    named = admins.count_active(conn) > 0
+    return render(request, "admin/login.html", status_code=status_code, error=error, named=named, email=email,
+                  created=request.query_params.get("created"), disabled=not named and not settings.admin_password)
 
 
 @router.get("/login")
 def login_form(request: Request):
-    return render(request, "admin/login.html", error=None, disabled=not settings.admin_password)
+    with db.connect() as conn:
+        return _login_page(request, conn)
 
 
 @router.post("/login")
-def login(request: Request, password: str = Form("")):
-    if not auth.check_password(password):
-        return render(request, "admin/login.html", status_code=401,
-                      error="Wrong password.", disabled=not settings.admin_password)
+def login(request: Request, email: str = Form(""), password: str = Form(""), code: str = Form("")):
+    ip = ratelimit.client_ip(request)
+    with db.connect() as conn:
+        if ratelimit.blocked(conn, "admin", ip):
+            return _login_page(request, conn, 429, ratelimit.MESSAGES["admin"], email)
+        if admins.count_active(conn):  # named accounts only, from the first one on
+            user = admins.authenticate(conn, email, password, code)
+            user_id = user["id"] if user else None
+            ok, error = bool(user), "Wrong email, password or code."
+        else:
+            user_id, ok, error = None, auth.check_password(password), "Wrong password."
+        if not ok:
+            ratelimit.record(conn, "admin", ip)
+            return _login_page(request, conn, 401, error, email)
+        ratelimit.clear(conn, "admin", ip)
     resp = RedirectResponse("/admin", status_code=303)
-    resp.set_cookie(auth.COOKIE, auth.make_token(), max_age=auth.TTL_SECONDS, httponly=True,
+    resp.set_cookie(auth.COOKIE, auth.make_token(user_id), max_age=auth.TTL_SECONDS, httponly=True,
                     samesite="lax", secure=settings.is_production)
     return resp
 
@@ -362,3 +387,107 @@ def reset_partner_password(request: Request, hotel_id: str, password: str = Form
         if owner and len(password) >= 8:
             partners.set_password(conn, owner, password)
     return RedirectResponse(f"/admin/approvals/{hotel_id}?decided=password", status_code=303)
+
+
+# --------------------------------------------------------------------------- team (named admins, two-step login)
+
+def _team(request: Request, conn, status_code: int = 200, errors: list | None = None, setup: dict | None = None,
+          form: dict | None = None):
+    return _page(request, conn, "admin/team.html", "team", status_code=status_code, users=admins.all_users(conn),
+                 errors=errors or [], setup=setup, form=form or {}, done=request.query_params.get("done"))
+
+
+@router.get("/team")
+def team_page(request: Request):
+    if (r := _guard(request)):
+        return r
+    with db.connect() as conn:
+        return _team(request, conn)
+
+
+@router.post("/team/add")
+def team_add(request: Request, name: str = Form(""), email: str = Form(""), password: str = Form("")):
+    if (r := _guard(request)):
+        return r
+    with db.connect() as conn:
+        me = _me(conn, request)
+        try:
+            admins.create(conn, name, email, password)
+        except admins.AdminError as exc:
+            conn.raw.rollback()
+            return _team(request, conn, 422, [str(exc)], form={"name": name, "email": email})
+    if me and me.get("shared"):  # the shared password is now closed: sign in with the new account
+        resp = RedirectResponse("/admin/login?created=1", status_code=303)
+        resp.delete_cookie(auth.COOKIE)
+        return resp
+    return RedirectResponse("/admin/team?done=added", status_code=303)
+
+
+@router.post("/team/{user_id}/toggle")
+def team_toggle(request: Request, user_id: str):
+    if (r := _guard(request)):
+        return r
+    with db.connect() as conn:
+        me, user = _me(conn, request), admins.get(conn, user_id)
+        if not user or me.get("shared"):
+            return RedirectResponse("/admin/team", status_code=303)
+        try:
+            admins.set_active(conn, me, user_id, not user["is_active"])
+        except admins.AdminError as exc:
+            return _team(request, conn, 422, [str(exc)])
+    return RedirectResponse("/admin/team?done=updated", status_code=303)
+
+
+@router.post("/team/password")
+def team_password(request: Request, current: str = Form(""), new: str = Form("")):
+    if (r := _guard(request)):
+        return r
+    with db.connect() as conn:
+        me = _me(conn, request)
+        if me.get("shared"):
+            return RedirectResponse("/admin/team", status_code=303)
+        try:
+            admins.change_password(conn, me, current, new)
+        except admins.AdminError as exc:
+            return _team(request, conn, 422, [str(exc)])
+    return RedirectResponse("/admin/team?done=password", status_code=303)
+
+
+@router.post("/team/two-step/start")
+def two_step_start(request: Request):
+    if (r := _guard(request)):
+        return r
+    with db.connect() as conn:
+        me = _me(conn, request)
+        if me.get("shared"):
+            return RedirectResponse("/admin/team", status_code=303)
+        secret = admins.start_two_step(conn, me)
+        return _team(request, conn, setup={"key": totp.grouped(secret), "uri": totp.setup_uri(secret, me["email"])})
+
+
+@router.post("/team/two-step/confirm")
+def two_step_confirm(request: Request, code: str = Form("")):
+    if (r := _guard(request)):
+        return r
+    with db.connect() as conn:
+        me = _me(conn, request)
+        try:
+            admins.confirm_two_step(conn, me, code)
+        except admins.AdminError as exc:
+            pending = me.get("totp_pending")
+            setup = {"key": totp.grouped(pending), "uri": totp.setup_uri(pending, me["email"])} if pending else None
+            return _team(request, conn, 422, [str(exc)], setup=setup)
+    return RedirectResponse("/admin/team?done=two-step-on", status_code=303)
+
+
+@router.post("/team/two-step/stop")
+def two_step_stop(request: Request, code: str = Form("")):
+    if (r := _guard(request)):
+        return r
+    with db.connect() as conn:
+        me = _me(conn, request)
+        try:
+            admins.stop_two_step(conn, me, code)
+        except admins.AdminError as exc:
+            return _team(request, conn, 422, [str(exc)])
+    return RedirectResponse("/admin/team?done=two-step-off", status_code=303)

@@ -7,7 +7,7 @@ from fastapi import APIRouter, Form, Request
 from fastapi.responses import RedirectResponse, Response
 
 from ..db import db
-from ..services import bookings, catalog, dates, legal, notify, partners, payments
+from ..services import bookings, catalog, dates, legal, notify, partners, payments, ratelimit
 from ..services.search import SORTS, Filters, search
 from ..web import base_url, qs, render
 
@@ -94,10 +94,14 @@ def place_booking(request: Request, room: str = Form(...), check_in: str = Form(
             "special_requests": special_requests, "guest_language": guest_language}
     errors = bookings.validate_guest(guest_name, guest_email, guest_phone)
     redirect_to = None
+    ip = ratelimit.client_ip(request)
     with db.connect() as conn:
+        if not errors and ratelimit.blocked(conn, "booking", ip):
+            errors["general"] = ratelimit.MESSAGES["booking"]
         if not errors:
             try:
                 b = bookings.create_booking(conn, stay, room, **form)
+                ratelimit.record(conn, "booking", ip)  # each checkout holds a room: cap them per connection
                 if payments.provider() == "stripe":
                     hotel = catalog.get_hotel(conn, b["hotel_id"])
                     room_row = catalog.rooms_by_ids(conn, [room])[room]

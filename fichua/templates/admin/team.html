@@ -1,0 +1,85 @@
+{% extends "admin/_layout.html" %}
+{% block atitle %}Team{% endblock %}
+{% block page_title %}Team{% endblock %}
+{% block page_sub %}<p>Who can sign in to Fichua Admin, and how.</p>{% endblock %}
+{% block app_content %}
+{% set notices = {
+  'added': 'Admin added. Share their password privately: they can change it under My password.',
+  'updated': 'Saved.',
+  'password': 'Your password is changed.',
+  'two-step-on': 'Two-step login is on. From now on, sign in with your password and the code from your app.',
+  'two-step-off': 'Two-step login is off.',
+} %}
+{% if done in notices %}<div class="alert alert-success" role="status">{{ notices[done] }}</div>{% endif %}
+{% if errors %}<div class="alert alert-error" role="alert"><ul>{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul></div>{% endif %}
+{% if me and me.shared %}
+<div class="alert alert-warning"><strong>You're signed in with the shared admin password.</strong> Create your own account. After that, the shared password stops working and everyone signs in with their own email.</div>
+{% endif %}
+<div class="split">
+  <div style="display:grid;gap:var(--space-5)">
+    {% if not users %}
+    <section class="panel panel-pad" style="display:grid;gap:var(--space-3)">
+      <h2>How sign-in works</h2>
+      <ol class="small" style="margin:0;padding-left:var(--space-5);display:grid;gap:6px;color:var(--color-ink-soft)">
+        <li>Today Fichua Admin opens with one shared password.</li>
+        <li>Create your own account here. From then on, everyone signs in with their own email and password, and the shared password stops working.</li>
+        <li>Then add your team, and turn on two-step login so a stolen password alone can't get in.</li>
+      </ol>
+      <p class="muted small" style="margin:0">Locked out later? Run <span class="mono">python scripts/admin_users.py reset you@example.com</span> on your computer for a new password.</p>
+    </section>
+    {% endif %}
+    {% if users %}
+    <div class="table-wrap"><table class="table table--fit">
+      <thead><tr><th>Name</th><th>Email</th><th>Two-step login</th><th>Last sign-in</th><th>Status</th><th></th></tr></thead>
+      <tbody>{% for u in users %}<tr>
+        <td><strong>{{ u.name }}</strong>{% if me and me.id == u.id %} <span class="muted small">(you)</span>{% endif %}</td>
+        <td>{{ u.email }}</td>
+        <td><span class="pill {{ 'pill--live' if u.totp_secret else 'pill--pending' }}">{{ 'On' if u.totp_secret else 'Off' }}</span></td>
+        <td>{{ u.last_login_at|nice_date('%d %b %Y, %H:%M') if u.last_login_at else 'Never' }}</td>
+        <td><span class="pill {{ 'pill--live' if u.is_active else 'pill--muted' }}">{{ 'Active' if u.is_active else 'Off' }}</span></td>
+        <td>{% if me and not me.shared and me.id != u.id %}<form method="post" action="/admin/team/{{ u.id }}/toggle"><button class="btn btn-ghost btn-sm" type="submit">{{ 'Turn off' if u.is_active else 'Turn on' }}</button></form>{% endif %}</td>
+      </tr>{% endfor %}</tbody>
+    </table></div>
+    {% endif %}
+    {% if me and not me.shared %}
+    <section class="panel panel-pad" style="display:grid;gap:var(--space-4)">
+      <h2>Two-step login</h2>
+      {% if setup %}
+        <p class="muted small" style="margin:0">1. In Google Authenticator, Authy or 1Password, add an account with this setup key, or <a href="{{ setup.uri }}">open it on your phone</a>:</p>
+        <p class="mono" style="margin:0;font-size:var(--text-lg);letter-spacing:0.06em">{{ setup.key }}</p>
+        <form method="post" action="/admin/team/two-step/confirm" class="form-grid-2" style="align-items:end">
+          <div class="field"><label for="confirm_code">2. Type the 6-digit code it shows</label><input id="confirm_code" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="7" required></div>
+          <button class="btn btn-primary" type="submit">Turn on two-step login</button>
+        </form>
+      {% elif me.totp_secret %}
+        <p class="muted small" style="margin:0">On. You sign in with your password and the code from your authenticator app.</p>
+        <form method="post" action="/admin/team/two-step/stop" class="form-grid-2" style="align-items:end">
+          <div class="field"><label for="stop_code">Current code, to turn it off</label><input id="stop_code" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="7" required></div>
+          <button class="btn btn-secondary" type="submit">Turn off two-step login</button>
+        </form>
+      {% else %}
+        <p class="muted small" style="margin:0">Off. Turn it on so a stolen password alone can't open Fichua Admin: you'll also need the 6-digit code from an app on your phone.</p>
+        <form method="post" action="/admin/team/two-step/start"><button class="btn btn-primary" type="submit">Set up two-step login</button></form>
+      {% endif %}
+    </section>
+    <section class="panel panel-pad" style="display:grid;gap:var(--space-4)">
+      <h2>My password</h2>
+      <form method="post" action="/admin/team/password" class="form-grid-2" style="align-items:end">
+        <div class="field"><label for="current">Current password</label><input id="current" name="current" type="password" autocomplete="current-password" required></div>
+        <div class="field"><label for="new">New password</label><input id="new" name="new" type="password" autocomplete="new-password" minlength="10" required><span class="hint">At least 10 characters.</span></div>
+        <button class="btn btn-secondary" type="submit">Change password</button>
+      </form>
+    </section>
+    {% endif %}
+  </div>
+  <form class="panel panel-pad" method="post" action="/admin/team/add" style="display:grid;gap:var(--space-4)">
+    <h2>{{ 'Create your account' if me and me.shared else 'Add an admin' }}</h2>
+    <div class="field"><label for="name">Name</label><input id="name" name="name" value="{{ form.get('name', '') }}" autocomplete="name" required></div>
+    <div class="field"><label for="email">Email</label><input id="email" name="email" type="email" value="{{ form.get('email', '') }}" autocomplete="email" required></div>
+    <div class="field"><label for="password">{{ 'Password' if me and me.shared else 'Temporary password' }}</label>
+      <input id="password" name="password" type="password" autocomplete="new-password" minlength="10" required>
+      <span class="hint">At least 10 characters.{% if not (me and me.shared) %} Share it privately: they can change it after signing in.{% endif %}</span></div>
+    <button class="btn btn-primary btn-block" type="submit">{{ 'Create my account' if me and me.shared else 'Add admin' }}</button>
+  </form>
+</div>
+{% endblock %}

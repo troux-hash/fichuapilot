@@ -191,7 +191,7 @@ def test_partner_login_and_pages():
 def test_admin_pages_render(admin):
     for path in ("/admin", "/admin/approvals", "/admin/hotels", "/admin/finance", "/admin/finance?period=week",
                  "/admin/finance?period=custom&from=2026-01-01&to=2027-12-31&source=all", "/admin/messages",
-                 "/admin/messages?role=hotel", "/admin/codes", "/admin/settings"):
+                 "/admin/messages?role=hotel", "/admin/codes", "/admin/settings", "/admin/team"):
         assert admin.get(path).status_code == 200, path
 
 

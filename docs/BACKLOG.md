@@ -27,25 +27,28 @@ Markets: Rwanda, Benin, Côte d'Ivoire. Master currency USD (RWF / CFA shown alo
 Traveler, hotel operator and admin journeys tested on the local copy (videos in `qa/2026-11-21/`, kept out of git).
 Full list with status tracking: [Fichua QA Backlog](https://claude.ai/artifact/HKnXLZX4Q9WQNiXj2Ct9ab) (34 items).
 
-| ID | Priority | Fix |
-|---|---|---|
-| FIX-01 | **P0** | Public `/api/search` returns private hotel fields (owner ID, commission, owner contacts, review note, plan): return public fields only |
-| FIX-02 | **P0** | Guest terms, privacy policy and readable partner terms, linked at checkout, join, policies step and footer |
-| FIX-03 | **P0** | WhatsApp: send approved EN / FR utility templates instead of free text (needed before connecting WhatsApp) |
-| FIX-04 | P1 | Partner review step wider than a phone (Edit links and prices cut off) |
-| FIX-05 | P1 | Partner room list squeezes details on phones |
-| FIX-06 | P1 | Multi-room walk-in fails when "Guests" is the group total, with a wrong "not enough rooms" message |
-| FIX-07 | P1 | After cancelling, reopening the page shows a raw 405: redirect to the booking page |
-| FIX-08 | P1 | App-wide friendly 404 / 405 / 500 pages (unknown links show raw JSON) |
-| FIX-09 | P1 | Plurals: "1 bookings", "1 room types", "1 guests" |
-| FIX-10 | P1 | Partner calendar on phones: range picking jumps away; booked nights not shown |
-| FIX-11 | P1 | Partner bookings list as cards on phones |
-| FIX-12 | P1 | Sticky "See rooms" bar covers Reserve on the hotel page |
-| FIX-13 | P1 | Admin tables cut off at laptop width |
-| FIX-14 | P1 | Named admin accounts, two-step login, rate limits |
-| FIX-15 | P1 | Big-group searches: explain that no room fits, instead of "nothing available" |
+All 3 P0 and 12 P1 fixes shipped on 21 Nov 2026:
 
-Plus 18 smaller improvements (IMP-01 to IMP-18) and one setup task (SET-01) in the sheet.
+| ID | Priority | Fix | Status |
+|---|---|---|---|
+| FIX-01 | **P0** | Public `/api/search` returns public hotel and room fields only | ✅ Shipped |
+| FIX-02 | **P0** | Terms of service, privacy policy and partner terms, linked at checkout, join, policies step and footer (company details in Admin → Settings; lawyer review still to do) | ✅ Shipped |
+| FIX-03 | **P0** | WhatsApp sends approved EN / FR utility templates (create them with `scripts/whatsapp_templates.py`) | ✅ Shipped |
+| FIX-04 | P1 | Partner review step fits a phone | ✅ Shipped |
+| FIX-05 | P1 | Partner room list fits a phone | ✅ Shipped |
+| FIX-06 | P1 | Walk-in "Guests" is the group total, shared over the rooms, with the real reason when it can't fit | ✅ Shipped |
+| FIX-07 | P1 | Cancelling redirects to the booking page (reload-safe) | ✅ Shipped |
+| FIX-08 | P1 | Friendly 404 / 405 / 400 / 500 pages; `/api` keeps JSON | ✅ Shipped |
+| FIX-09 | P1 | Plurals fixed ("1 booking", "1 room type", "1 guest") | ✅ Shipped |
+| FIX-10 | P1 | Partner calendar on phones: stays on the calendar while picking a range; nights with bookings marked | ✅ Shipped |
+| FIX-11 | P1 | Partner bookings as cards on phones | ✅ Shipped |
+| FIX-12 | P1 | Hotel page: sticky "See rooms" bar hides while the rooms are on screen | ✅ Shipped |
+| FIX-13 | P1 | Admin tables fit a 1280 px laptop | ✅ Shipped |
+| FIX-14 | P1 | Named admin accounts, two-step login (TOTP), rate limits on sign-in, sign-up and checkout | ✅ Shipped |
+| FIX-15 | P1 | Big-group searches explain that no room fits that many guests | ✅ Shipped |
+
+Also done on the way: IMP-06 (refund timing), IMP-16 (French number formats in WhatsApp), IMP-17 (settings error wording).
+Still open: 15 smaller improvements (IMP-01 to IMP-18) and one setup task (SET-01), in the sheet.
 
 ## 🔜 P1 — next
 

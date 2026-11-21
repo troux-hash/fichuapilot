@@ -1,4 +1,5 @@
-"""Sessions as signed, expiring cookies (stdlib HMAC). Admin: one password from env.
+"""Sessions as signed, expiring cookies (stdlib HMAC).
+Admin: named accounts (services/admins.py); the shared ADMIN_PASSWORD only until the first account exists.
 Partners: email + password accounts (see services/partners.py)."""
 from __future__ import annotations
 
@@ -41,12 +42,14 @@ def check_password(password: str) -> bool:
     return hmac.compare_digest(password.encode(), settings.admin_password.encode())
 
 
-def make_token() -> str:
-    return _token("admin", TTL_SECONDS)
+def make_token(user_id: str | None = None) -> str:
+    """'admin' for the shared password, 'admin:<id>' for a named account."""
+    return _token(f"admin:{user_id}" if user_id else "admin", TTL_SECONDS)
 
 
-def is_admin(request: Request) -> bool:
-    return _read(request.cookies.get(COOKIE, "")) == "admin"
+def admin_subject(request: Request) -> str | None:
+    subject = _read(request.cookies.get(COOKIE, ""))
+    return subject if subject and (subject == "admin" or subject.startswith("admin:")) else None
 
 
 def make_partner_token(user_id: str) -> str:

@@ -13,11 +13,13 @@
   <span class="sidebar__group">Setup</span>
   <a class="navlink{% if active == 'codes' %} is-active{% endif %}" href="/admin/codes">{{ i.icon('key') }}Access codes</a>
   <a class="navlink{% if active == 'settings' %} is-active{% endif %}" href="/admin/settings">{{ i.icon('settings') }}Settings</a>
+  <a class="navlink{% if active == 'team' %} is-active{% endif %}" href="/admin/team">{{ i.icon('users') }}Team</a>
   <a class="navlink" href="/" target="_blank" rel="noopener">{{ i.icon('external') }}Guest site</a>
   <form method="post" action="/admin/logout" class="hide-desktop"><button class="navlink" type="submit" style="background:none;border:0;font:inherit;cursor:pointer">{{ i.icon('logout') }}Log out</button></form>
 {% endblock %}
 {% block sidebar_foot %}
   <div style="display:grid;gap:6px">
+    {% if me %}<span>Signed in: <strong style="color:#fff">{{ me.name }}</strong></span>{% endif %}
     <span>Payments: <strong style="color:#fff">{{ 'Stripe' if payments_mode == 'stripe' else 'Test checkout' }}</strong></span>
     <span>WhatsApp: <strong style="color:#fff">{{ 'Connected' if whatsapp_ready else 'Not connected' }}</strong></span>
   </div>

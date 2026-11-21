@@ -11,9 +11,20 @@
     <form class="panel panel-pad" method="post" action="/admin/login" style="display:grid;gap:var(--space-4);max-width:420px">
       <a class="logo" href="/"><span class="logo-mark" aria-hidden="true">F</span>Fichua <span class="pill pill--muted" style="margin-left:6px">Admin</span></a>
       {% if disabled %}<div class="alert alert-info">Admin is disabled until the <code>ADMIN_PASSWORD</code> environment variable is set.</div>{% endif %}
+      {% if created %}<div class="alert alert-success" role="status">Your admin account is ready. Sign in with your email and password. The shared password no longer works.</div>{% endif %}
       {% if error %}<div class="alert alert-error" role="alert">{{ error }}</div>{% endif %}
+      {% if named %}
+      <div class="field"><label for="email">Email</label>
+        <input id="email" name="email" type="email" value="{{ email }}" autocomplete="username" required autofocus></div>
       <div class="field"><label for="password">Password</label>
-        <input id="password" name="password" type="password" autocomplete="current-password" required autofocus></div>
+        <input id="password" name="password" type="password" autocomplete="current-password" required></div>
+      <div class="field"><label for="code">Code from your authenticator app</label>
+        <input id="code" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="7" placeholder="Only if two-step login is on"></div>
+      {% else %}
+      <div class="field"><label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required autofocus>
+        <span class="hint">The shared admin password. Once you're in, create your own account under Team.</span></div>
+      {% endif %}
       <button class="btn btn-primary btn-block" type="submit">Sign in</button>
     </form>
   </section>
