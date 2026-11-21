@@ -95,9 +95,13 @@ Shipped now (needed no decision):
 | Business travel | "I need an invoice" at checkout (company, tax number, address, PO), shown to the hotel in its bookings list; a printable payment receipt; the hotel's registered name and tax number (optional, in Hotel details) printed on it |
 | Arrival | "Show at the door": the booking on one screen, big enough to read across a desk, and plainly void when cancelled |
 
+Decided on 21 Nov 2026: Fichua is built from Africa for the world, and the pilot starts in Rwanda, Benin and Côte d'Ivoire
+together, each market with its own lead (Rwanda: park lodges and Kigali boutiques; Côte d'Ivoire: the largest premium pool
+and Abidjan weekenders; Benin: heritage and diaspora travel around the January Vodun festival).
+
 Waiting on founder decisions: money flow ("Fichua never holds your money" or "held until you arrive"), cancellation presets
-(7 / 14 / 30 days), one pricing rule for owners, Côte d'Ivoire in the pilot, the founding properties (real photos, host
-portraits and stories to replace the demo catalogue). Waiting on WhatsApp: the build-first "reveal" flow for owners.
+(7 / 14 / 30 days), one pricing rule for owners, the founding properties (real photos, host portraits and stories to replace
+the demo catalogue). Waiting on WhatsApp: the build-first "reveal" flow for owners.
 
 ## 🔜 P1 — next
 
