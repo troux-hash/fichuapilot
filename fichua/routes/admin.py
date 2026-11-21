@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import re
 from datetime import date
+from urllib.parse import quote, urlencode
 
 from fastapi import APIRouter, Form, Request, UploadFile
 from fastapi.responses import RedirectResponse, Response
@@ -12,7 +13,7 @@ from ..config import settings
 from ..db import db, utcnow
 from ..services import (admins, app_settings, currency, finance, importer, notify, partners, payments, payouts,
                         ratelimit, totp)
-from ..web import forget_rates, render
+from ..web import base_url, forget_rates, render
 
 router = APIRouter(prefix="/admin")
 
@@ -168,19 +169,43 @@ def approval_detail(request: Request, hotel_id: str):
         return _page(request, conn, "admin/approval_detail.html", "approvals", decided=request.query_params.get("decided"), **ctx)
 
 
+def _commission(text: str) -> tuple[float | None, bool]:
+    """(percentage or None for the default, True if the text isn't a valid 0-50% commission)."""
+    if not text.strip():
+        return None, False
+    try:
+        pct = float(text.replace("%", "").replace(",", ".").strip())
+    except ValueError:
+        return None, True
+    return (pct, False) if 0 <= pct <= 50 else (None, True)
+
+
+DECISIONS = ("approve", "changes", "reject")
+LIVE_ACTIONS = ("commission", "hide", "show")  # what a live hotel's page offers instead (IMP-12)
+
+
 @router.post("/approvals/{hotel_id}")
 def approval_decide(request: Request, hotel_id: str, action: str = Form(...), commission: str = Form(""),
                     note: str = Form("")):
     if (r := _guard(request)):
         return r
+    back = f"/admin/approvals/{hotel_id}"
     with db.connect() as conn:
         hotel = conn.one("SELECT * FROM hotels WHERE id = :id", {"id": hotel_id})
-        if not hotel or action not in ("approve", "changes", "reject"):
+        if not hotel or action not in DECISIONS + LIVE_ACTIONS:
             return RedirectResponse("/admin/approvals", status_code=303)
-        try:
-            pct = float(commission) if commission.strip() else None
-        except ValueError:
-            pct = None
+        live = hotel["status"] == "live"
+        if (action in LIVE_ACTIONS) != live or (action == "approve" and live):
+            return RedirectResponse(back, status_code=303)  # stale page: show what applies now
+        pct, bad = _commission(commission)
+        if bad and action in ("approve", "commission"):
+            return RedirectResponse(f"{back}?decided=bad-commission", status_code=303)
+        if action in LIVE_ACTIONS:
+            if action == "commission":
+                conn.run("UPDATE hotels SET commission_pct = :p WHERE id = :id", {"p": pct, "id": hotel_id})
+            else:
+                conn.run("UPDATE hotels SET is_active = :on WHERE id = :id", {"on": action == "show", "id": hotel_id})
+            return RedirectResponse(f"{back}?decided={action}", status_code=303)
         if action == "approve":
             conn.run("UPDATE hotels SET status = 'live', is_active = TRUE, approved_at = :t, commission_pct = :p, "
                      "review_note = :n WHERE id = :id", {"t": utcnow(), "p": pct, "n": note.strip(), "id": hotel_id})
@@ -200,19 +225,50 @@ def approval_decide(request: Request, hotel_id: str, action: str = Form(...), co
 
 # --------------------------------------------------------------------------- hotels
 
+HOTEL_STATUSES = {"live": "Live", "hidden": "Hidden", "pending": "Waiting for approval",
+                  "changes": "Changes requested", "draft": "Onboarding", "rejected": "Rejected"}
+
+
 @router.get("/hotels")
 def hotels(request: Request):
     if (r := _guard(request)):
         return r
+    q = request.query_params
+    f = {"q": (q.get("q") or "").strip(), "status": q.get("status") or "", "country": q.get("country") or "",
+         "group": q.get("group") or ""}
+    where, params = [], {}
+    if f["q"]:  # name, hotel ID or city
+        where.append("(LOWER(h.name) LIKE :q OR LOWER(h.id) LIKE :q OR LOWER(h.city) LIKE :q)")
+        params["q"] = f"%{f['q'].lower()}%"
+    if f["status"] == "live":
+        where.append("h.status = 'live' AND h.is_active = TRUE")
+    elif f["status"] == "hidden":
+        where.append("h.status = 'live' AND h.is_active = FALSE")
+    elif f["status"] in HOTEL_STATUSES:
+        where.append("h.status = :status")
+        params["status"] = f["status"]
+    if f["country"]:
+        where.append("h.country = :country")
+        params["country"] = f["country"]
+    if f["group"]:
+        where.append("h.hotel_group = :grp")
+        params["grp"] = f["group"]
     with db.connect() as conn:
         rows = conn.all(
             "SELECT h.id, h.name, h.city, h.country, h.hotel_group, h.star_rating, h.guest_rating, h.status, "
             "h.is_active, h.commission_pct, h.plan, h.manager_free_until, COUNT(rt.id) AS rooms FROM hotels h "
             "LEFT JOIN room_types rt ON rt.hotel_id = h.id "
-            "GROUP BY h.id, h.name, h.city, h.country, h.hotel_group, h.star_rating, h.guest_rating, h.status, "
-            "h.is_active, h.commission_pct, h.plan, h.manager_free_until ORDER BY h.country, h.city, h.name")
-        return _page(request, conn, "admin/hotels.html", "hotels", hotels=rows,
-                     default_commission=app_settings.get(conn, "commission_pct"))
+            + (f"WHERE {' AND '.join(where)} " if where else "")
+            + "GROUP BY h.id, h.name, h.city, h.country, h.hotel_group, h.star_rating, h.guest_rating, h.status, "
+            "h.is_active, h.commission_pct, h.plan, h.manager_free_until ORDER BY h.country, h.city, h.name", params)
+        countries = [r["country"] for r in conn.all(
+            "SELECT DISTINCT country FROM hotels WHERE country IS NOT NULL AND country <> '' ORDER BY country")]
+        groups = [r["hotel_group"] for r in conn.all(
+            "SELECT DISTINCT hotel_group FROM hotels WHERE hotel_group IS NOT NULL AND hotel_group <> '' "
+            "ORDER BY hotel_group")]
+        return _page(request, conn, "admin/hotels.html", "hotels", hotels=rows, f=f, filtered=any(f.values()),
+                     total=conn.scalar("SELECT COUNT(*) FROM hotels"), statuses=HOTEL_STATUSES,
+                     countries=countries, groups=groups, default_commission=app_settings.get(conn, "commission_pct"))
 
 
 @router.post("/hotels/{hotel_id}/toggle")
@@ -288,12 +344,24 @@ def messages_retry(request: Request):
 
 # --------------------------------------------------------------------------- access codes
 
+def _with_invites(request: Request, rows: list[dict]) -> list[dict]:
+    """Each code's partner link, and a WhatsApp link that opens a chat with the invite written (IMP-15)."""
+    base, today = base_url(request), date.today().isoformat()
+    for c in rows:
+        c["invite_url"] = f"{base}/partners?{urlencode({'code': c['code']})}"
+        c["whatsapp_url"] = "https://wa.me/?" + urlencode(
+            {"text": partners.invite_text(c["code"], c["invite_url"])}, quote_via=quote)
+        c["can_share"] = bool(c["is_active"]) and c["uses"] < c["max_uses"] and not (
+            c["expires_on"] and c["expires_on"] < today)
+    return rows
+
+
 @router.get("/codes")
 def codes(request: Request):
     if (r := _guard(request)):
         return r
     with db.connect() as conn:
-        rows = conn.all("SELECT * FROM access_codes ORDER BY created_at DESC")
+        rows = _with_invites(request, conn.all("SELECT * FROM access_codes ORDER BY created_at DESC"))
         return _page(request, conn, "admin/codes.html", "codes", codes=rows, error=None, created=request.query_params.get("created"))
 
 
@@ -310,7 +378,7 @@ def codes_create(request: Request, code: str = Form(""), plan: str = Form("manag
                 expires_on=date.fromisoformat(expires_on) if expires_on else None)
         except (partners.PartnerError, ValueError) as exc:
             conn.raw.rollback()
-            rows = conn.all("SELECT * FROM access_codes ORDER BY created_at DESC")
+            rows = _with_invites(request, conn.all("SELECT * FROM access_codes ORDER BY created_at DESC"))
             return _page(request, conn, "admin/codes.html", "codes", status_code=422, codes=rows, created=None,
                          error=str(exc) if isinstance(exc, partners.PartnerError) else "Check the dates and number of uses.")
     return RedirectResponse(f"/admin/codes?created={created}", status_code=303)

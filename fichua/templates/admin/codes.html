@@ -1,12 +1,15 @@
 {% extends "admin/_layout.html" %}
+{% import "components/icons.html" as i %}
 {% block atitle %}Access codes{% endblock %}
 {% block page_title %}Access codes{% endblock %}
 {% block page_sub %}<p>Hotels need a code to join. Give one to each hotel you invite, with the partner link.</p>{% endblock %}
 {% block app_content %}
-{% if created %}
-<div class="alert alert-success" role="status" style="display:grid;gap:6px">
-  <strong>Code {{ created }} created.</strong>
-  <span>Send this to the hotel: <span class="mono" data-copy="{{ request.base_url }}partners?code={{ created }}">{{ request.base_url }}partners?code={{ created }}</span> (tap to copy)</span>
+{% set new = codes|selectattr('code', 'equalto', created)|first if created else none %}
+{% if new %}
+<div class="alert alert-success" role="status" style="display:grid;gap:var(--space-2)">
+  <strong>Code {{ new.code }} created.</strong>
+  <span>Send it to the hotel with its link: <span class="mono" data-copy="{{ new.invite_url }}">{{ new.invite_url }}</span> (tap to copy)</span>
+  <span><a class="btn btn-primary btn-sm" href="{{ new.whatsapp_url }}" target="_blank" rel="noopener">{{ i.icon('chat', 16) }}Send on WhatsApp</a></span>
 </div>
 {% endif %}
 <div class="split">
@@ -16,7 +19,8 @@
       <thead><tr><th>Code</th><th>Gives</th><th class="num">Used</th><th>Expires</th><th>Note</th><th></th></tr></thead>
       <tbody>{% for c in codes %}
         <tr>
-          <td class="mono"><strong>{{ c.code }}</strong></td>
+          <td><strong class="mono">{{ c.code }}</strong>
+            {% if c.can_share %}<br><a class="code-send small" href="{{ c.whatsapp_url }}" target="_blank" rel="noopener" aria-label="Send {{ c.code }} on WhatsApp" title="Opens WhatsApp with the code and the partner link written for you">{{ i.icon('chat', 14) }}WhatsApp</a>{% endif %}</td>
           <td>{{ 'Listing + Hotel Manager' if c.plan == 'manager' else 'Listing only' }}{% if c.free_until %}<br><span class="muted small">free until {{ c.free_until|nice_date('%d %b %Y') }}</span>{% endif %}</td>
           <td class="num">{{ c.uses }} / {{ c.max_uses }}</td>
           <td>{{ c.expires_on|nice_date('%d %b %Y') if c.expires_on else 'Never' }}</td>

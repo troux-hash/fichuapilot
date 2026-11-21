@@ -198,6 +198,25 @@ def booking_cancelled(conn: Connection, booking: dict, hotel: dict, refunded: bo
           booking_id=booking["id"], hotel_id=hotel["id"])
 
 
+def hotel_submitted(conn: Connection, hotel: dict, owner: dict | None) -> None:
+    """The hotel hears its listing arrived; Fichua hears there is one to review (IMP-13)."""
+    lang = wt.language("fichua_hotel_submitted", currency.language_for(hotel.get("country")))
+    queue(conn, role="hotel", to_phone=_hotel_phone(hotel), language=lang, kind="hotel_submitted",
+          template="fichua_hotel_submitted", params=[hotel["name"], hotel["id"]], hotel_id=hotel["id"])
+    rooms = conn.one("SELECT COUNT(*) AS types, COALESCE(SUM(total_rooms), 0) AS units FROM room_types "
+                     "WHERE hotel_id = :h", {"h": hotel["id"]}) or {"types": 0, "units": 0}
+    types, units = int(rooms["types"] or 0), int(rooms["units"] or 0)
+    owner = owner or {}
+    who = " · ".join(p for p in [(owner.get("name") or "").strip(), (owner.get("phone") or hotel.get("whatsapp") or "")
+                                 .strip()] if p) or "-"
+    where = ", ".join(p for p in [hotel.get("city"), hotel.get("country")] if p) or "-"
+    queue(conn, role="admin", to_phone=app_settings.get(conn, "admin_whatsapp"), language="en",
+          kind="hotel_submitted", template="fichua_review_needed",
+          params=[hotel["name"], hotel["id"], where, who,
+                  f"{types} room type{'' if types == 1 else 's'} · {units} room{'' if units == 1 else 's'}"],
+          hotel_id=hotel["id"])
+
+
 def hotel_decision(conn: Connection, hotel: dict, decision: str, note: str = "") -> None:
     template = f"fichua_hotel_{decision}"
     lang = wt.language(template, currency.language_for(hotel.get("country")))

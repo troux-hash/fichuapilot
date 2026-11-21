@@ -103,6 +103,16 @@
     scrim?.addEventListener("click", () => open(false));
   }
 
+  // After a failed form post: show the error even if it sits below the fold, and put the cursor in
+  // the field to fix (the partner sign-up form sits under the pitch on small phones).
+  const toFix = $("[data-error-focus]");
+  if (toFix) {
+    const alert = toFix.closest("form")?.querySelector(".alert-error") || toFix;
+    const show = () => { alert.scrollIntoView({ block: "start" }); toFix.focus({ preventScroll: true }); };
+    // After load: fonts and images can still move the page while it loads.
+    if (document.readyState === "complete") show(); else window.addEventListener("load", show, { once: true });
+  }
+
   // A field's error goes away as soon as the guest starts fixing it; its hint comes back.
   $$(".field.has-error").forEach((field) => {
     const input = $("input, textarea, select", field);
@@ -138,7 +148,10 @@
   // Admin upload drop zone label.
   $$("[data-dropzone]").forEach((z) => {
     const input = $("input[type=file]", z), label = $("[data-file-label]", z);
-    input.addEventListener("change", () => { if (input.files[0]) label.textContent = input.files[0].name; });
+    input.addEventListener("change", () => {
+      const n = input.files.length;
+      if (n) label.textContent = n > 1 ? n + " photos chosen" : input.files[0].name;
+    });
     ["dragenter", "dragover"].forEach((ev) => z.addEventListener(ev, () => z.classList.add("is-drag")));
     ["dragleave", "drop"].forEach((ev) => z.addEventListener(ev, () => z.classList.remove("is-drag")));
   });

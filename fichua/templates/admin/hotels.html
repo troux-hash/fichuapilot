@@ -1,9 +1,20 @@
 {% extends "admin/_layout.html" %}
 {% block atitle %}Hotels{% endblock %}
-{% block page_title %}Hotels <span class="muted" style="font-size:1.1rem">{{ hotels|length }}</span>{% endblock %}
+{% block page_title %}Hotels <span class="muted" style="font-size:1.1rem">{{ hotels|length }}{% if filtered %} of {{ total }}{% endif %}</span>{% endblock %}
 {% block page_sub %}<p>Every hotel on Fichua, from partner sign-ups and Excel uploads.</p>{% endblock %}
 {% block app_content %}
 {% set labels = {'draft': 'Onboarding', 'pending': 'Waiting for approval', 'changes': 'Changes requested', 'live': 'Live', 'rejected': 'Rejected'} %}
+<form class="panel panel-pad filterbar" method="get" action="/admin/hotels" role="search">
+  <div class="field filterbar__grow"><label for="q">Search</label><input id="q" name="q" type="search" value="{{ f.q }}" placeholder="Hotel name, city or ID (FH-00012)"></div>
+  <div class="field"><label for="status">Status</label>
+    <select id="status" name="status" data-autosubmit><option value="">Any status</option>{% for k, v in statuses.items() %}<option value="{{ k }}" {% if f.status == k %}selected{% endif %}>{{ v }}</option>{% endfor %}</select></div>
+  <div class="field"><label for="country">Country</label>
+    <select id="country" name="country" data-autosubmit><option value="">All countries</option>{% for c in countries %}<option value="{{ c }}" {% if f.country == c %}selected{% endif %}>{{ c }}</option>{% endfor %}</select></div>
+  {% if groups %}<div class="field"><label for="group">Group</label>
+    <select id="group" name="group" data-autosubmit><option value="">All groups</option>{% for g in groups %}<option value="{{ g }}" {% if f.group == g %}selected{% endif %}>{{ g }}</option>{% endfor %}</select></div>{% endif %}
+  <button class="btn btn-primary" type="submit">Search</button>
+  {% if filtered %}<a class="btn btn-ghost" href="/admin/hotels">Clear</a>{% endif %}
+</form>
 <div class="table-wrap"><table class="table table--fit">
   <thead><tr><th>Hotel</th><th>Location</th><th>Group</th><th class="num">Rooms</th><th class="num">Commission</th><th>Plan</th><th>Status</th><th></th></tr></thead>
   <tbody>
@@ -22,7 +33,7 @@
     </td>
   </tr>
   {% else %}
-  <tr><td colspan="8" class="muted">No hotels yet. Create an access code for a partner, or upload an Excel file from the dashboard.</td></tr>
+  <tr><td colspan="8" class="muted">{% if filtered %}No hotels match. <a href="/admin/hotels">Clear the search</a>.{% else %}No hotels yet. Create an access code for a partner, or upload an Excel file from the dashboard.{% endif %}</td></tr>
   {% endfor %}
   </tbody>
 </table></div>

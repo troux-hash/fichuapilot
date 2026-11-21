@@ -71,6 +71,20 @@ TEMPLATES: dict[str, dict] = {
         "en": "Booking cancelled\nReference: {{1}}\nHotel: {{2}}\nRefund: {{3}}.\n\nSee it in Fichua Admin.",
         "example": {"en": ["FCH-7QX2KD", "Kigali Hills Hotel (FH-00012)", "$160.00"]},
     },
+    "fichua_hotel_submitted": {  # to the hotel, when it sends its listing for review
+        "en": "Listing received\n{{1}} ({{2}}) is with the Fichua team for review. We usually reply within "
+              "24 hours, here on WhatsApp.\n\nMeanwhile, you can set prices for special dates in Fichua Partners.",
+        "fr": "Annonce reçue\n{{1}} ({{2}}) est en cours de vérification par l’équipe Fichua. Nous répondons "
+              "en général sous 24 heures, ici sur WhatsApp.\n\nEn attendant, vous pouvez fixer vos prix des "
+              "dates spéciales dans Fichua Partners.",
+        "example": {"en": ["Kigali Hills Hotel", "FH-00012"], "fr": ["Hôtel Lagune Bleue", "FH-00012"]},
+    },
+    "fichua_review_needed": {  # to Fichua, when a hotel sends its listing for review
+        "en": "New hotel to review\n{{1}} ({{2}})\nWhere: {{3}}\nOwner: {{4}}\nRooms: {{5}}\n\n"
+              "Review it in Fichua Admin, under Approvals.",
+        "example": {"en": ["Kigali Hills Hotel", "FH-00012", "Kigali, Rwanda",
+                           "Amina Diallo · +250 788 000 000", "2 room types · 14 rooms"]},
+    },
     "fichua_hotel_approved": {  # to the hotel
         "en": "Welcome to Fichua!\n{{1}} ({{2}}) is approved and now live. Guests can book you from today. "
               "Manage your calendar in Fichua Partners.",

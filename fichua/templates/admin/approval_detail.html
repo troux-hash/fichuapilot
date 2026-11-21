@@ -1,14 +1,18 @@
 {% extends "admin/_layout.html" %}
 {% block atitle %}{{ hotel.name }}{% endblock %}
 {% block page_title %}{{ hotel.name }}{% endblock %}
-{% block page_sub %}<p><a href="/admin/approvals">← Approvals</a> · <span class="mono">{{ hotel.id }}</span> · {{ hotel.property_type or 'Hotel' }} · {{ hotel.city }}{% if hotel.country %}, {{ hotel.country }}{% endif %}</p>{% endblock %}
-{% block page_actions %}<span class="pill pill--{{ hotel.status }}">{{ {'pending': 'Waiting for approval', 'changes': 'Changes requested', 'draft': 'Still onboarding', 'live': 'Live', 'rejected': 'Rejected'}.get(hotel.status, hotel.status) }}</span>{% endblock %}
+{% block page_sub %}<p>{% if hotel.status == 'live' %}<a href="/admin/hotels">← Hotels</a>{% else %}<a href="/admin/approvals">← Approvals</a>{% endif %} · <span class="mono">{{ hotel.id }}</span> · {{ hotel.property_type or 'Hotel' }} · {{ hotel.city }}{% if hotel.country %}, {{ hotel.country }}{% endif %}</p>{% endblock %}
+{% block page_actions %}{% if hotel.status == 'live' and not hotel.is_active %}<span class="pill pill--muted">Hidden</span>{% else %}<span class="pill pill--{{ hotel.status }}">{{ {'pending': 'Waiting for approval', 'changes': 'Changes requested', 'draft': 'Still onboarding', 'live': 'Live', 'rejected': 'Rejected'}.get(hotel.status, hotel.status) }}</span>{% endif %}{% endblock %}
 {% block app_content %}
 {% set wa = 'sent to the owner on WhatsApp' if whatsapp_ready else 'saved in WhatsApp messages (WhatsApp is not connected yet)' %}
 {% if decided == 'approve' %}<div class="alert alert-success" role="status"><strong>Approved.</strong> {{ hotel.name }} is live on Fichua. The welcome message was {{ wa }}. <a href="/hotels/{{ hotel.id }}" target="_blank">See it as a guest ↗</a></div>
 {% elif decided == 'changes' %}<div class="alert alert-info" role="status">Your request was {{ wa }}. The hotel stays hidden until it is fixed.</div>
 {% elif decided == 'reject' %}<div class="alert alert-error" role="status">Rejected. The message was {{ wa }}. The hotel stays hidden.</div>
-{% elif decided == 'password' %}<div class="alert alert-success" role="status">Password reset. Share it with the owner by phone.</div>{% endif %}
+{% elif decided == 'password' %}<div class="alert alert-success" role="status">Password reset. Share it with the owner by phone.</div>
+{% elif decided == 'commission' %}<div class="alert alert-success" role="status">Commission saved. New bookings use it; bookings already paid keep theirs.</div>
+{% elif decided == 'hide' %}<div class="alert alert-info" role="status">Hidden. Guests can't find or book {{ hotel.name }}. Existing bookings stay as they are.</div>
+{% elif decided == 'show' %}<div class="alert alert-success" role="status">{{ hotel.name }} is back on Fichua. Guests can book it again.</div>
+{% elif decided == 'bad-commission' %}<div class="alert alert-error" role="alert">Commission must be between 0% and 50%. Nothing was changed.</div>{% endif %}
 <div class="split">
   <div style="display:grid;gap:var(--space-5)">
     <section class="panel panel-pad" style="display:grid;gap:var(--space-4)">
@@ -50,6 +54,23 @@
     </section>
   </div>
   <aside style="display:grid;gap:var(--space-4);position:sticky;top:var(--space-5)">
+    {% if hotel.status == 'live' %}
+    {# A live hotel was approved already: what Fichua can still change is its commission and whether guests see it. #}
+    <form class="panel panel-pad" method="post" action="/admin/approvals/{{ hotel.id }}" style="display:grid;gap:var(--space-4)">
+      <h2>Live hotel</h2>
+      <p class="muted small" style="margin:0">{% if hotel.is_active %}Guests can find and book it.{% else %}Hidden: guests can't find or book it. Existing bookings stay.{% endif %}</p>
+      <div class="field"><label for="commission">Commission for this hotel</label>
+        <div class="money-input"><input id="commission" name="commission" inputmode="decimal" value="{{ '%g'|format(hotel.commission_pct) if hotel.commission_pct is not none else default_commission }}"><span>%</span></div>
+        <span class="hint">Default is {{ default_commission }}% (Settings). New bookings use the new rate.</span></div>
+      <button class="btn btn-primary btn-block" name="action" value="commission" type="submit">Save commission</button>
+      {% if hotel.is_active %}
+      <button class="btn btn-secondary btn-block" name="action" value="hide" type="submit">Hide from guests</button>
+      <a class="btn btn-ghost btn-block" href="/hotels/{{ hotel.id }}" target="_blank" rel="noopener">See it as a guest ↗</a>
+      {% else %}
+      <button class="btn btn-secondary btn-block" name="action" value="show" type="submit">Show to guests again</button>
+      {% endif %}
+    </form>
+    {% else %}
     <form class="panel panel-pad" method="post" action="/admin/approvals/{{ hotel.id }}" style="display:grid;gap:var(--space-4)">
       <h2>Decision</h2>
       <div class="field"><label for="commission">Commission for this hotel</label>
@@ -62,6 +83,7 @@
       <button class="btn btn-ghost btn-block" name="action" value="reject" type="submit" style="color:var(--color-danger)">Reject</button>
       {% if not status.ready %}<p class="muted small" style="margin:0">Approve becomes available once the hotel finishes every onboarding step.</p>{% endif %}
     </form>
+    {% endif %}
     <form class="panel panel-pad" method="post" action="/admin/partners/{{ hotel.id }}/password" style="display:grid;gap:var(--space-3)">
       <h2>Reset the owner's password</h2>
       <div class="field"><label for="password">New password</label><input id="password" name="password" type="text" minlength="8" required></div>

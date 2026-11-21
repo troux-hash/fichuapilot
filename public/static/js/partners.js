@@ -54,6 +54,10 @@
       img.src = url;
     });
   }
+  // On the photos page, choosing photos uploads them straight away: no second tap.
+  $$("input[type=file][data-autoupload]").forEach((input) => input.addEventListener("change", () => {
+    if (input.files.length) input.form.requestSubmit();
+  }));
   $$("form[data-upload]").forEach((form) => form.addEventListener("submit", async (e) => {
     const inputs = $$("input[type=file]", form).filter((i) => i.files.length);
     if (!inputs.length || !window.fetch) return;
@@ -72,7 +76,7 @@
         // Each photo travels with its small copy in the same position: guests' result cards load that one.
         const full = await shrink(file), card = await shrink(file, 800, 0.78);
         data.append(input.name, full || file);
-        data.append("thumbs", card || new File([], ""));
+        data.append("thumbs", card || "");  // an empty entry keeps photos and copies in step
       }
     }
     if (status) status.textContent = "Uploading…";

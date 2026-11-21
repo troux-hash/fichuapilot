@@ -59,10 +59,16 @@ P2 improvements:
 | IMP-06 | Refund timing in the cancel message | ✅ Shipped |
 | IMP-07 | Result cards and thumbnails load an ~800 px photo (partner uploads keep a small copy) | ✅ Shipped |
 | IMP-08 | Wording: "2 nights × $65", reference on one line, "Tap or click" map, "Pin set" | ✅ Shipped |
+| IMP-09 | Partner sign-up and log-in errors scroll into view and put the cursor in the field to fix | ✅ Shipped |
+| IMP-10 | Photos: styled "Choose photos" button, upload starts on choosing, "Continue" is the main button from 3 photos | ✅ Shipped |
+| IMP-12 | A live hotel's admin page offers "Save commission" and "Hide from guests" / "Show to guests again" | ✅ Shipped |
+| IMP-13 | On submit, the hotel gets "Listing received" and Fichua gets "New hotel to review" (two new WhatsApp templates) | ✅ Shipped |
+| IMP-14 | Admin hotels list: search by name, city or ID; filter by status, country and group | ✅ Shipped |
+| IMP-15 | Access codes: "WhatsApp" link opens a chat with the code and partner link written (English and French) | ✅ Shipped |
 | IMP-16 | French number formats in WhatsApp | ✅ Shipped |
 | IMP-17 | Settings error wording | ✅ Shipped |
 
-Still open: IMP-09 to IMP-15 and IMP-18, and one setup task (SET-01), in the sheet.
+Still open: IMP-11 and IMP-18 (several rooms in one booking), and one setup task (SET-01), in the sheet.
 
 ## 🔜 P1 — next
 

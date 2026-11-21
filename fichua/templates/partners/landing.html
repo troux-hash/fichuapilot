@@ -6,6 +6,8 @@
 {% block header %}{% endblock %}
 {% block footer %}{% endblock %}
 {% block content %}
+{# After a failed sign-up or log-in, app.js scrolls to the error and puts the cursor in the field to fix (IMP-09). #}
+{% macro to_fix(which, field) %}{% if which and which == field %} data-error-focus aria-invalid="true"{% endif %}{% endmacro %}
 <div class="partner-landing">
   <section class="partner-landing__pitch">
     <a class="logo" href="/" style="color:#fff"><span class="logo-mark" aria-hidden="true">F</span>Fichua <span class="sidebar__tag" style="margin-left:6px">Partners</span></a>
@@ -23,24 +25,24 @@
         <h2 style="font-family:var(--font-display);font-size:var(--text-2xl)">Join with your code</h2>
         <p class="muted small" style="margin:4px 0 0">Fichua gives a code to each hotel it invites.</p>
       </div>
-      {% if join_error %}<div class="alert alert-error" role="alert">{{ join_error }}</div>{% endif %}
-      <div class="field"><label for="code">Access code</label><input id="code" name="code" value="{{ form.get('code', request.query_params.get('code', '')) }}" placeholder="FICHUA-XXXXXX" autocapitalize="characters" required></div>
+      {% if join_error %}<div class="alert alert-error" role="alert" tabindex="-1"{% if not join_field %} data-error-focus{% endif %}>{{ join_error }}</div>{% endif %}
+      <div class="field"><label for="code">Access code</label><input id="code" name="code" value="{{ form.get('code', request.query_params.get('code', '')) }}" placeholder="FICHUA-XXXXXX" autocapitalize="characters" required{{ to_fix(join_field, 'code') }}></div>
       <div class="form-grid-2">
-        <div class="field"><label for="name">Your name</label><input id="name" name="name" value="{{ form.get('name', '') }}" autocomplete="name" required></div>
-        <div class="field"><label for="hotel_name">Hotel name</label><input id="hotel_name" name="hotel_name" value="{{ form.get('hotel_name', '') }}" required></div>
-        <div class="field"><label for="email">Email</label><input id="email" name="email" type="email" value="{{ form.get('email', '') }}" autocomplete="email" required></div>
-        <div class="field"><label for="phone">WhatsApp number</label><input id="phone" name="phone" type="tel" value="{{ form.get('phone', '') }}" placeholder="+250 788 000 000" autocomplete="tel" required></div>
+        <div class="field"><label for="name">Your name</label><input id="name" name="name" value="{{ form.get('name', '') }}" autocomplete="name" required{{ to_fix(join_field, 'name') }}></div>
+        <div class="field"><label for="hotel_name">Hotel name</label><input id="hotel_name" name="hotel_name" value="{{ form.get('hotel_name', '') }}" required{{ to_fix(join_field, 'hotel_name') }}></div>
+        <div class="field"><label for="email">Email</label><input id="email" name="email" type="email" value="{{ form.get('email', '') }}" autocomplete="email" required{{ to_fix(join_field, 'email') }}></div>
+        <div class="field"><label for="phone">WhatsApp number</label><input id="phone" name="phone" type="tel" value="{{ form.get('phone', '') }}" placeholder="+250 788 000 000" autocomplete="tel" required{{ to_fix(join_field, 'phone') }}></div>
       </div>
-      <div class="field"><label for="password">Choose a password</label><input id="password" name="password" type="password" minlength="8" autocomplete="new-password" required><span class="hint">At least 8 characters.</span></div>
+      <div class="field"><label for="password">Choose a password</label><input id="password" name="password" type="password" minlength="8" autocomplete="new-password" required{{ to_fix(join_field, 'password') }}><span class="hint">At least 8 characters.</span></div>
       <button class="btn btn-primary btn-block" type="submit">Create my account</button>
       <p class="legal-note">By creating an account, you accept the <a href="/partners/terms" target="_blank" rel="noopener">partner terms</a> and the <a href="/privacy" target="_blank" rel="noopener">privacy policy</a>.</p>
     </form>
     <form class="panel panel-pad" method="post" action="/partners/login" style="display:grid;gap:var(--space-3)">
       <h2 style="font-size:var(--text-lg)">Already a partner? Log in</h2>
-      {% if login_error %}<div class="alert alert-error" role="alert">{{ login_error }}</div>{% endif %}
+      {% if login_error %}<div class="alert alert-error" role="alert" tabindex="-1"{% if not login_field %} data-error-focus{% endif %}>{{ login_error }}</div>{% endif %}
       <div class="form-grid-2">
-        <div class="field"><label for="login_email">Email</label><input id="login_email" name="email" type="email" value="{{ form.get('login_email', '') }}" autocomplete="email" required></div>
-        <div class="field"><label for="login_password">Password</label><input id="login_password" name="password" type="password" autocomplete="current-password" required></div>
+        <div class="field"><label for="login_email">Email</label><input id="login_email" name="email" type="email" value="{{ form.get('login_email', '') }}" autocomplete="email" required{{ to_fix(login_field, 'login_email') }}></div>
+        <div class="field"><label for="login_password">Password</label><input id="login_password" name="password" type="password" autocomplete="current-password" required{{ to_fix(login_field, 'login_password') }}></div>
       </div>
       <button class="btn btn-secondary btn-block" type="submit">Log in</button>
       <p class="muted small" style="margin:0">Forgot your password? Message the Fichua team and we'll reset it.</p>

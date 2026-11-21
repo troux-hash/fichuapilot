@@ -1,8 +1,9 @@
 {% extends "partners/_layout.html" %}
+{% import "components/icons.html" as i %}
 {% block ptitle %}Photos{% endblock %}
 {% block page_title %}Photos{% endblock %}
 {% block page_sub %}<p>Step 2 of 5 · Hotels with 8 or more photos get more bookings. The first photo is your cover.</p>{% endblock %}
-{% block page_actions %}<a class="btn btn-primary" href="/partners/rooms">Continue to rooms</a>{% endblock %}
+{% block page_actions %}<a class="btn {{ 'btn-primary' if photos|length >= min_photos else 'btn-secondary' }}" href="/partners/rooms">Continue to rooms</a>{% endblock %}
 {% block partner_content %}
 {% if error %}<div class="alert alert-error" role="alert">{{ error }}</div>{% endif %}
 <section class="panel panel-pad" style="display:grid;gap:var(--space-4)">
@@ -11,12 +12,14 @@
     <span class="pill {{ 'pill--live' if photos|length >= min_photos else 'pill--pending' }}">{{ 'Enough to submit' if photos|length >= min_photos else 'At least ' ~ min_photos ~ ' needed' }}</span>
   </div>
   <form method="post" action="/partners/photos" enctype="multipart/form-data" data-upload>
+    {# One tap: choosing photos uploads them (partners.js). Without JavaScript, the Upload button does it. #}
     <label class="uploader" data-dropzone>
-      <strong data-file-label>Take photos or choose from your phone</strong>
-      <span class="muted small">JPG, PNG or WebP · they are resized on your phone so uploads work on slow connections</span>
-      <input type="file" name="files" accept="image/jpeg,image/png,image/webp" multiple required>
+      <span class="btn {{ 'btn-secondary' if photos|length >= min_photos else 'btn-primary' }} uploader__button">{{ i.icon('upload') }}Choose photos</span>
+      <strong data-file-label>Take photos or choose them from your phone</strong>
+      <span class="muted small">JPG, PNG or WebP · they upload as soon as you choose them, resized on your phone for slow connections</span>
+      <input type="file" name="files" accept="image/jpeg,image/png,image/webp" multiple required data-autoupload>
     </label>
-    <div class="form-actions" style="margin-top:var(--space-3)"><span class="muted small" data-upload-status></span><button class="btn btn-primary" type="submit">Upload photos</button></div>
+    <div class="form-actions" style="margin-top:var(--space-3)"><span class="muted small" data-upload-status aria-live="polite"></span><button class="btn btn-primary js-hide" type="submit">Upload photos</button></div>
   </form>
   {% if photos %}
   <div class="photo-grid">

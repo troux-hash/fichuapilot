@@ -9,7 +9,7 @@ from fastapi.responses import RedirectResponse
 from .. import auth
 from ..config import settings
 from ..db import db
-from ..services import app_settings, bookings, catalog, currency, dates, partners, ratelimit
+from ..services import app_settings, bookings, catalog, currency, dates, notify, partners, ratelimit
 from ..web import render
 
 router = APIRouter(prefix="/partners")
@@ -86,7 +86,7 @@ def join(request: Request, code: str = Form(""), name: str = Form(""), hotel_nam
             conn.raw.rollback()
             ratelimit.record(conn, "join", ip)  # after the rollback, so the attempt is kept
             return render(request, "partners/landing.html", status_code=422, join_error=str(exc),
-                          login_error=None, form=form)
+                          join_field=exc.field, login_error=None, form=form)
     return _start_session(created["user_id"], "/partners/hotel")
 
 
@@ -104,7 +104,8 @@ def login(request: Request, email: str = Form(""), password: str = Form("")):
             ratelimit.clear(conn, "partner", key)
     if not user:
         return render(request, "partners/landing.html", status_code=401, join_error=None,
-                      login_error="Wrong email or password.", form={"login_email": email})
+                      login_error="Wrong email or password.", login_field="login_password" if email.strip()
+                      else "login_email", form={"login_email": email})
     return _start_session(user["id"], "/partners")
 
 
@@ -171,8 +172,10 @@ async def _save_uploads(conn, owner_type: str, owner_id: str, files: list, thumb
 
 
 @router.post("/photos")
-async def photos_upload(request: Request, files: list[UploadFile] = File(default=[]),
-                        thumbs: list[UploadFile] = File(default=[])):
+async def photos_upload(request: Request):
+    # Read the form by hand: a photo without a card copy sends an empty "thumbs" entry to keep the pairs in step.
+    form = await request.form()
+    files, thumbs = form.getlist("files"), form.getlist("thumbs")
     with db.connect() as conn:
         user, hotel = _current(conn, request)
         if not hotel:
@@ -333,10 +336,15 @@ def submit(request: Request):
         if not hotel:
             return _login_redirect()
         try:
-            partners.submit(conn, hotel)
+            sent = partners.submit(conn, hotel)
         except partners.PartnerError as exc:
             return _page(request, conn, user, hotel, "partners/review.html", "review", status_code=422,
                          error=str(exc), rooms=partners.hotel_room_list(conn, hotel["id"]))
+        if sent:  # "we received it" to the hotel, "a hotel to review" to Fichua (IMP-13)
+            notify.hotel_submitted(conn, hotel, user)
+    if sent:
+        with db.connect() as conn:  # after the commit, like every other message
+            notify.flush(conn)
     return RedirectResponse("/partners/review", status_code=303)
 
 

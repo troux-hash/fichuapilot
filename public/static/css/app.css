@@ -148,6 +148,8 @@
 /* Filters bar (finance) */
 .filterbar { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: flex-end; }
 .filterbar .field { min-width: 150px; }
+.filterbar .filterbar__grow { flex: 1 1 240px; }
+.code-send { display: inline-flex; align-items: center; gap: 4px; margin-top: 4px; font-weight: var(--weight-bold); white-space: nowrap; }
 .filterbar .field select, .filterbar .field input { min-height: 42px; padding: var(--space-2) var(--space-3); }
 
 /* Photos */
@@ -160,7 +162,12 @@
 .uploader { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-2); text-align: center;
   padding: var(--space-6) var(--space-4); border: 2px dashed var(--color-border-strong); border-radius: var(--radius-md); background: var(--color-surface-2); cursor: pointer; }
 .uploader:hover, .uploader.is-drag { border-color: var(--color-primary); background: var(--color-primary-soft); }
-.uploader input { max-width: 100%; }
+/* The real file input covers the whole box, invisible: a tap anywhere opens the picker and a drop lands on it. */
+.uploader { position: relative; }
+.uploader input[type=file] { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.uploader:focus-within { border-color: var(--color-primary); box-shadow: 0 0 0 3px var(--color-primary-soft); }
+.uploader__button { pointer-events: none; }
+.js .js-hide { display: none; }
 
 /* Map */
 .map { height: 280px; border-radius: var(--radius-md); border: 1px solid var(--color-border); overflow: hidden; background: var(--color-surface-2); }

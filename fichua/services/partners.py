@@ -34,7 +34,11 @@ COUNTRY_BOXES = {
 
 
 class PartnerError(Exception):
-    pass
+    """A problem to show the partner; `field` names the form field to fix, when there is one."""
+
+    def __init__(self, message: str, field: str | None = None):
+        super().__init__(message)
+        self.field = field
 
 
 # --------------------------------------------------------------------------- accounts & codes
@@ -73,33 +77,33 @@ def create_code(conn: Connection, *, code: str = "", plan: str = "manager", free
 def check_code(conn: Connection, code: str) -> dict:
     row = conn.one("SELECT * FROM access_codes WHERE code = :c", {"c": normalize_code(code)})
     if not row or not row["is_active"]:
-        raise PartnerError("That code isn't valid. Check it with the Fichua team.")
+        raise PartnerError("That code isn't valid. Check it with the Fichua team.", "code")
     if row["expires_on"] and row["expires_on"] < date.today().isoformat():
-        raise PartnerError("That code has expired. Ask the Fichua team for a new one.")
+        raise PartnerError("That code has expired. Ask the Fichua team for a new one.", "code")
     if row["uses"] >= row["max_uses"]:
-        raise PartnerError("That code has already been used. Ask the Fichua team for a new one.")
+        raise PartnerError("That code has already been used. Ask the Fichua team for a new one.", "code")
     return row
 
 
 def join(conn: Connection, *, code: str, name: str, hotel_name: str, email: str, phone: str,
          password: str) -> dict:
-    errors = []
+    errors = []  # (field, message), in the order the form shows them
     if len(name.strip()) < 2:
-        errors.append("Enter your name.")
+        errors.append(("name", "Enter your name."))
     if len(hotel_name.strip()) < 2:
-        errors.append("Enter your hotel's name.")
+        errors.append(("hotel_name", "Enter your hotel's name."))
     if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email.strip()):
-        errors.append("Enter a valid email address.")
+        errors.append(("email", "Enter a valid email address."))
     if len(re.sub(r"\D", "", phone)) < 8:
-        errors.append("Enter your WhatsApp number with the country code.")
+        errors.append(("phone", "Enter your WhatsApp number with the country code."))
     if len(password) < 8:
-        errors.append("Choose a password of at least 8 characters.")
+        errors.append(("password", "Choose a password of at least 8 characters."))
     if errors:
-        raise PartnerError(" ".join(errors))
+        raise PartnerError(" ".join(message for _, message in errors), errors[0][0])
     access = check_code(conn, code)
     email = email.strip().lower()
     if conn.scalar("SELECT COUNT(*) FROM partner_users WHERE email = :e", {"e": email}):
-        raise PartnerError("An account with this email already exists. Log in instead.")
+        raise PartnerError("An account with this email already exists. Log in instead.", "email")
     user_id = str(uuid.uuid4())
     conn.run("INSERT INTO partner_users (id, email, password_hash, name, phone, access_code) "
              "VALUES (:id, :e, :pw, :n, :ph, :c)", {"id": user_id, "e": email, "pw": hash_password(password),
@@ -319,11 +323,24 @@ def onboarding_status(conn: Connection, hotel: dict) -> dict:
             "room_units": sum(int(r["total_rooms"] or 0) for r in rooms)}
 
 
-def submit(conn: Connection, hotel: dict) -> None:
+def submit(conn: Connection, hotel: dict) -> bool:
+    """Send the hotel for review. True when it was waiting to be sent (draft, or changes asked)."""
     if not onboarding_status(conn, hotel)["ready"]:
         raise PartnerError("Finish every step before submitting.")
-    conn.run("UPDATE hotels SET status = 'pending', submitted_at = :t WHERE id = :id AND status IN "
-             "('draft', 'changes')", {"t": utcnow(), "id": hotel["id"]})
+    return conn.run("UPDATE hotels SET status = 'pending', submitted_at = :t WHERE id = :id AND status IN "
+                    "('draft', 'changes')", {"t": utcnow(), "id": hotel["id"]}) > 0
+
+
+def invite_text(code: str, link: str) -> str:
+    """What Fichua sends a hotel with its access code (English and French: Rwanda, Benin, Côte d'Ivoire)."""
+    return "\n".join([
+        "Fichua Partners",
+        f"Your access code: {code}",
+        f"List your hotel here: {link}",
+        "",
+        f"Votre code d’accès : {code}",
+        f"Inscrivez votre hôtel ici : {link}",
+    ])
 
 
 def review_checks(conn: Connection, hotel: dict) -> list[dict]:
