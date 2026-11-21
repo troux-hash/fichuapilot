@@ -25,7 +25,7 @@ Markets: Rwanda, Benin, Côte d'Ivoire. Master currency USD (RWF / CFA shown alo
 
 | # | Feature | Needs |
 |---|---|---|
-| 1 | Switch payments to Stripe test mode, then live | `STRIPE_SECRET_KEY` + webhook secret |
+| 1 | Switch Stripe from test mode to live (test mode is connected and working) | US company, Stripe account activation, `sk_live_` key |
 | 2 | Connect WhatsApp (Meta test number, then verified business number + message templates) | Meta developer app |
 | 3 | French for the partner portal and guest site (Benin, Côte d'Ivoire) | — |
 | 4 | Automatic payouts to hotel bank accounts (Stripe Global Payouts: Benin + CI; Rwanda on request) | Stripe access |

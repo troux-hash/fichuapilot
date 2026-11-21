@@ -8,6 +8,9 @@
 | Code | github.com/troux-hash/fichuapilot (branch `main` = production) |
 | Hosting | Vercel project `fichuapilot`, functions in `pdx1` (Oregon) |
 | Database | Supabase Postgres, us-west-2 (Oregon), via the transaction pooler |
+| Payments | Stripe, **test mode** (US account, USD). Webhook `https://fichuapilot.vercel.app/api/stripe/webhook` (checkout.session.completed / async_payment_succeeded), created through the API; its signing secret is `STRIPE_WEBHOOK_SECRET` |
+| WhatsApp | Not connected yet (messages are logged in Admin → WhatsApp messages) |
+| Payout job | Vercel Cron, daily 06:00 UTC → `/api/cron/payouts` (protected by `CRON_SECRET`) |
 
 **Every push to `main` deploys automatically.** Check a deploy with
 `python scripts/vercel_status.py --wait` (needs `VERCEL_TOKEN` in `.env`).
