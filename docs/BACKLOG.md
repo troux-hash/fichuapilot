@@ -103,6 +103,52 @@ Waiting on founder decisions: money flow ("Fichua never holds your money" or "he
 (7 / 14 / 30 days), one pricing rule for owners, the founding properties (real photos, host portraits and stories to replace
 the demo catalogue). Waiting on WhatsApp: the build-first "reveal" flow for owners.
 
+## 🧪 QA findings — round 2, after the redesign (21 Nov 2026)
+
+A second end-to-end run on the local copy after the persona-led redesign: 44 steps in headless Edge (phones at
+390 × 844, admin at 1280 × 800). It ran from the admin's invitation through the owner's listing, approval, a traveller's
+booking, door card, receipt and refund, then the owner's and the admin's follow-up. Automatic checks on every step found no
+JavaScript errors, no failed requests and no sideways scrolling; the bugs below came from reviewing each screen.
+Walkthrough videos (traveller, operator, admin) are in `qa/2026-11-21-round2/`, kept out of git. Tracking:
+[Fichua QA Backlog](https://claude.ai/artifact/HKnXLZX4Q9WQNiXj2Ct9ab) (61 items).
+
+Bugs, fixed on the local copy and **not deployed yet** (commit `96412ac`, tests in `tests/test_round2.py`):
+
+| ID | Priority | Bug | Fix | Status |
+|---|---|---|---|---|
+| R2-B1 | P1 | Hotel page on phones: the sticky bar grows to a third of the screen once the WhatsApp button is there | Two rows: total and dates, then WhatsApp and See rooms side by side | 🟡 Fixed, not live |
+| R2-B2 | P1 | Multi-night prices with cents and a misleading "From $178.33 / night" (an average, not a minimum) | The total for the stay first; the nightly figure in whole dollars, "avg" when nights differ | 🟡 Fixed, not live |
+| R2-B3 | P2 | The photos step claims "8 or more photos get more bookings" with no data behind it | Plain guidance on what to photograph | 🟡 Fixed, not live |
+| R2-B4 | P2 | Room list: the RWF figure follows the Fri–Sat price, so it reads as the weekend price | RWF sits next to the standard price it converts | 🟡 Fixed, not live |
+| R2-B5 | P2 | The calendar reopens on the current month after saving another month's prices | It reopens on the month that changed | 🟡 Fixed, not live |
+| R2-B6 | P1 | The approval page hides the host profile and the business details, though both reach guests | Both shown before approving, with the host's consent state | 🟡 Fixed, not live |
+| R2-B7 | P3 | Admin sign-in still sets the old navy browser colour on phones | Ink | 🟡 Fixed, not live |
+
+Improvements to build (not started):
+
+| ID | Priority | Side | Improvement | Why |
+|---|---|---|---|---|
+| R2-T1 | **P1** | Travellers | Funnel analytics: search → hotel view → ask → checkout → paid, with the channel (`utm_source`), stored in Fichua's own database and shown in admin; no third-party tracker | No go-to-market decision can rest on data today |
+| R2-T2 | **P1** | Travellers | Destination pages ("Where to stay near Volcanoes National Park", "Lake Kivu", "Ouidah") listing reviewed places with plain facts, in the sitemap with schema.org data | Travellers decide in AI answers and search before they reach a booking site |
+| R2-O1 | **P1** | Owners | Owners see their "Ask on WhatsApp" enquiries (`ASK-` codes) and a monthly count | The first proof of value, before any booking |
+| R2-A1 | **P1** | Admin | Dashboard: enquiries, enquiry-to-booking rate, hotels with a host profile, approvals as a list | The numbers that run the pilot |
+| R2-T3 | P2 | Travellers | One WhatsApp button per phone screen (the sticky bar); the others become text links | Three equal calls to action dilute the path to booking |
+| R2-T4 | P2 | Travellers | "Share with family" on WhatsApp, with the dates and the total | Many trips are decided with family on WhatsApp |
+| R2-T5 | P2 | Travellers | Shortlist and compare up to three places, no account | Travellers compare in tabs and lose track |
+| R2-T6 | P2 | Travellers | Confirmation email matching the booking page (same as P1 #6; needs a domain) | Today the booking lives on a bookmarked page |
+| R2-T7 | P2 | Travellers | Search suggestions for regions, parks and lakes | People type "Lake Kivu", not "Rubavu" |
+| R2-O2 | P2 | Owners | The review step suggests the optional host profile | Owners may submit without ever seeing it |
+| R2-O3 | P2 | Owners | A caption on each photo, also used as alt text | Guests and search engines read captions |
+| R2-O4 | P2 | Owners | Bookings totals two per row on phones | "after commission" wraps over three lines |
+| R2-O5 | P2 | Owners | A "Join with my code" button at the top of the partner page on phones | The form starts below a full screen of pitch |
+| R2-O6 | P2 | Owners | "I reply within …", shown to guests once reply times are measured | Sets expectations and rewards fast hosts |
+| R2-A2 | P2 | Admin | Finance export (CSV) | Month-end work happens in a spreadsheet |
+| R2-A3 | P2 | Admin | Audit trail for approvals, commission changes and hiding a hotel | Needed once several people use admin |
+| R2-T8 | P3 | Travellers | An occasion at checkout (anniversary, birthday), passed to the host | A personal touch the host can act on |
+
+Setup still blocking (SET-02 to SET-04 in the sheet): the WhatsApp access token (messages wait in the outbox), the
+founder decisions above, and real photos and host stories for the founding properties.
+
 ## 🔜 P1 — next
 
 | # | Feature | Needs |
