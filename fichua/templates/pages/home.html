@@ -1,112 +1,44 @@
 {% extends "base.html" %}
-{% import "components/ui.html" as ui %}
-{% import "components/icons.html" as i %}
+{% import "components/ui.html" as ui with context %}
+{# Brief 3 v3: one question first, the kind of stay; then where and when. No ranking by price, fees or reply speed. #}
+{% block body_class %}has-sticky-cta{% endblock %}
 
 {% block content %}
-{# Fichua is Swahili for "to reveal": the people and places behind each door, before the price. #}
-<section class="hero">
-  <div class="container">
-    <span class="hero__eyebrow"><i aria-hidden="true"></i>Rwanda · Benin · Côte d'Ivoire</span>
-    <h1>Know who's behind <em>the door.</em></h1>
-    <p class="hero__lede">Owner-run places to stay, each reviewed by our team before it goes live. One honest price, and the people who run the place a message away.</p>
-    {{ ui.search_form(stay, '', presets, destinations) }}
-    <div class="recent" data-recent>
-      <span class="label">Pick up where you left off</span>
-      <div class="chips" data-recent-list></div>
-    </div>
-    <ul class="proof-strip">
-      <li>{{ i.icon('shield', 16) }}Every place reviewed by our team</li>
-      <li>{{ i.icon('check', 16) }}The price you see is the price you pay</li>
-      <li>{{ i.icon('calendar', 16) }}Cancellation dates shown before you pay</li>
-    </ul>
-  </div>
-</section>
+<form class="kind-page" action="/where" method="get" data-kind-form>
+  <div class="container container--narrow">
+    <header class="kind-intro">
+      <h1 class="kind-intro__title">{{ t("What kind of stay are you looking for?") }}</h1>
+      <p class="kind-intro__mission">{{ t("Independent places that run responsibly, and travellers who want to support them, meet here directly. Choose from five kinds of stay.") }}</p>
+      <p class="where-from where-from--intro"><span class="where-from__line">{{ t("Starting in Rwanda, Benin and Côte d’Ivoire") }}</span>
+        <span class="where-from__mit">{{ t("Built at MIT, for Africa and the World") }}</span></p>
+    </header>
 
-{% if destinations %}
-{% if ways_in %}
-<section class="section band">
-  <div class="container">
-    <div class="section-head">
-      <div>
-        <h2>What brings you?</h2>
-        <p class="muted section-head__lede">Pick a way in. You'll see the places that fit, with the whole price for your dates.</p>
-      </div>
-    </div>
-    <div class="ways">
-      {% for w in ways_in %}
-      <a class="way" href="/search?{{ qs(stay.as_params(), **w.params) }}">
-        <strong>{{ w.title }}</strong>
-        <span>{{ w.line }}</span>
-        <span class="way__go">See places <span aria-hidden="true">→</span></span>
-      </a>
+    <fieldset class="kinds">
+      <legend class="kinds__head"><span class="label-caps">{{ t("Kind of place") }}</span><span class="muted small">{{ t("Pick one or two") }}</span></legend>
+      {% for k in KINDS %}
+      <label class="kind-card kind-card--{{ k.id }}">
+        <input class="kind-card__input" type="checkbox" name="kind" value="{{ k.id }}" {% if k.id in picked %}checked{% endif %} data-kind>
+        <span class="kind-card__tone" aria-hidden="true">
+          <span class="kind-card__tick"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+        </span>
+        <span class="kind-card__body">
+          <span class="kind-card__name">{{ pick(k.name) }}</span>
+          <span class="kind-card__line">{{ pick(k.line) }}</span>
+          {% set goods = [] %}{% for tid in kinds.typical_tags(k.id) %}{% set _ = goods.append(tag_name(tid)) %}{% endfor %}
+          <span class="kind-card__good">{{ t("Good for: {list}", list=goods|join(', ')) }}</span>
+        </span>
+      </label>
       {% endfor %}
-    </div>
-  </div>
-</section>
-{% endif %}
+    </fieldset>
 
-<section class="section">
-  <div class="container">
-    <div class="section-head">
-      <h2>Where to stay</h2>
-      <span class="muted small">{{ ui.stay_summary(stay) }}</span>
-    </div>
-    <div class="destinations">
-      {% for d in destinations[:6] %}
-      <a class="destination" href="/search?{{ qs(stay.as_params(), destination=d.city) }}">
-        <img src="{{ d.image|card_img }}" alt="" loading="lazy">
-        <span class="destination__text"><strong>{{ d.city }}</strong><span>{{ d.country }} · {{ d.hotels }} place{{ 's' if d.hotels != 1 }}</span></span>
-      </a>
-      {% endfor %}
-    </div>
-  </div>
-</section>
-{% else %}
-<section class="section">
-  <div class="container">
-    <div class="card empty">
-      <h2>No hotels yet</h2>
-      <p class="muted">Approve a partner hotel or upload an Excel file in the admin, and it appears here instantly.</p>
-      <a class="btn btn-primary" href="/admin">Go to admin</a>
-    </div>
-  </div>
-</section>
-{% endif %}
+    {% if fichua_wa %}<p class="kind-help"><a class="link-strong" href="{{ fichua_wa }}" target="_blank" rel="noopener">{{ t("Not sure? Message us on WhatsApp") }}</a></p>{% endif %}
 
-<section class="section band" id="checks">
-  <div class="container checks">
-    <div class="checks__intro">
-      <h2>What we check before a place goes live</h2>
-      <p class="muted">A person on our team reviews every hotel and lodge on Fichua. Today, that review covers four things.</p>
-    </div>
-    <ul class="checks__list">
-      <li>{{ i.icon('pin', 22) }}<span><strong>A real address</strong>The map pin sits inside the country the place says it is in.</span></li>
-      <li>{{ i.icon('chat', 22) }}<span><strong>A number that answers</strong>A WhatsApp number for bookings, used by no other place on Fichua.</span></li>
-      <li>{{ i.icon('image', 22) }}<span><strong>Photos and prices that make sense</strong>Photos of the place, and room prices in a normal range.</span></li>
-      <li>{{ i.icon('shield', 22) }}<span><strong>Our rules, accepted</strong>The owner accepts our partner terms on prices, cancellations and payment.</span></li>
-    </ul>
-    <p class="muted small checks__next">Next, and shown with the date each was done: the owner's identity, the operating licence, and photos checked at the property.</p>
+    {{ ui.trust_band() }}
   </div>
-</section>
 
-<section class="section">
-  <div class="container">
-    <h2 class="steps__title">How booking works</h2>
-    <ol class="steps">
-      <li><strong>See the whole price</strong><span>The total for your stay, in US dollars with your local currency beside it. No booking fees.</span></li>
-      <li><strong>Book, or ask first</strong><span>Pay by card in one step, with no account. Or, where the hotel offers it, message them on WhatsApp first.</span></li>
-      <li><strong>Everything on one page</strong><span>Your reference, directions, the hotel's number and your free-cancellation date, ready for the trip.</span></li>
-    </ol>
+  <div class="sticky-cta sticky-cta--stack">
+    <button class="btn btn-primary btn-block" type="submit" data-kind-submit>{{ t("Show matching places") }}</button>
+    <span class="muted small" data-kind-hint>{{ t("Pick one or two kinds of place to start.") }}</span>
   </div>
-</section>
-
-<section class="section band">
-  <div class="container owners-cta">
-    <div>
-      <h2>Run an independent hotel or lodge?</h2>
-      <p class="muted">Your story, your photos, your prices. Nothing goes live until you submit it and our team has reviewed it.</p>
-    </div>
-    <a class="btn btn-secondary" href="/partners">See how it works</a>
-  </div>
-</section>
+</form>
 {% endblock %}

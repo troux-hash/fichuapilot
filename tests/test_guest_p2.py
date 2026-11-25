@@ -97,7 +97,7 @@ def test_address_and_map():  # IMP-03
     assert no_pin["map_embed"] is None and "KG+7+Ave" in no_pin["map_url"]
     hotel_id = guest.get("/api/search", params={"destination": "Kigali", **STAY}).json()["results"][0]["hotel"]["id"]
     page = guest.get(f"/hotels/{hotel_id}", params=STAY)
-    assert "Where you'll stay" in page.text and 'class="map-embed"' in page.text and "Open in Google Maps" in page.text
+    assert "Where you’ll stay" in page.text and 'class="map-embed"' in page.text and "Open in Google Maps" in page.text
 
 
 def test_card_photos_are_small():  # IMP-07

@@ -11,8 +11,8 @@ from fastapi.responses import RedirectResponse, Response
 from .. import auth
 from ..config import settings
 from ..db import db, utcnow
-from ..services import (admins, app_settings, currency, finance, importer, notify, partners, payments, payouts,
-                        ratelimit, totp)
+from ..services import (admins, app_settings, catalog, currency, finance, importer, kinds, notify, partners, payments,
+                        payouts, ratelimit, totp)
 from ..web import base_url, forget_rates, render
 
 router = APIRouter(prefix="/admin")
@@ -84,7 +84,13 @@ def logout():
 
 def _stats(conn) -> dict:
     month = finance.report(conn, finance.FinanceFilter(period="month"))["totals"]
+    live = catalog.live_hotels(conn)
+    checks = kinds.checks_by_hotel(conn, [h["id"] for h in live])
+    start = date.today().replace(day=1).isoformat() + " 00:00:00"
     return {
+        "questions": conn.scalar("SELECT COUNT(*) FROM enquiries WHERE created_at >= :s", {"s": start}) or 0,
+        "verified": sum(1 for h in live if len(checks.get(h["id"], {})) == len(kinds.CHECKS)),
+        "depth": kinds.depth(live),
         "live_hotels": conn.scalar("SELECT COUNT(*) FROM hotels WHERE is_active = TRUE"),
         "pending": _pending_count(conn),
         "rooms": conn.scalar("SELECT COALESCE(SUM(total_rooms), 0) FROM room_types rt JOIN hotels h "
@@ -151,7 +157,6 @@ def _review_context(conn, hotel_id: str) -> dict | None:
                      {"id": hotel_id})
     if not hotel:
         return None
-    from ..services import catalog
     hotel = catalog.hydrate_hotel(hotel, catalog.media_urls(conn, "hotel", [hotel_id]).get(hotel_id))
     # The host profile goes public once the owner ticks consent: the reviewer sees it either way.
     host = None
@@ -159,7 +164,9 @@ def _review_context(conn, hotel_id: str) -> dict | None:
         host = catalog.host_profile({**hotel, "host_consent_at": hotel.get("host_consent_at") or "pending"},
                                     (catalog.media_urls(conn, "host", [hotel_id]).get(hotel_id) or [None])[0])
         host["public"] = bool(hotel.get("host_consent_at"))
+    verification = kinds.verification(hotel, kinds.checks_by_hotel(conn, [hotel_id]).get(hotel_id))
     return {"hotel": hotel, "host": host, "rooms": partners.hotel_room_list(conn, hotel_id),
+            "verification": verification, "today": date.today().isoformat(),
             "checks": partners.review_checks(conn, hotel), "status": partners.onboarding_status(conn, hotel),
             "default_commission": app_settings.get(conn, "commission_pct"), "policies": partners.POLICIES}
 
@@ -173,6 +180,31 @@ def approval_detail(request: Request, hotel_id: str):
         if not ctx:
             return RedirectResponse("/admin/approvals", status_code=303)
         return _page(request, conn, "admin/approval_detail.html", "approvals", decided=request.query_params.get("decided"), **ctx)
+
+
+@router.post("/approvals/{hotel_id}/trust")
+async def approval_trust(request: Request, hotel_id: str):
+    """The kind of place, the five checks with their dates, and how the place runs (Brief 3 v3).
+    Travellers see all three on the place's page, so only what Fichua saw goes here."""
+    if (r := _guard(request)):
+        return r
+    form = await request.form()
+    data = {k: form.get(k) for k in form.keys()}
+    with db.connect() as conn:
+        if not conn.scalar("SELECT 1 FROM hotels WHERE id = :id", {"id": hotel_id}):
+            return RedirectResponse("/admin/approvals", status_code=303)
+        kind = kinds.clean_kind(data.get("category"))
+        also = kinds.clean_kind(data.get("category_also"))
+        conn.run("UPDATE hotels SET category = COALESCE(:c, category), category_also = :a, good_for = :g, "
+                 "practice_people = :pp, practice_place = :pl, practice_money = :pm WHERE id = :id",
+                 {"c": kind, "a": also if also != kind else None,
+                  "g": ",".join(kinds.clean_tags(form.getlist("good_for"))) or None,
+                  "pp": (data.get("practice_people") or "").strip()[:200] or None,
+                  "pl": (data.get("practice_place") or "").strip()[:200] or None,
+                  "pm": (data.get("practice_money") or "").strip()[:200] or None, "id": hotel_id})
+        errors = kinds.save_checks(conn, hotel_id, data)
+    query = {"decided": "trust"} if not errors else {"decided": "trust-errors", "why": " ".join(errors)}
+    return RedirectResponse(f"/admin/approvals/{hotel_id}?{urlencode(query)}#trust", status_code=303)
 
 
 def _commission(text: str) -> tuple[float | None, bool]:

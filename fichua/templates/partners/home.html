@@ -1,0 +1,64 @@
+{% extends "partners/_layout.html" %}
+{# The owner's home (Brief 3 v3): what Fichua brought this month, the money as travellers see it, who arrives next,
+   and a share kit whose links still book and pay on Fichua (no codes, no bookings on the side). #}
+{% block ptitle %}Home{% endblock %}
+{% block page_title %}{{ hotel.name }}{% endblock %}
+{% block page_sub %}<p>{% if hotel.status == 'live' %}Live{% if hotel.approved_at %} since {{ hotel.approved_at|nice_date('%d %b %Y') }}{% endif %}{% else %}Not live yet{% endif %} · {{ kind_name(hotel.kind) }}</p>{% endblock %}
+{% block partner_content %}
+<section class="panel panel-pad" style="display:grid;gap:var(--space-4)" aria-labelledby="month-title">
+  <h2 id="month-title">{{ stats.month.strftime('%B') }} so far</h2>
+  <div class="stats">
+    <div class="stat"><span>Questions from travellers</span><strong>{{ stats.questions }}</strong><small>“Ask on WhatsApp” with a reference</small></div>
+    <div class="stat"><span>Bookings through Fichua</span><strong>{{ stats.bookings }}</strong><small>paid in full</small></div>
+    <div class="stat stat--accent"><span>You received</span><strong>{{ stats.received|usd(true) }}</strong><small>after Fichua’s fee</small></div>
+    <div class="stat"><span>Fichua’s fee</span><strong>{{ stats.fee|usd(true) }}</strong><small>{{ commission }}% of {{ stats.paid|usd }}</small></div>
+  </div>
+  <p class="muted small" style="margin:0">Travellers see the same split on your page: what they pay, what you receive and Fichua’s fee, which is never added to their price.</p>
+</section>
+
+<div class="split">
+  <section class="panel panel-pad" style="display:grid;gap:var(--space-3)" aria-labelledby="arrivals-title">
+    <h2 id="arrivals-title">Next arrivals</h2>
+    {% for a in stats.arrivals %}
+    <div class="arrival">
+      <strong>{{ a.check_in|nice_date('%a %d %b') }} · {{ a.guest_short }}</strong>
+      <span class="muted small">{{ a.nights }} night{{ 's' if a.nights != 1 }} · {{ a.guests }} guest{{ 's' if a.guests != 1 }}{% if (a.rooms or 1) > 1 %} · {{ a.rooms }} rooms{% endif %} · <span class="mono">{{ a.reference }}</span></span>
+      <span class="small">{% if a.source == 'offline' %}Added by you{% elif a.payment_status == 'paid' %}Paid in full on Fichua{% else %}Awaiting payment{% endif %}</span>
+    </div>
+    {% else %}
+    <p class="muted" style="margin:0">No arrivals booked yet.</p>
+    {% endfor %}
+    <a class="small" href="/partners/bookings">All bookings →</a>
+  </section>
+
+  <section class="panel panel-pad" style="display:grid;gap:var(--space-3)" aria-labelledby="sources-title">
+    <h2 id="sources-title">Where this month’s bookings came from</h2>
+    <ul class="source-list">{% for s in stats.sources %}<li><span>{{ s.label|capitalize }}</span><strong>{{ s.n }}</strong></li>{% endfor %}</ul>
+    <p class="muted small" style="margin:0">Walk-ins and bookings from your agents count here once you add them, so your calendar stays true.</p>
+  </section>
+</div>
+
+<section class="panel panel-pad" style="display:grid;gap:var(--space-3)" aria-labelledby="kit-title">
+  <h2 id="kit-title">Your share kit</h2>
+  {% if hotel.status == 'live' %}
+  <div class="kit">
+    <strong>A WhatsApp message for your contacts</strong>
+    <blockquote class="kit__text">{{ share }}</blockquote>
+    <div class="row" style="flex-wrap:wrap">
+      <a class="btn btn-whatsapp btn-sm" href="https://wa.me/?{{ qs({'text': share}) }}" target="_blank" rel="noopener">Send on WhatsApp</a>
+      <button class="btn btn-secondary btn-sm" type="button" data-copy="{{ share }}">Copy the message</button>
+    </div>
+  </div>
+  <div class="kit">
+    <strong>A link for your Instagram or Facebook bio</strong>
+    <code class="kit__link">{{ link }}</code>
+    <div class="row"><button class="btn btn-secondary btn-sm" type="button" data-copy="{{ link }}">Copy the link</button></div>
+  </div>
+  <p class="muted small" style="margin:0">Guests who come through these links book and pay on Fichua. You see every booking and its Fichua reference here.</p>
+  {% else %}
+  <p class="muted" style="margin:0">Your share kit appears here once Fichua has reviewed your page and it is live.</p>
+  {% endif %}
+</section>
+
+<div class="alert alert-info" role="note"><strong>Every Fichua booking is paid on Fichua.</strong> If a traveller offers to pay you directly or asks for a code, send them back to their Fichua link. You and your guest always see the same Fichua reference.</div>
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% import "components/icons.html" as i %}
+{# Travellers may talk to the host directly; Fichua still handles the booking and the payment. No codes from hosts. #}
+{% block title %}{{ t("Ask {name}", name=hotel.host.name if hotel.host else hotel.name) }} · {{ app_name }}{% endblock %}
+
+{% block content %}
+{% set who = hotel.host.name if hotel.host else hotel.name %}
+<div class="container container--narrow ask-page">
+  <a class="back-link" href="{{ hotel.path }}?{{ qs(stay.as_params()) }}">← {{ hotel.name }}</a>
+  <h1>{{ t("Ask {name} before you book", name=who) }}</h1>
+  <p class="muted">{{ t("WhatsApp opens with this message and a reference, so {name} knows you found them on Fichua.", name=who) }}</p>
+
+  <form class="stack" method="post" action="/hotels/{{ hotel.id }}/ask" target="_blank" data-ask-form>
+    {% for k, v in stay.as_params().items() %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endfor %}
+    <div class="bubble">{{ preview }}</div>
+    <div class="field">
+      <label for="question">{{ t("Your question") }} <span class="muted" style="font-weight:400">({{ t("optional") }})</span></label>
+      <textarea id="question" name="question" maxlength="500" rows="3" placeholder="{{ t('Can you arrange an airport pickup?') }}"></textarea>
+    </div>
+    <div class="trust-note">{{ i.icon('shield', 20) }}
+      <span>{{ t("When you want to book, it happens here: Fichua handles the booking, your payment and your confirmation. Hosts never take payment outside Fichua; if anyone asks you to, tell us.") }}</span></div>
+    <button class="btn btn-whatsapp btn-block" type="submit">{{ i.icon('chat', 18) }}<span>{{ t("Open WhatsApp") }}</span></button>
+    <p class="muted small" style="text-align:center;margin:0">{{ t("Nothing is booked yet.") }}</p>
+  </form>
+  <a class="btn btn-secondary btn-block" href="{{ hotel.path }}?{{ qs(stay.as_params()) }}#rooms">{{ t("Check dates and book") }}</a>
+</div>
+{% endblock %}

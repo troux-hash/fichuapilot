@@ -288,3 +288,15 @@
   --shadow-glow: 0 0 0 1px rgba(143, 124, 255, 0.35), 0 18px 50px -18px rgba(143, 124, 255, 0.7);
   --focus-ring: 0 0 0 3px rgba(76, 215, 246, 0.55);
 }
+
+/* Brief 3 v3: the five kinds of place, each with a quiet tone behind its card; the message bubble on "Ask your host". */
+:root {
+  --kind-urban: #D9C7B8;
+  --kind-eco: #C9D6B8;
+  --kind-heritage: #E2CDA8;
+  --kind-wild: #A9BFA8;
+  --kind-water: #B7CCD3;
+  --bubble-bg: var(--color-success-soft);
+  --bubble-fg: #1F3A2C;
+  --container-narrow: 760px;
+}

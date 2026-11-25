@@ -72,6 +72,13 @@ COLUMN_MIGRATIONS: list[tuple[str, str, str]] = [
     ("bookings", "invoice_tax_id", "TEXT"),
     ("bookings", "invoice_address", "TEXT"),
     ("bookings", "invoice_reference", "TEXT"),
+    # The kind of place travellers choose from (Brief 3 v3), its "good for" tags, and how it runs.
+    ("hotels", "category", "TEXT"),
+    ("hotels", "category_also", "TEXT"),
+    ("hotels", "good_for", "TEXT"),
+    ("hotels", "practice_people", "TEXT"),
+    ("hotels", "practice_place", "TEXT"),
+    ("hotels", "practice_money", "TEXT"),
 ]
 
 

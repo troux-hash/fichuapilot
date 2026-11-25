@@ -1,79 +1,80 @@
 {% extends "base.html" %}
-{% import "components/ui.html" as ui %}
+{% import "components/ui.html" as ui with context %}
 
-{% block title %}Confirm and pay · {{ app_name }}{% endblock %}
+{% block title %}{{ t("Confirm and pay") }} · {{ app_name }}{% endblock %}
 
 {% block content %}
 {% macro field(name, label, type='text', autocomplete='', hint='', required=true) %}
 {# An error replaces the hint until the guest types in the field again (app.js, IMP-05). #}
 <div class="field{% if errors[name] %} has-error{% endif %}">
-  <label for="{{ name }}">{{ label }}{% if not required %} <span class="muted" style="font-weight:400">(optional)</span>{% endif %}</label>
+  <label for="{{ name }}">{{ label }}{% if not required %} <span class="muted" style="font-weight:400">({{ t("optional") }})</span>{% endif %}</label>
   {% set described = (name ~ '-error') if errors[name] else ((name ~ '-hint') if hint else '') %}
   {% if type == 'textarea' %}
   <textarea id="{{ name }}" name="{{ name }}" maxlength="1000">{{ form.get(name, '') }}</textarea>
   {% else %}
   <input id="{{ name }}" name="{{ name }}" type="{{ type }}" value="{{ form.get(name, '') }}" {% if autocomplete %}autocomplete="{{ autocomplete }}"{% endif %} {% if required %}required{% endif %}{% if errors[name] %} aria-invalid="true"{% endif %}{% if described %} aria-describedby="{{ described }}"{% endif %}>
   {% endif %}
-  {% if errors[name] %}<span class="error" id="{{ name }}-error">{{ errors[name] }}</span>{% endif %}
+  {% if errors[name] %}<span class="error" id="{{ name }}-error">{{ t(errors[name]) }}</span>{% endif %}
   {% if hint %}<span class="hint" id="{{ name }}-hint"{% if errors[name] %} hidden{% endif %}>{{ hint }}</span>{% endif %}
 </div>
 {% endmacro %}
 <div class="container" style="padding-bottom:var(--space-8)">
-  <a class="back-link" href="{{ hotel.path }}?{{ qs(stay.as_params()) }}#rooms">← Back to {{ hotel.name }}</a>
-  <h1 class="page-title">Confirm and pay</h1>
-  <p class="muted">One step. No account needed.</p>
+  <a class="back-link" href="{{ hotel.path }}?{{ qs(stay.as_params()) }}#rooms">← {{ t("Back to {name}", name=hotel.name) }}</a>
+  <h1 class="page-title">{{ t("Confirm and pay") }}</h1>
+  <p class="muted">{{ t("One step. No account needed.") }}</p>
 
   <div class="checkout-layout">
     <form class="card card-pad stack" method="post" action="/book" novalidate data-checkout>
       <input type="hidden" name="room" value="{{ room.id }}">
       {% for k, v in stay.as_params().items() %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endfor %}
       {% if date_note %}<div class="alert alert-info date-note" role="status">{{ date_note }}</div>{% endif %}
-      {% if errors.general %}<div class="alert alert-error" role="alert">{{ errors.general }}</div>{% endif %}
-      {% if not offer and not errors.general %}<div class="alert alert-error" role="alert">This room is no longer available for these dates. <a href="{{ hotel.path }}?{{ qs(stay.as_params()) }}#rooms">Choose another room</a>.</div>{% endif %}
+      {% if errors.general %}<div class="alert alert-error" role="alert">{{ t(errors.general) }}</div>{% endif %}
+      {% if not offer and not errors.general %}<div class="alert alert-error" role="alert">{{ t("This room is no longer available for these dates.") }} <a href="{{ hotel.path }}?{{ qs(stay.as_params()) }}#rooms">{{ t("Choose another room") }}</a>.</div>{% endif %}
 
-      <h2 style="font-size:var(--text-xl)">Who's checking in?</h2>
+      <h2 style="font-size:var(--text-xl)">{{ t("Who’s checking in?") }}</h2>
       <div class="form-grid">
-        {{ field('guest_name', 'Full name', autocomplete='name') }}
+        {{ field('guest_name', t('Full name'), autocomplete='name') }}
         <div class="form-grid form-grid--2">
-          {{ field('guest_email', 'Email', 'email', 'email', "To find your booking later.") }}
-          {{ field('guest_phone', 'WhatsApp number', 'tel', 'tel', 'Your confirmation arrives here. Include the country code.') }}
+          {{ field('guest_email', t('Email'), 'email', 'email', t("To find your booking later.")) }}
+          {{ field('guest_phone', t('WhatsApp number'), 'tel', 'tel', t('Your confirmation arrives here. Include the country code.')) }}
         </div>
         <div class="field">
-          <label for="guest_language">Messages in</label>
+          <label for="guest_language">{{ t("Messages in") }}</label>
           <select id="guest_language" name="guest_language">
-            <option value="en" {% if form.get('guest_language') != 'fr' %}selected{% endif %}>English</option>
-            <option value="fr" {% if form.get('guest_language') == 'fr' %}selected{% endif %}>Français</option>
+            {% set chosen = form.get('guest_language') or lang %}
+            <option value="en" {% if chosen != 'fr' %}selected{% endif %}>English</option>
+            <option value="fr" {% if chosen == 'fr' %}selected{% endif %}>Français</option>
           </select>
         </div>
-        {{ field('special_requests', 'Special requests', 'textarea', required=false) }}
+        {{ field('special_requests', t('Special requests'), 'textarea', required=false) }}
         {# Business travellers need a receipt their finance team accepts (Brief 2, D3). Hidden until asked for. #}
         <details class="invoice"{% if errors.invoice_company or form.get('invoice_company') or form.get('invoice_tax_id') %} open{% endif %}>
-          <summary>I need an invoice for my company</summary>
+          <summary>{{ t("I need an invoice for my company") }}</summary>
           <div class="form-grid">
             <div class="form-grid form-grid--2">
-              {{ field('invoice_company', 'Company name', autocomplete='organization', required=false) }}
-              {{ field('invoice_tax_id', 'Tax or VAT number', required=false) }}
+              {{ field('invoice_company', t('Company name'), autocomplete='organization', required=false) }}
+              {{ field('invoice_tax_id', t('Tax or VAT number'), required=false) }}
             </div>
-            {{ field('invoice_address', 'Billing address', 'textarea', required=false) }}
-            {{ field('invoice_reference', 'Purchase order or reference', required=false) }}
-            <p class="muted small" style="margin:0">Your receipt shows these details. The hotel sees them too, to issue an invoice in its name.</p>
+            {{ field('invoice_address', t('Billing address'), 'textarea', required=false) }}
+            {{ field('invoice_reference', t('Purchase order or reference'), required=false) }}
+            <p class="muted small" style="margin:0">{{ t("Your receipt shows these details. The host sees them too, to issue an invoice in its name.") }}</p>
           </div>
         </details>
       </div>
 
       <div class="pay-box">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
-        <div><strong>You pay the full amount now, by card.</strong> Nothing more to pay at the hotel.
-          {% if free_until %}Free cancellation until {{ free_until|nice_date('%a %d %b') }}: cancel by then from your booking page and you're refunded in full.
-          {% elif room.free_cancellation %}Check-in is too close for free cancellation, so this booking can't be refunded.
-          {% else %}This rate is non-refundable.{% endif %}</div>
+        <div><strong>{{ t("Your payment goes through Fichua’s secure checkout.") }}</strong> {{ t("You pay the full amount now, by card, and nothing more on arrival. You get your Fichua reference straight away.") }}
+          {% if free_until %}{{ t("Free cancellation until {date}: cancel by then from your booking page and you’re refunded in full.", date=fdate(free_until)) }}
+          {% elif room.free_cancellation %}{{ t("Check-in is too close for free cancellation, so this booking can’t be refunded.") }}
+          {% else %}{{ t("This rate is non-refundable.") }}{% endif %}</div>
       </div>
 
       <button class="btn btn-primary btn-lg btn-block" type="submit" {% if not offer %}disabled{% endif %} data-submit>
-        {% if offer %}Pay {{ offer.total_price|usd }} and confirm{% else %}Not available{% endif %}
+        {% if offer %}{{ t("Pay {amount} and confirm", amount=price(offer.total_price)) }}{% else %}{{ t("Not available") }}{% endif %}
       </button>
-      {% if offer %}{% set loc = offer.total_price|local(hotel.country) %}{% if loc %}<p class="muted small" style="text-align:center;margin:0">{{ loc }} at today's rate. Your card is charged in US dollars.</p>{% endif %}{% endif %}
-      <p class="legal-note" style="text-align:center">By paying, you accept the <a href="/terms" target="_blank" rel="noopener">terms of service</a> and this room's cancellation policy. The <a href="/privacy" target="_blank" rel="noopener">privacy policy</a> explains how we use your details.</p>
+      {% if offer %}{% set loc = local_price(offer.total_price, hotel.country) %}{% if loc %}<p class="muted small" style="text-align:center;margin:0">{{ t("{amount} at today’s rate. Your card is charged in US dollars.", amount=loc) }}</p>{% endif %}{% endif %}
+      <p class="legal-note" style="text-align:center">{{ t("By paying, you accept the") }} <a href="/terms" target="_blank" rel="noopener">{{ t("terms of service") }}</a> {{ t("and this room’s cancellation policy. The") }} <a href="/privacy" target="_blank" rel="noopener">{{ t("privacy policy") }}</a> {{ t("explains how we use your details.") }}</p>
     </form>
 
     <aside class="card summary-card">
@@ -82,17 +83,20 @@
         <h3 class="display" style="font-size:var(--text-xl)">{{ hotel.name }}</h3>
         <p class="muted small">{{ hotel.full_address or hotel.city }}</p>
         <dl class="summary-rows">
-          <div><dt>Room</dt><dd>{{ room.name }}{% if stay.rooms > 1 %} × {{ stay.rooms }}{% endif %}</dd></div>
-          <div><dt>Check-in</dt><dd>{{ stay.check_in|nice_date('%a %d %b %Y') }}, from {{ hotel.check_in_time or '14:00' }}</dd></div>
-          <div><dt>Check-out</dt><dd>{{ stay.check_out|nice_date('%a %d %b %Y') }}, until {{ hotel.check_out_time or '11:00' }}</dd></div>
-          <div><dt>Guests</dt><dd>{{ stay.guests }}{% if stay.rooms > 1 %} in {{ stay.rooms }} rooms{% endif %}</dd></div>
+          <div><dt>{{ t("Room") }}</dt><dd>{{ room.name }}{% if stay.rooms > 1 %} × {{ stay.rooms }}{% endif %}</dd></div>
+          <div><dt>{{ t("Check-in") }}</dt><dd>{{ fdate(stay.check_in, 'weeklong') }}, {{ t("from {time}", time=hotel.check_in_time or '14:00') }}</dd></div>
+          <div><dt>{{ t("Check-out") }}</dt><dd>{{ fdate(stay.check_out, 'weeklong') }}, {{ t("until {time}", time=hotel.check_out_time or '11:00') }}</dd></div>
+          <div><dt>{{ t("Guests") }}</dt><dd>{{ stay.guests }}{% if stay.rooms > 1 %} · {{ tn(stay.rooms, "1 room", "{n} rooms") }}{% endif %}</dd></div>
           {% if offer %}
-          <div><dt>{{ nights_text }}</dt><dd>{{ offer.total_price|usd }}</dd></div>
-          <div class="total"><dt>Total to pay now</dt><dd>{{ offer.total_price|usd }}</dd></div>
+          {% set nights = tn(stay.nights, "1 night", "{n} nights") %}{% if stay.rooms > 1 %}{% set nights = tn(stay.rooms, "1 room", "{n} rooms") ~ " × " ~ nights %}{% endif %}
+          {% set nightly = offer.nightly or [] %}
+          <div><dt>{% if nightly and nightly|unique|list|length == 1 %}{{ t("{nights} × {price}", nights=nights, price=price(nightly[0])) }}{% elif nightly %}{{ t("{nights} (average {price})", nights=nights, price=price((nightly|sum / nightly|length)|round(2))) }}{% else %}{{ nights }}{% endif %}</dt><dd>{{ price(offer.total_price) }}</dd></div>
+          <div class="total"><dt>{{ t("Total to pay now") }}</dt><dd>{{ price(offer.total_price) }}</dd></div>
           {% endif %}
         </dl>
-        {% if room.breakfast_included %}<div class="row" style="flex-wrap:wrap;gap:6px"><span class="badge badge--info">Breakfast included</span></div>{% endif %}
-        {% if rules %}<p class="rules__title">If you cancel</p>{{ ui.rules_bar(rules) }}{% endif %}
+        {% if room.breakfast_included %}<div class="row" style="flex-wrap:wrap;gap:6px"><span class="badge badge--info">{{ t("Breakfast included") }}</span></div>{% endif %}
+        {% if rules %}<p class="rules__title">{{ t("If you cancel") }}</p>{{ ui.rules_bar(rules) }}{% endif %}
+        {% if offer %}{{ ui.money_panel(offer.total_price, commission, compact=true) }}{% endif %}
       </div>
     </aside>
   </div>

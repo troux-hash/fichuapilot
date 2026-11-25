@@ -11,8 +11,9 @@ from urllib.parse import urlencode
 from fastapi import Request
 from fastapi.templating import Jinja2Templates
 
+from . import i18n
 from .config import settings
-from .services import currency
+from .services import currency, kinds
 
 templates = Jinja2Templates(directory=str(Path(__file__).with_name("templates")))
 
@@ -135,8 +136,37 @@ def trust_partners() -> list[dict]:
     return out
 
 
+def local_price(amount, country) -> str:
+    """'≈ 232,000 RWF' beside a dollar price, with French spacing in French."""
+    found = currency.local_amount(amount, country, rates())
+    if not found:
+        return ""
+    value, code = found
+    return f"≈ {i18n.number(value)} {code}"
+
+
+def money_split(total, commission_pct) -> dict:
+    """Where the traveller's money goes (Brief 3 v3): what the host receives and Fichua's fee, paid by the host."""
+    pct = float(commission_pct if commission_pct is not None else 7)
+    fee = round(float(total or 0) * pct / 100, 2) if total else None
+    return {"pct": pct, "host_pct": round(100 - pct, 2), "total": total, "fee": fee,
+            "host": round(float(total) - fee, 2) if total else None}
+
+
+def here(request: Request) -> str:
+    """This page's path and query without ?lang=, for the EN/FR switch to come back to."""
+    items = [(k, v) for k, v in request.query_params.multi_items() if k != "lang"]
+    return request.url.path + (("?" + urlencode(items)) if items else "")
+
+
+templates.env.globals["here"] = here
 templates.env.globals["asset"] = asset
 templates.env.globals["trust_partners"] = trust_partners
+templates.env.globals.update(
+    t=i18n.t, tn=i18n.tn, pick=i18n.pick, fdate=i18n.fdate, frange=i18n.frange, price=i18n.money,
+    number=i18n.number, pct=i18n.pct, join_words=i18n.join, local_price=local_price, money_split=money_split,
+    kinds=kinds, KINDS=kinds.KINDS, TAGS=kinds.TAGS,
+    kind_name=lambda k: kinds.kind_name(k, i18n.current()), tag_name=lambda tg: kinds.tag_name(tg, i18n.current()))
 templates.env.filters["money"] = money
 templates.env.filters["usd"] = currency.usd
 templates.env.filters["local"] = local
@@ -147,4 +177,6 @@ templates.env.globals["app_name"] = settings.app_name
 
 
 def render(request: Request, name: str, status_code: int = 200, **context):
+    # Templates render right here, so every t() in them (and in their macros) sees this page's language.
+    context["lang"] = i18n.use(context.get("lang") or i18n.lang_of(request))
     return templates.TemplateResponse(request, name, context, status_code=status_code)

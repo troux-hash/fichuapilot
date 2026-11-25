@@ -1,0 +1,404 @@
+"""French for the traveller pages, keyed by the English sentence (see i18n.py).
+
+Written for travellers in Benin and Côte d'Ivoire and the French-speaking diaspora: plain, warm, and accurate
+about money and bookings. The spaces before : ? ! ; are typed as ordinary spaces here and become the thin
+no-break spaces French typography uses when the table loads.
+"""
+from __future__ import annotations
+
+_FR: dict[str, str] = {
+    # Shell: header, footer, trust band
+    "Independent places, reviewed by our team": "Des lieux indépendants, vérifiés par notre équipe",
+    "Independent places to stay, each run by people you can talk to and reviewed by our team. Starting in Rwanda, Benin and Côte d’Ivoire.":
+        "Des lieux où séjourner, tenus par des gens à qui vous pouvez parler et vérifiés par notre équipe. D’abord au Rwanda, au Bénin et en Côte d’Ivoire.",
+    "Talk to your host directly. We take care of the rest.": "Parlez directement à votre hôte. Nous nous occupons du reste.",
+    "Skip to content": "Aller au contenu",
+    "Manage booking": "Gérer une réservation",
+    "For hosts": "Pour les hôtes",
+    "Language": "Langue",
+    "Starting in Rwanda, Benin and Côte d’Ivoire": "D’abord au Rwanda, au Bénin et en Côte d’Ivoire",
+    "Built at MIT, for Africa and the World": "Conçu au MIT, pour l’Afrique et le monde",
+    "Prices in US dollars, the total for your stay.": "Prix en dollars américains, le total de votre séjour.",
+    "Manage a booking": "Gérer une réservation",
+    "List your place": "Inscrire votre établissement",
+    "Terms": "Conditions",
+    "Privacy": "Confidentialité",
+    "Supported by": "Avec le soutien de",
+    "Built at MIT": "Conçu au MIT",
+    "Fichua is built at the Massachusetts Institute of Technology (MIT), with support from the MIT Sandbox Innovation Fund and the MIT Kuo Sharper Center for Prosperity and Entrepreneurship.":
+        "Fichua est conçu au Massachusetts Institute of Technology (MIT), avec le soutien du MIT Sandbox Innovation Fund et du MIT Kuo Sharper Center for Prosperity and Entrepreneurship.",
+    "Every place is reviewed by our team before it can take bookings, and every payment is processed securely by Stripe.":
+        "Chaque lieu est vérifié par notre équipe avant de pouvoir recevoir des réservations, et chaque paiement est traité de façon sécurisée par Stripe.",
+
+    # Countries and small words
+    "Rwanda": "Rwanda", "Benin": "Bénin", "Côte d'Ivoire": "Côte d’Ivoire", "Côte d’Ivoire": "Côte d’Ivoire",
+    ": ": " : ",
+    "optional": "facultatif",
+    "Edit": "Modifier",
+
+    # Home: what kind of stay
+    "What kind of stay are you looking for?": "Quel type de séjour cherchez-vous ?",
+    "Independent places that run responsibly, and travellers who want to support them, meet here directly. Choose from five kinds of stay.":
+        "Des lieux indépendants qui agissent de manière responsable, et des voyageurs qui veulent les soutenir, se rencontrent ici directement. Choisissez parmi cinq types de séjour.",
+    "Kind of place": "Type de lieu",
+    "Pick one or two": "Un ou deux au choix",
+    "Good for: {list}": "Idéal pour : {list}",
+    "Not sure? Message us on WhatsApp": "Vous hésitez ? Écrivez-nous sur WhatsApp",
+    "Show matching places": "Voir les lieux correspondants",
+    "Pick one or two kinds of place to start.": "Choisissez un ou deux types de lieu pour commencer.",
+    "Hello Fichua, I'm not sure which kind of place suits my trip.":
+        "Bonjour Fichua, je ne sais pas quel type de lieu convient à mon voyage.",
+    "Hello Fichua, I'm looking for a place to stay and found nothing yet.":
+        "Bonjour Fichua, je cherche un lieu où séjourner et je n’ai encore rien trouvé.",
+
+    # Trust band
+    "We vet every host": "Nous vérifions chaque hôte",
+    "We check each place before it goes live, and show you what we checked and when.":
+        "Nous contrôlons chaque lieu avant sa mise en ligne, et vous montrons ce que nous avons vérifié, et quand.",
+    "We handle the booking": "Nous gérons la réservation",
+    "One Fichua reference, shared with your host. Nothing to arrange on the side.":
+        "Une seule référence Fichua, partagée avec votre hôte. Rien à arranger à côté.",
+    "We secure your payment": "Nous sécurisons votre paiement",
+    "You pay through Fichua’s secure checkout, and refunds follow the rule you saw before paying.":
+        "Vous payez via le paiement sécurisé de Fichua, et les remboursements suivent la règle affichée avant de payer.",
+    "We show the money": "Nous montrons où va l’argent",
+    "What you pay, what your host receives and Fichua’s fee. Travellers and hosts see the same figures.":
+        "Ce que vous payez, ce que reçoit votre hôte et la commission de Fichua. Voyageurs et hôtes voient les mêmes chiffres.",
+    "We vet the host, handle the booking, secure your payment and show where the money goes.":
+        "Nous vérifions l’hôte, gérons la réservation, sécurisons votre paiement et montrons où va l’argent.",
+    "Fichua is built on trust, and rewards it: verified hosts come first, and no one can pay to rank higher.":
+        "Fichua repose sur la confiance, et la récompense : les hôtes vérifiés passent en premier, et personne ne peut payer pour être mieux classé.",
+
+    # Where and when
+    "Where and when": "Où et quand",
+    "Where": "Où",
+    "Only places that match your choice, with how many there are.": "Seulement les lieux qui correspondent à votre choix, avec leur nombre.",
+    "Everywhere": "Partout",
+    "When": "Quand",
+    "Check-in": "Arrivée",
+    "Check-out": "Départ",
+    "Show me without dates": "Voir sans dates",
+    "Dates are optional. Without them you see prices from.": "Les dates sont facultatives. Sans elles, vous voyez les prix « à partir de ».",
+    "Who is coming": "Qui vient",
+    "Guests": "Voyageurs",
+    "Rooms": "Chambres",
+    "Remove one": "En retirer un",
+    "Add one": "En ajouter un",
+    "See places": "Voir les lieux",
+
+    # Results
+    "1 place": "1 lieu",
+    "{n} places": "{n} lieux",
+    "All kinds of place": "Tous les types de lieu",
+    "all kinds of place": "tous les types de lieu",
+    "Your search": "Votre recherche",
+    "Any dates": "Sans dates",
+    "Ordered by fit and verification. Places cannot pay to rank higher.":
+        "Classés selon la correspondance et la vérification. Aucun lieu ne peut payer pour être mieux classé.",
+    "1 more place is full on these dates.": "1 autre lieu est complet à ces dates.",
+    "{n} more places are full on these dates.": "{n} autres lieux sont complets à ces dates.",
+    "See them without dates": "Les voir sans dates",
+    "No place matches yet.": "Aucun lieu ne correspond pour l’instant.",
+    "Only one place matches so far.": "Un seul lieu correspond pour l’instant.",
+    "Fichua lists only places our team has checked, so there are fewer of them. Try one of these:":
+        "Fichua ne présente que des lieux vérifiés par notre équipe : il y en a donc moins. Essayez l’une de ces recherches :",
+    "Every kind of place, {where}": "Tous les types de lieu, {where}",
+    "{kinds}, everywhere": "{kinds}, partout",
+    "The same search without dates": "La même recherche, sans dates",
+    "Ask a person on WhatsApp": "Demander à une personne sur WhatsApp",
+    "No single room here sleeps {guests} guests: the largest sleeps {n}.":
+        "Aucune chambre ici n’accueille {guests} voyageurs : la plus grande accueille {n} personnes.",
+    "Search for {guests} guests in {rooms} rooms": "Chercher pour {guests} voyageurs en {rooms} chambres",
+    "{nights} × {price}": "{nights} × {price}",
+    "{nights} (average {price})": "{nights} ({price} en moyenne)",
+
+    # Place cards and pages
+    "Verified": "Vérifié",
+    "Reviewed": "Contrôlé",
+    "Verified on {date} · 5 of 5 checks": "Vérifié le {date} · 5 contrôles sur 5",
+    "Partly verified · {n} of 5 checks": "Vérification en cours · {n} contrôles sur 5",
+    "Reviewed by Fichua on {date}": "Contrôlé par Fichua le {date}",
+    "Reviewed by Fichua before it went live": "Contrôlé par Fichua avant sa mise en ligne",
+    "{name}, photo {n}": "{name}, photo {n}",
+    "With {name}": "Avec {name}",
+    "Why it matches:": "Pourquoi il correspond :",
+    "Why it matches your search:": "Pourquoi il correspond à votre recherche :",
+    "Responsible practice": "Pratiques responsables",
+    "Card · paid in full through Fichua’s secure checkout": "Carte · paiement intégral via le paiement sécurisé de Fichua",
+    "Your host receives {pct} of what you pay": "Votre hôte reçoit {pct} de ce que vous payez",
+    "See the place": "Voir le lieu",
+    "Ask {name}": "Écrire à {name}",
+    "Ask the host": "Écrire à l’hôte",
+    "{total} for {nights}": "{total} pour {nights}",
+    "From {price} a night": "À partir de {price} la nuit",
+    "{amount} a night": "{amount} la nuit",
+    "{price} a night": "{price} la nuit",
+    "avg {price} a night": "{price} la nuit en moyenne",
+    "1 night": "1 nuit", "{n} nights": "{n} nuits",
+    "1 guest": "1 voyageur", "{n} guests": "{n} voyageurs",
+    "1 room": "1 chambre", "{n} rooms": "{n} chambres",
+    "{n}-star": "{n} étoiles",
+    "on Fichua": "sur Fichua",
+    "All places": "Tous les lieux",
+    "What Fichua checked": "Ce que Fichua a vérifié",
+    "See the five checks": "Voir les cinq contrôles",
+    "Not yet": "Pas encore",
+    "This place was reviewed before the five checks were introduced: address, contact number, photos and prices were checked by our team.":
+        "Ce lieu a été contrôlé avant la mise en place des cinq contrôles : adresse, numéro de contact, photos et prix ont été vérifiés par notre équipe.",
+    "About this place": "À propos de ce lieu",
+    "A place to stay in {city}.": "Un lieu où séjourner à {city}.",
+    "Your host": "Votre hôte",
+    "Speaks {langs}": "Parle {langs}",
+    "Price and terms": "Prix et conditions",
+    "Not available for these dates": "Indisponible à ces dates",
+    "Payment:": "Paiement :",
+    "by card, in full, through Fichua’s secure checkout. Nothing more to pay on arrival.":
+        "par carte, en totalité, via le paiement sécurisé de Fichua. Rien de plus à payer à l’arrivée.",
+    "If you cancel": "Si vous annulez",
+    "Until {date}": "Jusqu’au {date}",
+    "From {date}": "À partir du {date}",
+    "Once booked": "Dès la réservation",
+    "Free cancellation, full refund of {amount}": "Annulation gratuite, remboursement intégral de {amount}",
+    "No refund": "Pas de remboursement",
+    "Where your money goes": "Où va votre argent",
+    "You pay": "Vous payez",
+    "Your host receives": "Votre hôte reçoit",
+    "Fichua’s fee": "Commission de Fichua",
+    "{pct} of what you pay": "{pct} de ce que vous payez",
+    "Fichua’s fee is paid by the host. It is not added to your price.":
+        "La commission de Fichua est payée par l’hôte. Elle ne s’ajoute pas à votre prix.",
+    "How this place runs": "Comment ce lieu fonctionne",
+    "Not yet verified": "Pas encore vérifié",
+    "Good to know": "Bon à savoir",
+    "From {time}": "À partir de {time}",
+    "Until {time}": "Jusqu’à {time}",
+    "Cancellation": "Annulation",
+    "Each room shows its own date.": "Chaque chambre indique sa propre date.",
+    "Free cancellation until 24 hours before check-in.": "Annulation gratuite jusqu’à 24 heures avant l’arrivée.",
+    "Free cancellation until 5 days before check-in.": "Annulation gratuite jusqu’à 5 jours avant l’arrivée.",
+    "No refund once booked.": "Aucun remboursement après la réservation.",
+    "Children": "Enfants",
+    "Welcome": "Bienvenus",
+    "Not accepted": "Non acceptés",
+    "Pets": "Animaux",
+    "Allowed": "Acceptés",
+    "Not allowed": "Non autorisés",
+    "Smoking": "Tabac",
+    "Allowed in some areas": "Autorisé dans certains espaces",
+    "Choose your room": "Choisissez votre chambre",
+    "Update": "Mettre à jour",
+    "Free cancellation until {date}": "Annulation gratuite jusqu’au {date}",
+    "Non-refundable": "Non remboursable",
+    "Breakfast included": "Petit-déjeuner inclus",
+    "Book this room": "Réserver cette chambre",
+    "Book {n} rooms": "Réserver {n} chambres",
+    "Sleeps 1": "1 personne", "Sleeps {n}": "{n} personnes",
+    "Sleeps {n} per room: not enough for {guests} guests": "{n} personnes par chambre : pas assez pour {guests} voyageurs",
+    "Sleeps {n}: not enough for {guests} guests": "{n} personnes : pas assez pour {guests} voyageurs",
+    "Show {n} rooms": "Voir {n} chambres",
+    "Fewer than {n} rooms left for these dates": "Moins de {n} chambres libres à ces dates",
+    "Sold out for these dates": "Complet à ces dates",
+    "No rooms available for {when}. Try other dates above.": "Aucune chambre libre pour {when}. Essayez d’autres dates ci-dessus.",
+    "Where you’ll stay": "Où vous séjournerez",
+    "Map showing where {name} is": "Carte indiquant où se trouve {name}",
+    "Open in Google Maps": "Ouvrir dans Google Maps",
+    "Similar places": "Lieux similaires",
+    "Check dates and book": "Voir les dates et réserver",
+    "People": "Les personnes", "Place": "Le lieu", "Money": "L’argent",
+
+    # Owner roles, amenities and beds (from the partner forms)
+    "Owner": "Propriétaire", "Co-owner": "Copropriétaire", "General manager": "Directeur général",
+    "Manager": "Gérant", "Host": "Hôte",
+    "Free WiFi": "Wi-Fi gratuit", "Pool": "Piscine", "Restaurant": "Restaurant", "Bar": "Bar",
+    "Breakfast": "Petit-déjeuner", "Free parking": "Parking gratuit", "Airport shuttle": "Navette aéroport",
+    "Gym": "Salle de sport", "Spa": "Spa", "Air conditioning": "Climatisation",
+    "Generator / backup power": "Groupe électrogène de secours", "24h front desk": "Réception 24 h/24",
+    "Garden": "Jardin", "Rooftop terrace": "Toit-terrasse", "Beachfront": "Bord de plage",
+    "Family rooms": "Chambres familiales", "Laundry": "Blanchisserie", "Conference room": "Salle de réunion",
+    "Wi-Fi": "Wi-Fi", "Hot shower": "Douche chaude", "TV": "Télévision", "Desk": "Bureau", "Fan": "Ventilateur",
+    "Mosquito net": "Moustiquaire", "Balcony": "Balcon", "Minibar": "Minibar", "Safe": "Coffre-fort",
+    "Kettle": "Bouilloire", "Bathtub": "Baignoire",
+    "1 double bed": "1 lit double", "1 king bed": "1 très grand lit", "1 queen bed": "1 grand lit",
+    "1 king + 2 single beds": "1 très grand lit et 2 lits simples",
+
+    # Ask your host
+    "Ask {name} before you book": "Écrire à {name} avant de réserver",
+    "WhatsApp opens with this message and a reference, so {name} knows you found them on Fichua.":
+        "WhatsApp s’ouvre avec ce message et une référence : {name} saura que vous l’avez trouvé sur Fichua.",
+    "Your question": "Votre question",
+    "Can you arrange an airport pickup?": "Pouvez-vous organiser un transfert depuis l’aéroport ?",
+    "When you want to book, it happens here: Fichua handles the booking, your payment and your confirmation. Hosts never take payment outside Fichua; if anyone asks you to, tell us.":
+        "Quand vous voulez réserver, c’est ici : Fichua gère la réservation, votre paiement et votre confirmation. Les hôtes ne demandent jamais de paiement en dehors de Fichua ; si quelqu’un le fait, prévenez-nous.",
+    "Open WhatsApp": "Ouvrir WhatsApp",
+    "Nothing is booked yet.": "Rien n’est encore réservé.",
+
+    # Checkout
+    "Confirm and pay": "Confirmer et payer",
+    "Back to {name}": "Retour à {name}",
+    "One step. No account needed.": "Une seule étape. Aucun compte nécessaire.",
+    "This room is no longer available for these dates.": "Cette chambre n’est plus disponible à ces dates.",
+    "Choose another room": "Choisissez une autre chambre",
+    "Who’s checking in?": "Qui arrive ?",
+    "Full name": "Nom complet",
+    "Email": "E-mail",
+    "To find your booking later.": "Pour retrouver votre réservation plus tard.",
+    "WhatsApp number": "Numéro WhatsApp",
+    "Your confirmation arrives here. Include the country code.": "Votre confirmation arrive ici. Indiquez l’indicatif du pays.",
+    "Messages in": "Messages en",
+    "Special requests": "Demandes particulières",
+    "I need an invoice for my company": "J’ai besoin d’une facture pour mon entreprise",
+    "Company name": "Nom de l’entreprise",
+    "Tax or VAT number": "Numéro fiscal ou de TVA",
+    "Billing address": "Adresse de facturation",
+    "Purchase order or reference": "Bon de commande ou référence",
+    "Your receipt shows these details. The host sees them too, to issue an invoice in its name.":
+        "Votre reçu indique ces informations. L’hôte les voit aussi, pour émettre une facture à son nom.",
+    "Your payment goes through Fichua’s secure checkout.": "Votre paiement passe par le paiement sécurisé de Fichua.",
+    "You pay the full amount now, by card, and nothing more on arrival. You get your Fichua reference straight away.":
+        "Vous payez la totalité maintenant, par carte, et rien de plus à l’arrivée. Vous recevez votre référence Fichua tout de suite.",
+    "Free cancellation until {date}: cancel by then from your booking page and you’re refunded in full.":
+        "Annulation gratuite jusqu’au {date} : annulez d’ici là depuis votre page de réservation et vous êtes remboursé en totalité.",
+    "Check-in is too close for free cancellation, so this booking can’t be refunded.":
+        "L’arrivée est trop proche pour une annulation gratuite : cette réservation ne peut pas être remboursée.",
+    "This rate is non-refundable.": "Ce tarif n’est pas remboursable.",
+    "Pay {amount} and confirm": "Payer {amount} et confirmer",
+    "Not available": "Indisponible",
+    "{amount} at today’s rate. Your card is charged in US dollars.": "{amount} au taux du jour. Votre carte est débitée en dollars américains.",
+    "By paying, you accept the": "En payant, vous acceptez les",
+    "terms of service": "conditions d’utilisation",
+    "and this room’s cancellation policy. The": "et les conditions d’annulation de cette chambre. La",
+    "privacy policy": "politique de confidentialité",
+    "explains how we use your details.": "explique comment nous utilisons vos informations.",
+    "Room": "Chambre",
+    "Total to pay now": "Total à payer maintenant",
+    "Please enter the lead guest's full name.": "Indiquez le nom complet du voyageur principal.",
+    "Please enter a valid email so we can find your booking.": "Indiquez un e-mail valide pour que nous retrouvions votre réservation.",
+    "Please enter your WhatsApp number with the country code, e.g. +250 788 000 000.":
+        "Indiquez votre numéro WhatsApp avec l’indicatif du pays, par exemple +229 01 97 00 00 00.",
+    "That phone number looks too short.": "Ce numéro semble trop court.",
+    "Too many bookings from this connection. Please wait a few minutes and try again.":
+        "Trop de réservations depuis cette connexion. Patientez quelques minutes, puis réessayez.",
+
+    # Test payment
+    "Test payment": "Paiement de test",
+    "Test checkout · no real money": "Paiement de test · aucun argent réel",
+    "Test card": "Carte de test",
+    "Fichua uses this test checkout until Stripe is connected. Paying here confirms the booking, records the commission, pays the host (test) and sends the WhatsApp messages, exactly like a real payment.":
+        "Fichua utilise ce paiement de test jusqu’à la connexion de Stripe. Payer ici confirme la réservation, enregistre la commission, paie l’hôte (test) et envoie les messages WhatsApp, exactement comme un vrai paiement.",
+    "Pay {amount} (test)": "Payer {amount} (test)",
+    "This checkout expired and the room was released. Please book again.":
+        "Ce paiement a expiré et la chambre a été libérée. Merci de réserver à nouveau.",
+
+    # Booking page
+    "Booking {ref}": "Réservation {ref}",
+    "Waiting for your payment": "En attente de votre paiement",
+    "Your room is held for a few minutes. Complete the payment to confirm it.":
+        "Votre chambre est retenue quelques minutes. Terminez le paiement pour la confirmer.",
+    "Pay {amount}": "Payer {amount}",
+    "If you have just paid, this page updates in a moment.": "Si vous venez de payer, cette page se met à jour dans un instant.",
+    "Refresh": "Actualiser",
+    "This checkout expired": "Ce paiement a expiré",
+    "The room was released because the payment wasn’t completed. Nothing was charged.":
+        "La chambre a été libérée car le paiement n’a pas été terminé. Rien n’a été débité.",
+    "Search again": "Chercher à nouveau",
+    "You’re booked through Fichua.": "Votre séjour est réservé via Fichua.",
+    "{name} is expecting you on {date}.": "{name} vous attend le {date}.",
+    "Paid and confirmed.": "Payé et confirmé.",
+    "We’ve sent the details to your WhatsApp.": "Nous vous avons envoyé les détails sur WhatsApp.",
+    "Keep this page: it’s your booking.": "Gardez cette page : c’est votre réservation.",
+    "Your booking": "Votre réservation",
+    "Your Fichua reference": "Votre référence Fichua",
+    "Paid · confirmed": "Payé · confirmé",
+    "Awaiting payment": "En attente de paiement",
+    "Cancelled": "Annulée",
+    "refunded": "remboursée",
+    "Your host sees the same reference. There is nothing to arrange on the side.":
+        "Votre hôte voit la même référence. Il n’y a rien à arranger à côté.",
+    "from {time}": "à partir de {time}",
+    "until {time}": "jusqu’à {time}",
+    "Paid": "Payé",
+    "Total": "Total",
+    "card payment": "paiement par carte",
+    "Lead guest:": "Voyageur principal :",
+    "Requests:": "Demandes :",
+    "Invoice for:": "Facture pour :",
+    "tax number {n}": "numéro fiscal {n}",
+    "ref {r}": "réf. {r}",
+    "Before you go": "Avant de partir",
+    "Talk to {name} on WhatsApp": "Parler à {name} sur WhatsApp",
+    "Directions": "Itinéraire",
+    "Opens Google Maps": "Ouvre Google Maps",
+    "Call reception": "Appeler la réception",
+    "Add to calendar": "Ajouter au calendrier",
+    "iPhone, Outlook and more": "iPhone, Outlook et autres",
+    "Show at the door": "À montrer à l’arrivée",
+    "Your booking on one screen": "Votre réservation sur un seul écran",
+    "Receipt": "Reçu",
+    "For {company}": "Pour {company}",
+    "Print or save as PDF": "Imprimer ou enregistrer en PDF",
+    "Use Google Calendar?": "Vous utilisez Google Agenda ?",
+    "Add your stay there": "Ajoutez-y votre séjour",
+    "Free cancellation until {date}. After that, the booking can’t be refunded.":
+        "Annulation gratuite jusqu’au {date}. Ensuite, la réservation ne peut plus être remboursée.",
+    "Free cancellation ended on {date}. To change your stay, contact the host.":
+        "L’annulation gratuite s’est terminée le {date}. Pour modifier votre séjour, contactez l’hôte.",
+    "This rate is non-refundable. To change your stay, contact the host.":
+        "Ce tarif n’est pas remboursable. Pour modifier votre séjour, contactez l’hôte.",
+    "Start a new search": "Nouvelle recherche",
+    "Cancel this booking? You’ll be refunded in full.": "Annuler cette réservation ? Vous serez remboursé en totalité.",
+    "Cancel and refund": "Annuler et rembourser",
+
+    # Door card and receipt
+    "Fichua booking": "Réservation Fichua",
+    "Paid in full · confirmed": "Payé en totalité · confirmé",
+    "not valid for a stay": "non valable pour un séjour",
+    "Guest": "Voyageur",
+    "{amount}. Nothing more to pay.": "{amount}. Rien de plus à payer.",
+    "Reception:": "Réception :",
+    "Take a screenshot to keep this card without a connection.": "Faites une capture d’écran pour garder cette carte sans connexion.",
+    "Back to your booking": "Retour à votre réservation",
+    "Receipt {ref}": "Reçu {ref}",
+    "Payment receipt": "Reçu de paiement",
+    "Paid on": "Payé le",
+    "Paid by": "Payé par",
+    "For": "Pour",
+    "Tax number {n}": "Numéro fiscal {n}",
+    "Reference {r}": "Référence {r}",
+    "Stay at": "Séjour à",
+    "Description": "Description",
+    "Amount": "Montant",
+    "{start} to {end}": "du {start} au {end}",
+    "Total paid by card": "Total payé par carte",
+    "Refunded": "Remboursé",
+    "Prices are in US dollars and include every charge for the stay. This receipt confirms your payment through {company} for the stay above. For a tax invoice in the host’s name, ask {hotel} and quote {ref}.":
+        "Les prix sont en dollars américains et comprennent tous les frais du séjour. Ce reçu confirme votre paiement via {company} pour le séjour ci-dessus. Pour une facture au nom de l’hôte, demandez-la à {hotel} en indiquant {ref}.",
+
+    # Manage, errors
+    "Manage your booking": "Gérer votre réservation",
+    "Enter your Fichua reference and the email you booked with.": "Indiquez votre référence Fichua et l’e-mail utilisé pour réserver.",
+    "Find my booking": "Retrouver ma réservation",
+    "We couldn't find a booking with that reference and email.": "Nous n’avons trouvé aucune réservation avec cette référence et cet e-mail.",
+    "Not found": "Introuvable",
+    "We couldn’t find that page": "Nous n’avons pas trouvé cette page",
+    "The link may be out of date, or the place is no longer listed.": "Le lien est peut-être ancien, ou le lieu n’est plus en ligne.",
+    "Something went wrong": "Un problème est survenu",
+    "This link only works from a button": "Ce lien ne fonctionne qu’à partir d’un bouton",
+    "It was opened directly, perhaps from a bookmark or a refresh. Go back to the page you were on and try again.":
+        "Il a été ouvert directement, peut-être depuis un favori ou en actualisant. Revenez à la page précédente et réessayez.",
+    "Something went wrong on our side": "Un problème est survenu de notre côté",
+    "Nothing was charged twice and your booking, if you made one, is safe. Please try again in a minute.":
+        "Rien n’a été débité deux fois et votre réservation, si vous en avez fait une, est en sécurité. Réessayez dans une minute.",
+    "That didn’t work": "Cela n’a pas fonctionné",
+    "Something in the request didn’t look right. Go back and try again.": "Quelque chose dans la demande n’allait pas. Revenez en arrière et réessayez.",
+    "Go to the home page": "Aller à l’accueil",
+}
+
+
+def _typo(text: str) -> str:
+    """French typography: a thin no-break space before : ; ? ! and inside « »."""
+    for mark in (":", ";", "?", "!", "»"):
+        text = text.replace(" " + mark, " " + mark)
+    return text.replace("« ", "« ")
+
+
+FR: dict[str, str] = {k: _typo(v) for k, v in _FR.items()}

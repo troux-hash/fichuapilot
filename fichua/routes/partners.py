@@ -12,7 +12,7 @@ from .. import auth
 from ..config import settings
 from ..db import db
 from ..services import app_settings, bookings, catalog, currency, dates, notify, partners, ratelimit
-from ..web import render
+from ..web import base_url, render
 
 router = APIRouter(prefix="/partners")
 
@@ -45,6 +45,7 @@ def _page(request: Request, conn, user, hotel, template: str, active: str, statu
 def _form_dict(form) -> dict:
     data = {k: form.get(k) for k in form.keys()}
     data["amenities"] = form.getlist("amenities")
+    data["good_for"] = form.getlist("good_for")
     return data
 
 
@@ -62,7 +63,7 @@ def home(request: Request):
                 if not steps.get("identity" if key == "hotel" else key):
                     return RedirectResponse(f"/partners/{key}", status_code=303)
             return RedirectResponse("/partners/review", status_code=303)
-    return RedirectResponse("/partners/calendar", status_code=303)
+    return RedirectResponse("/partners/home", status_code=303)
 
 
 def _start_session(user_id: str, to: str):
@@ -460,6 +461,18 @@ def calendar_update(request: Request, room: str = Form(...), date_from: str = Fo
         except (ValueError, partners.PartnerError) as exc:
             query["error"] = str(exc) if isinstance(exc, partners.PartnerError) else "Pick valid dates."
     return RedirectResponse("/partners/calendar?" + urlencode(query), status_code=303)
+
+
+@router.get("/home")
+def partner_home(request: Request):
+    """The owner's home once live: this month in numbers, next arrivals, and the share kit."""
+    with db.connect() as conn:
+        user, hotel = _current(conn, request)
+        if not hotel:
+            return _login_redirect()
+        link = base_url(request) + hotel["path"]
+        return _page(request, conn, user, hotel, "partners/home.html", "home", stats=partners.home_stats(conn, hotel),
+                     link=link, share=partners.share_text(hotel, link))
 
 
 @router.get("/bookings")

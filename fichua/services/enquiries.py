@@ -11,7 +11,7 @@ import uuid
 from urllib.parse import quote, urlencode
 
 from ..db import Connection
-from . import currency
+from . import app_settings, currency
 from .dates import Stay
 
 ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"  # no 0/O or 1/I to misread
@@ -26,20 +26,43 @@ def hotel_number(hotel: dict) -> str:
     return currency.international_phone(hotel.get("phone"), hotel.get("country"))
 
 
-def message(hotel: dict, stay: Stay, reference: str | None) -> str:
-    day = lambda d: f"{d.day} {d.strftime('%b')}"  # noqa: E731
-    who = f"{stay.guests} guest{'' if stay.guests == 1 else 's'}"
-    if stay.rooms > 1:
-        who += f" in {stay.rooms} rooms"
-    text = (f"Hello, I found {hotel['name']} on Fichua. I would like to stay "
-            f"{day(stay.check_in)} to {day(stay.check_out)}, {who}.")
-    return f"{text} Ref {reference}" if reference else text
+_FR_MONTHS = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."]
 
 
-def whatsapp_link(hotel: dict, stay: Stay, reference: str | None) -> str:
+def message(hotel: dict, stay: Stay, reference: str | None, question: str = "", lang: str = "en") -> str:
+    """The message WhatsApp opens with, in the traveller's language, with their own question if they wrote one."""
+    question = " ".join((question or "").split())[:500]
+    if lang == "fr":
+        day = lambda d: f"{d.day} {_FR_MONTHS[d.month - 1]}"  # noqa: E731
+        who = f"{stay.guests} personne{'' if stay.guests == 1 else 's'}"
+        if stay.rooms > 1:
+            who += f" en {stay.rooms} chambres"
+        text = (f"Bonjour, j’ai trouvé {hotel['name']} sur Fichua. Je souhaite séjourner "
+                f"du {day(stay.check_in)} au {day(stay.check_out)}, {who}.")
+        ref = f"Réf. {reference}" if reference else ""
+    else:
+        day = lambda d: f"{d.day} {d.strftime('%b')}"  # noqa: E731
+        who = f"{stay.guests} guest{'' if stay.guests == 1 else 's'}"
+        if stay.rooms > 1:
+            who += f" in {stay.rooms} rooms"
+        text = (f"Hello, I found {hotel['name']} on Fichua. I would like to stay "
+                f"{day(stay.check_in)} to {day(stay.check_out)}, {who}.")
+        ref = f"Ref {reference}" if reference else ""
+    return " ".join(p for p in (text, question, ref) if p)
+
+
+def whatsapp_link(hotel: dict, stay: Stay, reference: str | None, question: str = "", lang: str = "en") -> str:
     # %20 rather than +: WhatsApp documents percent-encoding for the message text.
     return (f"https://wa.me/{hotel_number(hotel)}?"
-            + urlencode({"text": message(hotel, stay, reference)}, quote_via=quote))
+            + urlencode({"text": message(hotel, stay, reference, question, lang)}, quote_via=quote))
+
+
+def fichua_link(conn: Connection, text: str) -> str | None:
+    """'Message us on WhatsApp': Fichua's own number from Settings, or None while it isn't set."""
+    number = currency.international_phone(app_settings.get(conn, "admin_whatsapp"), None)
+    if not number:
+        return None
+    return f"https://wa.me/{number}?" + urlencode({"text": text}, quote_via=quote)
 
 
 def create(conn: Connection, hotel: dict, stay: Stay) -> str:

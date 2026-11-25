@@ -1,21 +1,21 @@
 {% extends "base.html" %}
 {# Friendly page for errors other than 404 (which uses not_found.html). `code` is the HTTP status. #}
-{% block title %}Something went wrong · {{ app_name }}{% endblock %}
+{% block title %}{{ t("Something went wrong") }} · {{ app_name }}{% endblock %}
 {% block content %}
 <div class="container narrow empty" style="padding-top:var(--space-9)">
   {% if code == 405 %}
-  <h1 class="page-title">This link only works from a button</h1>
-  <p class="muted">It was opened directly, perhaps from a bookmark or a refresh. Go back to the page you were on and try again.</p>
+  <h1 class="page-title">{{ t("This link only works from a button") }}</h1>
+  <p class="muted">{{ t("It was opened directly, perhaps from a bookmark or a refresh. Go back to the page you were on and try again.") }}</p>
   {% elif code >= 500 %}
-  <h1 class="page-title">Something went wrong on our side</h1>
-  <p class="muted">Nothing was charged twice and your booking, if you made one, is safe. Please try again in a minute.</p>
+  <h1 class="page-title">{{ t("Something went wrong on our side") }}</h1>
+  <p class="muted">{{ t("Nothing was charged twice and your booking, if you made one, is safe. Please try again in a minute.") }}</p>
   {% else %}
-  <h1 class="page-title">That didn't work</h1>
-  <p class="muted">Something in the request didn't look right. Go back and try again.</p>
+  <h1 class="page-title">{{ t("That didn’t work") }}</h1>
+  <p class="muted">{{ t("Something in the request didn’t look right. Go back and try again.") }}</p>
   {% endif %}
   <div class="row" style="justify-content:center;flex-wrap:wrap">
-    <a class="btn btn-primary" href="/">Go to the home page</a>
-    <a class="btn btn-secondary" href="/manage">Find my booking</a>
+    <a class="btn btn-primary" href="/">{{ t("Go to the home page") }}</a>
+    <a class="btn btn-secondary" href="/manage">{{ t("Find my booking") }}</a>
   </div>
 </div>
 {% endblock %}

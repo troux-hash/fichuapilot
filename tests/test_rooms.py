@@ -40,7 +40,7 @@ def test_search_book_and_cancel_several_rooms():
     assert three["total_price"] == pytest.approx(one["total_price"] * 3)  # the price is for every room
 
     hotel_page = guest.get(f"/hotels/{offer['hotel']['id']}", params={**STAY, "guests": 5, "rooms": 3}).text
-    assert "Reserve 3 rooms" in hotel_page and "3 rooms" in hotel_page
+    assert "Book 3 rooms" in hotel_page and "3 rooms" in hotel_page
     checkout = guest.get("/book", params={"room": room_id, **STAY, "guests": 5, "rooms": 3}).text
     assert "3 rooms × 2 nights" in checkout and f"× 3</dd>" in checkout and 'name="rooms" value="3"' in checkout
 

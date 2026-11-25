@@ -219,3 +219,14 @@ CREATE TABLE IF NOT EXISTS enquiries (
     created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS idx_enquiries_hotel ON enquiries (hotel_id, created_at);
+
+-- The five checks Fichua makes before a place appears in search (Brief 3 v3), each with the date it was done.
+-- Travellers see every check and its date on the place's page.
+CREATE TABLE IF NOT EXISTS hotel_checks (
+    hotel_id        TEXT NOT NULL REFERENCES hotels(id),
+    check_id        TEXT NOT NULL,                        -- identity | licence | location | photos | whatsapp
+    done_on         DATE NOT NULL,
+    note            TEXT,                                 -- what was seen, e.g. "ID seen by Amani"
+    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (hotel_id, check_id)
+);

@@ -3,7 +3,7 @@
    Logos switch on by themselves once official files are in public/static/img/trust/ (see docs/BRAND_ASSETS.md). #}
 
 {% macro logos(size='md') %}
-<ul class="trust__logos" aria-label="Supported by">
+<ul class="trust__logos" aria-label="{{ t('Supported by') }}">
   {% for p in trust_partners() %}
   <li>
     <a class="trust__plate trust__plate--{{ size }} trust__plate--{{ p.plate }} trust__plate--{{ p.key }}" href="{{ p.href }}" target="_blank" rel="noopener" title="{{ p.full }}">
@@ -16,18 +16,17 @@
 
 {% macro band(variant='guest') %}
 {% if variant == 'compact' %}
-<section class="trust trust--compact" aria-label="Built at MIT">
-  <span class="trust__eyebrow"><i aria-hidden="true"></i>Built at MIT</span>
+<section class="trust trust--compact" aria-label="{{ t('Built at MIT') }}">
+  <span class="trust__eyebrow"><i aria-hidden="true"></i>{{ t('Built at MIT') }}</span>
   {{ logos('sm') }}
 </section>
 {% else %}
 <section class="trust trust--{{ variant }}" aria-labelledby="trust-title-{{ variant }}">
   <div class="trust__copy">
-    <span id="trust-title-{{ variant }}" class="trust__eyebrow"><i aria-hidden="true"></i>Built at MIT</span>
-    <p class="trust__text">Fichua is built at the Massachusetts Institute of Technology (MIT), with support from the
-      MIT Sandbox Innovation Fund and the MIT Kuo Sharper Center for Prosperity and Entrepreneurship.</p>
+    <span id="trust-title-{{ variant }}" class="trust__eyebrow"><i aria-hidden="true"></i>{{ t('Built at MIT') }}</span>
+    <p class="trust__text">{{ t("Fichua is built at the Massachusetts Institute of Technology (MIT), with support from the MIT Sandbox Innovation Fund and the MIT Kuo Sharper Center for Prosperity and Entrepreneurship.") }}</p>
     {% if variant == 'guest' %}
-    <p class="trust__text trust__text--promise">Every hotel is reviewed by our team before it can take bookings, and every payment is processed securely by Stripe.</p>
+    <p class="trust__text trust__text--promise">{{ t("Every place is reviewed by our team before it can take bookings, and every payment is processed securely by Stripe.") }}</p>
     {% else %}
     <p class="trust__text trust__text--promise">Every hotel is verified before it goes live, every booking is paid in full before the guest arrives, and payments are processed securely by Stripe.</p>
     {% endif %}

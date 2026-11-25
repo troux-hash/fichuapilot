@@ -1,9 +1,9 @@
 {% extends "base.html" %}
-{% block title %}Not found · {{ app_name }}{% endblock %}
+{% block title %}{{ t("Not found") }} · {{ app_name }}{% endblock %}
 {% block content %}
 <div class="container narrow empty" style="padding-top:var(--space-9)">
-  <h1 class="page-title">We couldn't find that page</h1>
-  <p class="muted">The link may be out of date, or the hotel is no longer listed.</p>
-  <a class="btn btn-primary" href="/">Start a new search</a>
+  <h1 class="page-title">{{ t("We couldn’t find that page") }}</h1>
+  <p class="muted">{{ t("The link may be out of date, or the place is no longer listed.") }}</p>
+  <a class="btn btn-primary" href="/">{{ t("Start a new search") }}</a>
 </div>
 {% endblock %}

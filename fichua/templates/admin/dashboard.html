@@ -12,7 +12,18 @@
   <div class="stat"><span>Your commission</span><strong>{{ stats.month.commission|usd }}</strong><small>this month</small></div>
   <div class="stat"><span>Paid out to hotels</span><strong>{{ stats.month.payout_sent|usd }}</strong><small>{{ stats.month.payout_pending|usd }} still to send</small></div>
   <div class="stat"><span>Live hotels</span><strong>{{ stats.live_hotels }}</strong><small>{{ stats.rooms }} rooms</small></div>
+  <div class="stat"><span>Questions from travellers</span><strong>{{ stats.questions }}</strong><small>“Ask on WhatsApp” this month</small></div>
+  <div class="stat"><span>Fully verified places</span><strong>{{ stats.verified }}</strong><small>all five checks dated</small></div>
 </div>
+{# Brief 3 v3: travellers search by kind of place, so each kind needs places in each country. #}
+<section class="panel panel-pad" style="display:grid;gap:var(--space-3)" aria-labelledby="depth-title">
+  <div><h2 id="depth-title">Catalogue depth: live places by kind of place</h2>
+    <p class="muted small" style="margin:4px 0 0">Where to look for the next places. Kinds come from the owner and are confirmed on each place's review page.</p></div>
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th scope="col">Kind of place</th>{% for c in stats.depth.countries %}<th scope="col" class="num">{{ c }}</th>{% endfor %}<th scope="col" class="num">Total</th></tr></thead>
+    <tbody>{% for r in stats.depth.rows %}<tr><th scope="row">{{ r.kind.name.en }}</th>{% for c in stats.depth.countries %}<td class="num">{{ r.counts[c] or '–' }}</td>{% endfor %}<td class="num"><strong>{{ r.total }}</strong></td></tr>{% endfor %}</tbody>
+  </table></div>
+</section>
 {% if result %}
   {% if result.ok %}
   <div class="alert alert-success" role="status"><strong>Imported {{ filename }}.</strong> {{ result.hotels }} hotels, {{ result.rooms }} room types and {{ '{:,}'.format(result.rate_nights) }} rate nights saved. <a href="/" target="_blank">See it live ↗</a></div>

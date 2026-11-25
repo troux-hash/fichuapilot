@@ -12,7 +12,9 @@
 {% elif decided == 'commission' %}<div class="alert alert-success" role="status">Commission saved. New bookings use it; bookings already paid keep theirs.</div>
 {% elif decided == 'hide' %}<div class="alert alert-info" role="status">Hidden. Guests can't find or book {{ hotel.name }}. Existing bookings stay as they are.</div>
 {% elif decided == 'show' %}<div class="alert alert-success" role="status">{{ hotel.name }} is back on Fichua. Guests can book it again.</div>
-{% elif decided == 'bad-commission' %}<div class="alert alert-error" role="alert">Commission must be between 0% and 50%. Nothing was changed.</div>{% endif %}
+{% elif decided == 'bad-commission' %}<div class="alert alert-error" role="alert">Commission must be between 0% and 50%. Nothing was changed.</div>
+{% elif decided == 'trust' %}<div class="alert alert-success" role="status">Saved. Travellers see the kind of place, each check with its date and how the place runs on its page.</div>
+{% elif decided == 'trust-errors' %}<div class="alert alert-error" role="alert">Saved, except: {{ request.query_params.get('why', '') }}</div>{% endif %}
 <div class="split">
   <div style="display:grid;gap:var(--space-5)">
     <section class="panel panel-pad" style="display:grid;gap:var(--space-4)">
@@ -23,6 +25,37 @@
         {% endfor %}
       </div>
     </section>
+
+    {# Brief 3 v3: what travellers search by and what they are shown as checked. Only what Fichua saw, with dates. #}
+    <form id="trust" class="panel panel-pad" method="post" action="/admin/approvals/{{ hotel.id }}/trust" style="display:grid;gap:var(--space-4)">
+      <div><h2>Kind of place and the five checks</h2>
+        <p class="muted small" style="margin:4px 0 0">Travellers pick a kind of place first, and see each check with its date on the page. {{ verification.count }} of 5 checks recorded.</p></div>
+      <div class="form-grid-2">
+        <div class="field"><label for="category">Kind of place</label>
+          <select id="category" name="category">{% for k in KINDS %}<option value="{{ k.id }}" {% if hotel.kind == k.id %}selected{% endif %}>{{ k.name.en }}</option>{% endfor %}</select>
+          <span class="hint">{{ 'The owner picked this.' if hotel.category else 'Suggested from the type and name: confirm or change it.' }}</span></div>
+        <div class="field"><label for="category_also">Also fits</label>
+          <select id="category_also" name="category_also"><option value="">No second kind</option>{% for k in KINDS %}<option value="{{ k.id }}" {% if hotel.kind_also == k.id %}selected{% endif %}>{{ k.name.en }}</option>{% endfor %}</select></div>
+      </div>
+      <div class="field"><span class="label" id="good-for-label">Good for (up to three)</span>
+        <div class="choice-grid" role="group" aria-labelledby="good-for-label">{% for tg in TAGS %}<label class="choice"><input type="checkbox" name="good_for" value="{{ tg.id }}" {% if tg.id in hotel.tags %}checked{% endif %}>{{ tg.name.en }}</label>{% endfor %}</div></div>
+      <div class="checks-form">
+        {% for c in verification['items'] %}
+        <div class="checks-form__row">
+          <label for="check_{{ c.id }}"><strong>{{ c.name.en }}</strong></label>
+          <input id="check_{{ c.id }}" name="check_{{ c.id }}" type="date" max="{{ today }}" value="{{ c.done_on or '' }}" aria-label="{{ c.name.en }}: date done">
+          <input name="note_{{ c.id }}" value="{{ c.note }}" maxlength="200" placeholder="What was seen, e.g. ID seen by Amani" aria-label="{{ c.name.en }}: what was seen">
+        </div>
+        {% endfor %}
+      </div>
+      <div class="field"><span class="label">How this place runs <span class="muted" style="font-weight:400">(evidence you saw, with the date; all three earn the Responsible practice badge)</span></span>
+        {% for p in kinds.PRACTICE %}
+        <label class="sr-only" for="{{ p.field }}">{{ p.name.en }}</label>
+        <input id="{{ p.field }}" name="{{ p.field }}" value="{{ hotel[p.field] or '' }}" maxlength="200" placeholder="{{ p.name.en }}: {{ {'people': 'e.g. 6 staff from Rubavu (seen 12 Nov 2026)', 'place': 'e.g. solar hot water (seen 12 Nov 2026)', 'money': 'e.g. buys coffee from 12 neighbouring farms (receipts seen 12 Nov 2026)'}[p.id] }}">
+        {% endfor %}
+      </div>
+      <div class="form-actions"><span class="muted small">Leave a date empty for a check not done yet.</span><button class="btn btn-primary" type="submit">Save</button></div>
+    </form>
     <section class="panel panel-pad" style="display:grid;gap:var(--space-4)">
       <h2>Photos</h2>
       {% if hotel.images and hotel.images[0] != '/static/img/placeholder.svg' %}

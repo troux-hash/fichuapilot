@@ -8,7 +8,7 @@ from fastapi.testclient import TestClient
 
 from fichua.db import db
 from fichua.main import app
-from fichua.services import catalog, policies, ways_in
+from fichua.services import catalog, kinds, policies
 
 guest = TestClient(app)
 CI = date.today() + timedelta(days=30)
@@ -51,7 +51,10 @@ def test_ask_the_hotel_records_an_enquiry_with_a_reference():
         conn.run("UPDATE hotels SET phone = :p WHERE id = :id", {"p": "0788 123 456", "id": hotel_id})
     try:
         page = guest.get(f"/hotels/{hotel_id}", params=STAY).text
-        assert f'action="/hotels/{hotel_id}/ask"' in page and "Ask the hotel on WhatsApp" in page
+        assert f'href="/hotels/{hotel_id}/ask?' in page and "Ask the host" in page
+        # The ask page shows the message first and says booking stays on Fichua (no codes from hosts).
+        ask = guest.get(f"/hotels/{hotel_id}/ask", params=STAY).text
+        assert f'action="/hotels/{hotel_id}/ask"' in ask and "Hosts never take payment outside Fichua" in ask
         r = guest.post(f"/hotels/{hotel_id}/ask", data=STAY, follow_redirects=False)
         assert r.status_code == 303
         link = r.headers["location"]
@@ -67,7 +70,7 @@ def test_ask_the_hotel_records_an_enquiry_with_a_reference():
             conn.run("UPDATE hotels SET phone = :p WHERE id = :id", {"p": before, "id": hotel_id})
     # No reception number: no button, and the route refuses.
     if not before:
-        assert "Ask the hotel on WhatsApp" not in guest.get(f"/hotels/{hotel_id}", params=STAY).text
+        assert f"/hotels/{hotel_id}/ask" not in guest.get(f"/hotels/{hotel_id}", params=STAY).text
         assert guest.post(f"/hotels/{hotel_id}/ask", data=STAY, follow_redirects=False).status_code == 404
 
 
@@ -106,11 +109,13 @@ def test_readable_hotel_addresses():
     assert f'href="{path}?' in results
 
 
-def test_ways_in_lead_to_searches_that_exist():
+def test_home_starts_with_the_five_kinds_of_place():  # Brief 3 v3
     home = guest.get("/").text
-    assert "What brings you?" in home
-    links = re.findall(r'<a class="way" href="/search\?([^"]+)"', home)
-    assert links, "expected trip-purpose ways in on the home page"
-    for query in links:
-        assert guest.get("/search?" + query.replace("&amp;", "&")).status_code == 200
-    assert all(w["params"].get("destination") != "Atlantis" for w in ways_in.available([{"city": "Kigali"}]))
+    assert "What kind of stay are you looking for?" in home
+    for k in kinds.KINDS:
+        assert f'name="kind" value="{k["id"]}"' in home
+    assert "Starting in Rwanda, Benin and Côte d’Ivoire" in home and "Built at MIT, for Africa and the World" in home
+    where = guest.get("/where", params={"kind": ["urban", "water"]}).text
+    assert 'value="all"' in where and "Show me without dates" in where
+    results = guest.get("/search", params={"kind": "urban", "dates": "any"}).text
+    assert "Ordered by fit and verification" in results and "From $" in results

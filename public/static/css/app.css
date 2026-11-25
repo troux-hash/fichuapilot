@@ -238,3 +238,20 @@
   .partner-landing { grid-template-rows: 1fr auto; }
   .partner-landing__trust { padding: var(--space-7) var(--space-8); }
 }
+
+/* Owner's home and kind of place (Brief 3 v3) */
+.kind-picks { display: grid; gap: var(--space-2); }
+.kind-pick { display: flex; align-items: flex-start; gap: var(--space-3); padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); text-align: left; white-space: normal; }
+.kind-pick > span { display: grid; gap: 2px; }
+.kind-pick:has(input:checked) .muted { color: inherit; opacity: 0.85; }
+.arrival { display: grid; gap: 2px; padding-bottom: var(--space-3); border-bottom: 1px solid var(--color-border); }
+.source-list { margin: 0; padding: 0; list-style: none; display: grid; gap: var(--space-2); }
+.source-list li { display: flex; justify-content: space-between; gap: var(--space-3); }
+.kit { display: grid; gap: var(--space-2); }
+.kit__text { margin: 0; padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); background: var(--bubble-bg); color: var(--bubble-fg); white-space: pre-line; font-size: var(--text-sm); }
+.kit__link { padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); background: var(--color-surface-2); font-size: var(--text-sm); overflow-wrap: anywhere; }
+
+/* Admin: the five checks, each with its date and what was seen */
+.checks-form { display: grid; gap: var(--space-2); }
+.checks-form__row { display: grid; gap: var(--space-2); align-items: center; grid-template-columns: 1fr; }
+@media (min-width: 720px) { .checks-form__row { grid-template-columns: 180px 160px 1fr; } }

@@ -33,7 +33,7 @@ def test_prices_show_the_total_and_no_stray_cents():  # R2-B2
     for html in (results, page):
         assert not re.search(r"\$\d[\d,]*\.\d\d(/night| a night)", html), "a nightly price with cents"
         assert "avg $" in html
-    assert "Total for 3 nights" in page and "From</div>" not in page
+    assert "for 3 nights" in page and "From</div>" not in page
 
 
 def test_sticky_bar_on_phones_puts_two_actions_under_the_price():  # R2-B1
@@ -43,7 +43,7 @@ def test_sticky_bar_on_phones_puts_two_actions_under_the_price():  # R2-B1
         conn.run("UPDATE hotels SET phone = '0788 123 456' WHERE id = :id", {"id": offer["hotel"]["id"]})
     try:
         page = guest.get(offer["hotel"]["path"]).text
-        assert 'class="sticky-cta sticky-cta--two"' in page and "sticky-cta__price" in page
+        assert 'class="sticky-cta sticky-cta--two"' in page and "Check dates and book" in page
     finally:
         with db.connect() as conn:
             conn.run("UPDATE hotels SET phone = :p WHERE id = :id", {"p": before, "id": offer["hotel"]["id"]})

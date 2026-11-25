@@ -31,6 +31,27 @@
       </div>
     </section>
 
+    {# Brief 3 v3: travellers search by kind of place first. Fichua confirms the kind when it reviews the page. #}
+    <section class="panel panel-pad" style="display:grid;gap:var(--space-4)" aria-labelledby="kind-label">
+      <h2 id="kind-label">Kind of place</h2>
+      <p class="muted small" style="margin:0">Travellers choose from five kinds of stay before anything else. Pick the one that says why guests come to you; Fichua confirms it when we review your page.</p>
+      <div class="kind-picks" role="radiogroup" aria-labelledby="kind-label">
+        {% for k in KINDS %}
+        <label class="choice kind-pick"><input type="radio" name="category" value="{{ k.id }}" {% if hotel.kind == k.id %}checked{% endif %} required>
+          <span><strong>{{ k.name.en }}</strong><span class="muted small">{{ k.reason.en }}</span></span></label>
+        {% endfor %}
+      </div>
+      <div class="field"><label for="category_also">Also fits <span class="muted" style="font-weight:400">(optional)</span></label>
+        <select id="category_also" name="category_also"><option value="">No second kind</option>{% for k in KINDS %}<option value="{{ k.id }}" {% if hotel.kind_also == k.id %}selected{% endif %}>{{ k.name.en }}</option>{% endfor %}</select></div>
+      <div class="field">
+        <span class="label" id="good-label">Good for <span class="muted" style="font-weight:400">(up to three)</span></span>
+        <input type="hidden" name="good_for_sent" value="1">
+        <div class="choice-grid" role="group" aria-labelledby="good-label">
+          {% for tg in TAGS %}<label class="choice"><input type="checkbox" name="good_for" value="{{ tg.id }}" {% if hotel.good_for and tg.id in hotel.tags %}checked{% endif %} data-max-three>{{ tg.name.en }}</label>{% endfor %}
+        </div>
+      </div>
+    </section>
+
     <section class="panel panel-pad" style="display:grid;gap:var(--space-4)">
       <h2>Where it is</h2>
       <div class="form-grid-3">

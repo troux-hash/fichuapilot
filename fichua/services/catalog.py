@@ -14,7 +14,7 @@ from datetime import date, timedelta
 from urllib.parse import urlencode
 
 from ..db import Connection, utcnow
-from . import policies
+from . import kinds, policies
 from .dates import Stay
 
 PLACEHOLDER_IMAGE = "/static/img/placeholder.svg"
@@ -105,7 +105,7 @@ def hydrate_hotel(row: dict, photos: list[str] | None = None) -> dict:
     row["images"] = (photos or []) + split_list(row.get("image_urls")) or [PLACEHOLDER_IMAGE]
     row["full_address"] = full_address(row)
     row.update(map_links(row))
-    return row
+    return kinds.apply(row)
 
 
 def hydrate_room(row: dict, photos: list[str] | None = None) -> dict:
@@ -120,7 +120,7 @@ def hydrate_room(row: dict, photos: list[str] | None = None) -> dict:
 PUBLIC_HOTEL_FIELDS = ("id", "path", "name", "property_type", "star_rating", "city", "area",
                        "country", "address", "lat", "lng", "description", "amenities", "images", "currency",
                        "check_in_time", "check_out_time", "cancellation_policy", "children_allowed",
-                       "pets_allowed", "smoking_allowed")
+                       "pets_allowed", "smoking_allowed", "kind", "kind_also", "tags")
 PUBLIC_ROOM_FIELDS = ("id", "hotel_id", "name", "room_kind", "max_guests", "bed_type", "size_sqm", "description",
                       "amenities", "images", "breakfast_included", "free_cancellation")
 
@@ -286,6 +286,39 @@ def hotel_rooms(conn: Connection, hotel_id: str, stay: Stay) -> list[dict]:
         rooms.append(room)
     rooms.sort(key=lambda r: (not r["available"], r.get("total_price") or 0))
     return rooms
+
+
+def live_hotels(conn: Connection) -> list[dict]:
+    """Every live place, hydrated (kind, tags, photos), in name order."""
+    rows = conn.all("SELECT * FROM hotels WHERE is_active = TRUE ORDER BY name")
+    photos = media_urls(conn, "hotel", [r["id"] for r in rows])
+    return [hydrate_hotel(r, photos.get(r["id"])) for r in rows]
+
+
+def from_prices(conn: Connection, hotel_ids: list[str], guests: int = 1, rooms: int = 1) -> dict[str, float]:
+    """The lowest standing nightly price per place among room types that sleep the party, for a search
+    without dates ('From $150 a night'). Places with no such room are left out."""
+    if not hotel_ids:
+        return {}
+    marks, params = conn.in_params(hotel_ids, "f")
+    rows = conn.all(f"SELECT hotel_id, base_price, weekend_price, max_guests FROM room_types "
+                    f"WHERE hotel_id IN ({marks})", params)
+    out: dict[str, float] = {}
+    for r in rows:
+        if r["base_price"] is None or (r["max_guests"] or 0) * rooms < guests:
+            continue
+        prices = [float(r["base_price"])] + ([float(r["weekend_price"])] if r["weekend_price"] else [])
+        low = min(prices) * rooms
+        if r["hotel_id"] not in out or low < out[r["hotel_id"]]:
+            out[r["hotel_id"]] = low
+    return out
+
+
+def similar(conn: Connection, hotel: dict, limit: int = 3) -> list[dict]:
+    """Other live places of the same kind, in the same country first."""
+    others = [h for h in live_hotels(conn) if h["id"] != hotel["id"] and h["kind"] == hotel["kind"]]
+    others.sort(key=lambda h: (h.get("country") != hotel.get("country"), h.get("city") != hotel.get("city"), h["name"]))
+    return others[:limit]
 
 
 def destinations(conn: Connection) -> list[dict]:

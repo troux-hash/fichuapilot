@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% import "components/ui.html" as ui %}
+{% import "components/ui.html" as ui with context %}
 {% import "components/icons.html" as i %}
 
 {% block title %}{{ hotel.name }}, {{ hotel.city }} · {{ app_name }}{% endblock %}
@@ -9,7 +9,7 @@
 <meta property="og:site_name" content="{{ app_name }}">
 <meta property="og:type" content="website">
 <meta property="og:url" content="{{ canonical }}">
-<meta property="og:title" content="{{ hotel.name }}, {{ hotel.city }} · on Fichua">
+<meta property="og:title" content="{{ hotel.name }}, {{ hotel.city }} · {{ t('on Fichua') }}">
 <meta property="og:description" content="{{ summary }}">
 {% if share_image %}<meta property="og:image" content="{{ share_image }}">
 <meta name="twitter:card" content="summary_large_image">{% endif %}
@@ -19,155 +19,165 @@
 
 {% block content %}
 {% set available = rooms|selectattr('available')|list %}
-<div class="container">
-  <a class="back-link" href="/search?{{ back_qs }}">← All stays</a>
+{% set v = verification %}
+{% set ask_query = dict(stay.as_params(), kind=picked) %}
+{% set ask_label = t("Ask {name}", name=hotel.host.name) if hotel.host else t("Ask the host") %}
+<div class="container container--narrow place-page">
+  <a class="back-link" href="/search?{{ back_qs }}">← {{ t("All places") }}</a>
   {% if date_note %}<div class="alert alert-info date-note" role="status">{{ date_note }}</div>{% endif %}
-  <header class="hotel-head">
-    <p class="hotel-head__eyebrow">{{ hotel.property_type or 'Hotel' }} in {{ hotel.city }}, {{ hotel.country }}</p>
-    <h1>{{ hotel.name }}</h1>
-    <div class="meta">
-      {{ ui.stars(hotel.star_rating) }}
-      <a class="hotel-head__where" href="#location">{{ hotel.full_address or hotel.city }}</a>
+
+  <div class="place-hero">
+    <div class="photo-strip photo-strip--hero">
+      {% for img in hotel.images[:6] %}<img src="{{ img if loop.first else img|card_img }}" alt="{{ t('{name}, photo {n}', name=hotel.name, n=loop.index) }}" {% if not loop.first %}loading="lazy"{% endif %}>{% endfor %}
     </div>
+    {{ ui.verified_badge(v) }}
+  </div>
+
+  <header class="place-head">
+    <p class="kind-label">{{ kind_name(hotel.kind) }}{% if hotel.kind_also %} · {{ kind_name(hotel.kind_also) }}{% endif %}</p>
+    <h1>{{ hotel.name }}</h1>
+    <p class="muted"><a class="place-head__where" href="#location">{{ ui.place_where(hotel) }}</a>{% if hotel.star_rating %} · {{ ui.stars(hotel.star_rating) }}{% endif %}</p>
+    <p class="place-card__kinds">{% for tg in hotel.tags %}<span class="tag">{{ tag_name(tg) }}</span>{% endfor %}{% if hotel.practice.badge %}<span class="tag tag--match">{{ t("Responsible practice") }}</span>{% endif %}</p>
+    <p class="place-head__reason">{{ pick(kinds.kind(hotel.kind).reason) }}</p>
   </header>
 
-  <div class="gallery gallery--{{ [hotel.images|length, 5]|min }}">
-    {% for img in hotel.images[:5] %}<img src="{{ img if loop.first else img|card_img }}" alt="{{ hotel.name }} photo {{ loop.index }}" {% if not loop.first %}loading="lazy"{% endif %}>{% endfor %}
-  </div>
-
-  <p class="reviewed">
-    {{ i.icon('shield', 18) }}
-    <span><strong>Reviewed by the Fichua team{% if hotel.approved_at %} on {{ hotel.approved_at|nice_date('%d %b %Y') }}{% endif %}.</strong>
-    Address, contact number, photos and prices were checked before it went live. <a href="/#checks">What we check</a></span>
-  </p>
-
-  {% if hotel.host %}{{ ui.host_card(hotel.host, hotel, stay, can_ask) }}{% endif %}
-
-  <div class="hotel-layout">
-    <div class="hotel-main">
-      <section class="hotel-story">
-        <h2>About this place</h2>
-        <p class="lede">{{ hotel.description or 'A place to stay in ' ~ hotel.city ~ '.' }}</p>
-      </section>
-
-      <section>
-        <h2>Good to know</h2>
-        <dl class="facts">
-          <div><dt>Check-in</dt><dd>From {{ hotel.check_in_time or '14:00' }}</dd></div>
-          <div><dt>Check-out</dt><dd>Until {{ hotel.check_out_time or '11:00' }}</dd></div>
-          <div><dt>Cancellation</dt><dd>{{ policy[1] }} Each room shows its own date.</dd></div>
-          <div><dt>Payment</dt><dd>The full amount by card when you book, in US dollars. Nothing more to pay at the hotel.</dd></div>
-          <div><dt>Children</dt><dd>{% if hotel.children_allowed %}Welcome{% elif hotel.children_allowed is none %}Ask the hotel{% else %}Not accepted{% endif %}</dd></div>
-          <div><dt>Pets</dt><dd>{% if hotel.pets_allowed %}Allowed{% else %}Not allowed{% endif %}</dd></div>
-          <div><dt>Smoking</dt><dd>{% if hotel.smoking_allowed %}Allowed in some areas{% else %}Not allowed{% endif %}</dd></div>
-        </dl>
-      </section>
-
-      {% if hotel.amenities %}
-      <section>
-        <h2>What this place offers</h2>
-        <ul class="amenity-grid">{% for a in hotel.amenities %}<li>{{ a }}</li>{% endfor %}</ul>
-      </section>
-      {% endif %}
-
-      {% if hotel.full_address %}
-      <section id="location" class="hotel-location">
-        <h2>Where you'll stay</h2>
-        <p style="margin:0">{{ hotel.full_address }}</p>
-        {% if hotel.map_embed %}<iframe class="map-embed" src="{{ hotel.map_embed }}" title="Map showing where {{ hotel.name }} is" loading="lazy"></iframe>{% endif %}
-        {% if hotel.map_url %}<a class="small" href="{{ hotel.map_url }}" target="_blank" rel="noopener">Open in Google Maps ↗</a>{% endif %}
-      </section>
-      {% endif %}
-
-      <section id="rooms">
-        <h2>Choose your room</h2>
-        <form class="stay-form" method="get" action="{{ hotel.path }}" data-stay-form>
-          <div class="field"><label for="ci">Check-in</label><input class="input" id="ci" type="date" name="check_in" value="{{ stay.check_in }}" data-check-in></div>
-          <div class="field"><label for="co">Check-out</label><input class="input" id="co" type="date" name="check_out" value="{{ stay.check_out }}" data-check-out></div>
-          <div class="field"><label for="g">Guests</label><input class="input" id="g" type="number" name="guests" min="1" max="12" value="{{ stay.guests }}"></div>
-          <div class="field"><label for="rm">Rooms</label><select class="input" id="rm" name="rooms">{% for n in range(1, 9) %}<option value="{{ n }}" {% if stay.rooms == n %}selected{% endif %}>{{ n }}</option>{% endfor %}</select></div>
-          <button class="btn btn-secondary" type="submit">Update</button>
-        </form>
-
-        {% for r in rooms %}
-        <article class="card room{% if not r.available %} is-unavailable{% endif %}">
-          <img class="room__img" src="{{ r.images[0]|card_img }}" alt="{{ r.name }}" loading="lazy">
-          <div class="room__body">
-            <h3>{{ r.name }}</h3>
-            <p class="muted small" style="margin:0">
-              {% if r.bed_type %}{{ r.bed_type }} · {% endif %}{% if r.size_sqm %}{{ r.size_sqm }} m² · {% endif %}Sleeps {{ r.max_guests }}
-            </p>
-            <div class="row" style="flex-wrap:wrap; gap:6px">
-              {% if r.free_until %}<span class="badge badge--success">Free cancellation until {{ r.free_until|nice_date('%d %b') }}</span>{% else %}<span class="badge badge--muted">Non-refundable</span>{% endif %}
-              {% if r.breakfast_included %}<span class="badge badge--info">Breakfast included</span>{% endif %}
-            </div>
-            {% if r.amenities %}<ul class="tags">{% for a in r.amenities[:4] %}<li>{{ a }}</li>{% endfor %}</ul>{% endif %}
-          </div>
-          <div class="room__buy">
-            {% if r.available %}
-              <div class="price">
-                <span class="price__total">{{ r.total_price|usd }}</span>
-                <span class="price__meta">{% if stay.rooms > 1 %}{{ stay.rooms }} rooms · {% endif %}{{ stay.nights }} night{{ 's' if stay.nights != 1 }} · {{ ui.night_price(r.per_night, r.even_nights) }}</span>
-                {% set loc = r.total_price|local(hotel.country) %}{% if loc %}<span class="price__local">{{ loc }}</span>{% endif %}
-              </div>
-              <a class="btn btn-primary" href="/book?{{ qs(stay.as_params(), room=r.id) }}">Reserve{% if stay.rooms > 1 %} {{ stay.rooms }} rooms{% endif %}</a>
-            {% elif not r.fits_party %}
-              <span class="muted small">Sleeps {{ r.max_guests }}{{ ' per room' if stay.rooms > 1 }}: not enough for {{ stay.guests }} guests{% if stay.rooms > 1 %} in {{ stay.rooms }} rooms{% endif %}</span>
-              {% if r.rooms_needed <= 8 %}<a class="btn btn-secondary btn-sm" href="{{ hotel.path }}?{{ qs(stay.as_params(), rooms=r.rooms_needed) }}#rooms">Show {{ r.rooms_needed }} rooms</a>{% endif %}
-            {% elif stay.rooms > 1 %}
-              <span class="muted small">Fewer than {{ stay.rooms }} rooms left for these dates</span>
-            {% else %}
-              <span class="muted small">Sold out for these dates</span>
-            {% endif %}
-          </div>
-        </article>
+  <section class="box verify-box" id="checks" aria-label="{{ t('What Fichua checked') }}">
+    <p class="verify-box__line"><span class="dot" aria-hidden="true">✓</span><span>{{ ui.verified_line(v) }}</span></p>
+    <details class="verify-box__details"{% if v.count %} data-checks{% endif %}>
+      <summary>{{ t("See the five checks") }}</summary>
+      <dl class="checks">
+        {% for c in v["items"] %}
+        <div class="checks__row"><dt>{{ pick(c.name) }}</dt>
+          <dd class="{{ 'is-done' if c.done_on else 'is-pending' }}">{% if c.done_on %}{{ fdate(c.done_on, 'long') }}{% else %}{{ t("Not yet") }}{% endif %}</dd></div>
         {% endfor %}
-        {% if not available %}
-          <div class="alert alert-info">No rooms available for {{ ui.stay_summary(stay) }}. Try different dates above{% if can_ask %}, or ask the hotel on WhatsApp{% endif %}.</div>
-        {% endif %}
-      </section>
-    </div>
+      </dl>
+      {% if not v.count %}<p class="muted small">{{ t("This place was reviewed before the five checks were introduced: address, contact number, photos and prices were checked by our team.") }}</p>{% endif %}
+    </details>
+  </section>
 
-    <aside class="hotel-aside">
-      <div class="card card-pad booking-box">
-        {% if cheapest %}
-          {# One honest number first: the total for the stay (Brief 2); the nightly figure only helps compare. #}
-          <div class="muted small">Total for {{ stay.nights }} night{{ 's' if stay.nights != 1 }}{% if stay.rooms > 1 %}, {{ stay.rooms }} rooms{% endif %}</div>
-          <div class="from">{{ cheapest.total_price|usd }}</div>
-          <p class="muted small" style="margin:2px 0 0">No booking fees · {{ ui.night_price(cheapest.per_night, cheapest.even_nights, ' a night') }}</p>
-          <dl class="summary-rows">
-            <div><dt>Dates</dt><dd>{{ stay.check_in|nice_date }} – {{ stay.check_out|nice_date }}</dd></div>
-            <div><dt>Guests</dt><dd>{{ stay.guests }}{% if stay.rooms > 1 %} · {{ stay.rooms }} rooms{% endif %}</dd></div>
-          </dl>
-          <p class="rules__title">If you cancel <span class="muted">({{ cheapest.name }})</span></p>
-          {{ ui.rules_bar(rules) }}
-          <a class="btn btn-primary btn-block" href="#rooms">See rooms</a>
-        {% else %}
-          <h3>Not available</h3>
-          <p class="muted small">for {{ ui.stay_summary(stay) }}</p>
-          <a class="btn btn-secondary btn-block" href="#rooms">Change dates</a>
-        {% endif %}
-        {% if can_ask %}{{ ui.ask_form(hotel, stay, label=('Ask ' ~ hotel.host.name ~ ' on WhatsApp') if hotel.host else 'Ask the hotel on WhatsApp') }}{% endif %}
-        <ul class="trust-list">
-          <li>The price you see is the price you pay</li>
-          <li>Secure card payment, no account needed</li>
-          <li>Reviewed by the Fichua team</li>
-        </ul>
+  {% if hotel.host %}{{ ui.host_card(hotel.host, hotel, stay, can_ask, query=ask_query) }}{% endif %}
+
+  <section class="place-section">
+    <h2>{{ t("About this place") }}</h2>
+    <p class="lede">{{ hotel.description or t("A place to stay in {city}.", city=hotel.city) }}</p>
+    {% if picked %}
+    {% set matched = hotel.kind if hotel.kind in picked else hotel.kind_also %}
+    {% if matched %}<p class="why"><strong>{{ t("Why it matches your search:") }}</strong> {{ kind_name(matched) }}. {{ pick(kinds.kind(matched).reason) }}</p>{% endif %}
+    {% endif %}
+  </section>
+
+  <section class="box price-box" aria-labelledby="price-title">
+    <h2 id="price-title">{{ t("Price and terms") }}</h2>
+    {% if cheapest %}
+      <p class="price-box__main">{{ t("{total} for {nights}", total=price(cheapest.total_price), nights=tn(stay.nights, "1 night", "{n} nights")) }}{% if stay.rooms > 1 %}, {{ tn(stay.rooms, "1 room", "{n} rooms") }}{% endif %}</p>
+      <p class="muted small">{{ frange(stay.check_in, stay.check_out) }} · {{ tn(stay.guests, "1 guest", "{n} guests") }} · {{ ui.night_price(cheapest.per_night, cheapest.even_nights) }}{% set loc = local_price(cheapest.total_price, hotel.country) %}{% if loc %} · {{ loc }}{% endif %}</p>
+    {% else %}
+      <p class="price-box__main">{{ t("Not available for these dates") }}</p>
+      <p class="muted small">{{ ui.stay_summary(stay) }}</p>
+    {% endif %}
+    <p class="small"><strong>{{ t("Payment:") }}</strong> {{ t("by card, in full, through Fichua’s secure checkout. Nothing more to pay on arrival.") }}</p>
+    {% if rules %}<p class="rules__title">{{ t("If you cancel") }} <span class="muted">({{ cheapest.name }})</span></p>{{ ui.rules_bar(rules) }}{% endif %}
+  </section>
+
+  {{ ui.money_panel(cheapest.total_price if cheapest else none, commission) }}
+
+  {% if hotel.practice.any %}
+  <section class="place-section" aria-labelledby="runs-title">
+    <h2 id="runs-title">{{ t("How this place runs") }}</h2>
+    {% for p in kinds.PRACTICE %}
+    <div class="box box--tight runs"><strong>{{ pick(p.name) }}</strong>
+      {% if hotel.practice[p.id] %}<span>{{ hotel.practice[p.id] }}</span>{% else %}<span class="muted">{{ t("Not yet verified") }}</span>{% endif %}</div>
+    {% endfor %}
+  </section>
+  {% endif %}
+
+  <section class="place-section">
+    <h2>{{ t("Good to know") }}</h2>
+    <dl class="facts">
+      <div><dt>{{ t("Check-in") }}</dt><dd>{{ t("From {time}", time=hotel.check_in_time or '14:00') }}</dd></div>
+      <div><dt>{{ t("Check-out") }}</dt><dd>{{ t("Until {time}", time=hotel.check_out_time or '11:00') }}</dd></div>
+      <div><dt>{{ t("Cancellation") }}</dt><dd>{{ t(policy[1]) }} {{ t("Each room shows its own date.") }}</dd></div>
+      <div><dt>{{ t("Children") }}</dt><dd>{% if hotel.children_allowed %}{{ t("Welcome") }}{% elif hotel.children_allowed is none %}{{ t("Ask the host") }}{% else %}{{ t("Not accepted") }}{% endif %}</dd></div>
+      <div><dt>{{ t("Pets") }}</dt><dd>{% if hotel.pets_allowed %}{{ t("Allowed") }}{% else %}{{ t("Not allowed") }}{% endif %}</dd></div>
+      <div><dt>{{ t("Smoking") }}</dt><dd>{% if hotel.smoking_allowed %}{{ t("Allowed in some areas") }}{% else %}{{ t("Not allowed") }}{% endif %}</dd></div>
+    </dl>
+    {% if hotel.amenities %}<ul class="amenity-grid">{% for a in hotel.amenities %}<li>{{ t(a) }}</li>{% endfor %}</ul>{% endif %}
+  </section>
+
+  <section id="rooms" class="place-section">
+    <h2>{{ t("Choose your room") }}</h2>
+    <form class="stay-form" method="get" action="{{ hotel.path }}" data-stay-form>
+      {% for k in picked %}<input type="hidden" name="kind" value="{{ k }}">{% endfor %}
+      <div class="field"><label for="ci">{{ t("Check-in") }}</label><input class="input" id="ci" type="date" name="check_in" value="{{ stay.check_in }}" data-check-in></div>
+      <div class="field"><label for="co">{{ t("Check-out") }}</label><input class="input" id="co" type="date" name="check_out" value="{{ stay.check_out }}" data-check-out></div>
+      <div class="field"><label for="g">{{ t("Guests") }}</label><input class="input" id="g" type="number" name="guests" min="1" max="12" value="{{ stay.guests }}"></div>
+      <div class="field"><label for="rm">{{ t("Rooms") }}</label><select class="input" id="rm" name="rooms">{% for n in range(1, 9) %}<option value="{{ n }}" {% if stay.rooms == n %}selected{% endif %}>{{ n }}</option>{% endfor %}</select></div>
+      <button class="btn btn-secondary" type="submit">{{ t("Update") }}</button>
+    </form>
+
+    {% for r in rooms %}
+    <article class="card room{% if not r.available %} is-unavailable{% endif %}">
+      <img class="room__img" src="{{ r.images[0]|card_img }}" alt="{{ r.name }}" loading="lazy">
+      <div class="room__body">
+        <h3>{{ r.name }}</h3>
+        <p class="muted small" style="margin:0">
+          {% if r.bed_type %}{{ t(r.bed_type) }} · {% endif %}{% if r.size_sqm %}{{ r.size_sqm }} m² · {% endif %}{{ tn(r.max_guests, "Sleeps 1", "Sleeps {n}") }}
+        </p>
+        <div class="row" style="flex-wrap:wrap; gap:6px">
+          {% if r.free_until %}<span class="badge badge--success">{{ t("Free cancellation until {date}", date=fdate(r.free_until, 'short')) }}</span>{% else %}<span class="badge badge--muted">{{ t("Non-refundable") }}</span>{% endif %}
+          {% if r.breakfast_included %}<span class="badge badge--info">{{ t("Breakfast included") }}</span>{% endif %}
+        </div>
+        {% if r.amenities %}<ul class="tags">{% for a in r.amenities[:4] %}<li>{{ t(a) }}</li>{% endfor %}</ul>{% endif %}
       </div>
-    </aside>
-  </div>
+      <div class="room__buy">
+        {% if r.available %}
+          <div class="price">
+            <span class="price__total">{{ price(r.total_price) }}</span>
+            <span class="price__meta">{% if stay.rooms > 1 %}{{ tn(stay.rooms, "1 room", "{n} rooms") }} · {% endif %}{{ tn(stay.nights, "1 night", "{n} nights") }} · {{ ui.night_price(r.per_night, r.even_nights) }}</span>
+            {% set loc = local_price(r.total_price, hotel.country) %}{% if loc %}<span class="price__local">{{ loc }}</span>{% endif %}
+          </div>
+          <a class="btn btn-primary" href="/book?{{ qs(stay.as_params(), room=r.id) }}">{{ t("Book this room") if stay.rooms == 1 else t("Book {n} rooms", n=stay.rooms) }}</a>
+        {% elif not r.fits_party %}
+          <span class="muted small">{{ t("Sleeps {n} per room: not enough for {guests} guests", n=r.max_guests, guests=stay.guests) if stay.rooms > 1 else t("Sleeps {n}: not enough for {guests} guests", n=r.max_guests, guests=stay.guests) }}</span>
+          {% if r.rooms_needed <= 8 %}<a class="btn btn-secondary btn-sm" href="{{ hotel.path }}?{{ qs(stay.as_params(), rooms=r.rooms_needed, kind=picked) }}#rooms">{{ t("Show {n} rooms", n=r.rooms_needed) }}</a>{% endif %}
+        {% elif stay.rooms > 1 %}
+          <span class="muted small">{{ t("Fewer than {n} rooms left for these dates", n=stay.rooms) }}</span>
+        {% else %}
+          <span class="muted small">{{ t("Sold out for these dates") }}</span>
+        {% endif %}
+      </div>
+    </article>
+    {% endfor %}
+    {% if not available %}
+      <div class="alert alert-info">{{ t("No rooms available for {when}. Try other dates above.", when=ui.stay_summary(stay)) }}</div>
+    {% endif %}
+  </section>
+
+  {% if hotel.full_address %}
+  <section id="location" class="place-section hotel-location">
+    <h2>{{ t("Where you’ll stay") }}</h2>
+    <p style="margin:0">{{ hotel.full_address }}</p>
+    {% if hotel.map_embed %}<iframe class="map-embed" src="{{ hotel.map_embed }}" title="{{ t('Map showing where {name} is', name=hotel.name) }}" loading="lazy"></iframe>{% endif %}
+    {% if hotel.map_url %}<a class="small" href="{{ hotel.map_url }}" target="_blank" rel="noopener">{{ t("Open in Google Maps") }} ↗</a>{% endif %}
+  </section>
+  {% endif %}
+
+  {{ ui.trust_band(compact=true) }}
+
+  {% if similar %}
+  <section class="place-section" aria-labelledby="similar-title">
+    <h2 id="similar-title">{{ t("Similar places") }}</h2>
+    <div class="options">
+      {% for s in similar %}
+      <a class="option" href="{{ s.path }}?{{ qs(stay.as_params(), kind=picked) }}"><span class="option__stack"><span>{{ s.name }}</span><span class="muted small">{{ kind_name(s.kind) }} · {{ ui.place_where(s) }}</span></span><span aria-hidden="true">→</span></a>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
 </div>
 
-<div class="sticky-cta{% if cheapest and can_ask %} sticky-cta--two{% endif %}">
-  {% if cheapest %}
-  <div class="sticky-cta__price"><strong>{{ cheapest.total_price|usd }}</strong> <span class="muted small">total</span> <span class="muted small sticky-cta__when">{{ stay.check_in|nice_date('%d %b') }} – {{ stay.check_out|nice_date('%d %b') }} · {{ stay.guests }} guest{{ 's' if stay.guests != 1 }}{% if stay.rooms > 1 %} · {{ stay.rooms }} rooms{% endif %}</span></div>
-  <div class="sticky-cta__actions">
-    {% if can_ask %}{{ ui.ask_form(hotel, stay, label='WhatsApp', note=false, cls='') }}{% endif %}
-    <a class="btn btn-primary" href="#rooms">See rooms</a>
-  </div>
-  {% else %}
-  <span class="muted small">Not available for these dates</span>
-  <a class="btn btn-secondary" href="#rooms">Change dates</a>
-  {% endif %}
+<div class="sticky-cta sticky-cta--two">
+  {% if can_ask %}{{ ui.ask_link(hotel, stay, ask_label, query=ask_query) }}{% endif %}
+  <a class="btn btn-primary" href="#rooms">{{ t("Check dates and book") }}</a>
 </div>
 {% endblock %}

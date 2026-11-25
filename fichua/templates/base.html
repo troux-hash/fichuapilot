@@ -1,16 +1,16 @@
 <!doctype html>
-<html lang="en"{% if request.query_params.get('theme') %} data-theme="{{ request.query_params.get('theme') }}"{% endif %}>
+<html lang="{{ lang or 'en' }}"{% if request.query_params.get('theme') %} data-theme="{{ request.query_params.get('theme') }}"{% endif %}>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>{% block title %}{{ app_name }} — know who's behind the door{% endblock %}</title>
+  <title>{% block title %}{{ app_name }} · {{ t("Independent places, reviewed by our team") }}{% endblock %}</title>
   {# Link previews (WhatsApp, social) and search snippets. Hotel pages add a canonical address and schema.org data. #}
   {% block meta %}
-  <meta name="description" content="Owner-run hotels and lodges in Rwanda, Benin and Côte d'Ivoire, each reviewed by our team. One honest price, and cancellation dates shown before you pay.">
+  <meta name="description" content="{{ t('Independent places to stay, each run by people you can talk to and reviewed by our team. Starting in Rwanda, Benin and Côte d’Ivoire.') }}">
   <meta property="og:site_name" content="{{ app_name }}">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="{{ app_name }}: know who's behind the door">
-  <meta property="og:description" content="Owner-run hotels and lodges in Rwanda, Benin and Côte d'Ivoire, each reviewed by our team.">
+  <meta property="og:title" content="{{ app_name }}: {{ t('Independent places, reviewed by our team') }}">
+  <meta property="og:description" content="{{ t('Talk to your host directly. We take care of the rest.') }}">
   {% endblock %}
   <meta name="theme-color" content="{% block theme_color %}#FFFFFF{% endblock %}">
   <script>document.documentElement.classList.add("js")</script>
@@ -25,24 +25,32 @@
   {% block head %}{% endblock %}
 </head>
 <body class="{% block body_class %}{% endblock %}">
-  <a class="sr-only" href="#main">Skip to content</a>
+  <a class="sr-only" href="#main">{{ t("Skip to content") }}</a>
   {% block header %}
   <header class="site-header">
     <div class="container">
-      <a class="logo" href="/" aria-label="{{ app_name }} home"><span class="logo-mark" aria-hidden="true">F</span>{{ app_name }}</a>
-      <nav class="nav">{% block nav %}<a href="/manage">Manage booking</a><a href="/partners">For hotels</a>{% endblock %}</nav>
+      <a class="logo" href="/" aria-label="{{ app_name }}"><span class="logo-mark" aria-hidden="true">F</span>{{ app_name }}</a>
+      <nav class="nav">{% block nav %}<a href="/manage">{{ t("Manage booking") }}</a><a href="/partners">{{ t("For hosts") }}</a>{% endblock %}</nav>
+      <div class="lang-switch" role="group" aria-label="{{ t('Language') }}">
+        <a href="/lang/en?{{ qs({'next': here(request)}) }}" class="{{ 'is-on' if lang != 'fr' }}" hreflang="en" lang="en" {% if lang != 'fr' %}aria-current="true"{% endif %}>EN</a>
+        <a href="/lang/fr?{{ qs({'next': here(request)}) }}" class="{{ 'is-on' if lang == 'fr' }}" hreflang="fr" lang="fr" {% if lang == 'fr' %}aria-current="true"{% endif %}>FR</a>
+      </div>
     </div>
   </header>
   {% endblock %}
   <main id="main">{% block content %}{% endblock %}</main>
   {% block footer %}
-  {% import "components/trust.html" as trust %}
+  {% import "components/trust.html" as trust with context %}
   <footer class="site-footer">
     <div class="container site-footer__inner">
+      <div class="where-from">
+        <p class="where-from__line">{{ t("Starting in Rwanda, Benin and Côte d’Ivoire") }}</p>
+        <p class="where-from__mit">{{ t("Built at MIT, for Africa and the World") }}</p>
+      </div>
       {{ trust.band('guest') }}
       <div class="row-between site-footer__bar">
-        <span>© {{ app_name }} · Rwanda · Benin · Côte d'Ivoire · Prices in USD, total for your stay.</span>
-        <span class="row" style="flex-wrap:wrap"><a href="/manage">Manage a booking</a><a href="/partners">List your hotel</a><a href="/terms">Terms</a><a href="/privacy">Privacy</a></span>
+        <span>© {{ app_name }} · {{ t("Prices in US dollars, the total for your stay.") }}</span>
+        <span class="row" style="flex-wrap:wrap"><a href="/manage">{{ t("Manage a booking") }}</a><a href="/partners">{{ t("List your place") }}</a><a href="/terms">{{ t("Terms") }}</a><a href="/privacy">{{ t("Privacy") }}</a></span>
       </div>
     </div>
   </footer>

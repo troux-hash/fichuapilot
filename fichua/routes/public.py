@@ -6,10 +6,11 @@ import secrets
 from fastapi import APIRouter, Form, Request
 from fastapi.responses import RedirectResponse, Response
 
+from .. import i18n
 from ..db import db
-from ..services import (bookings, catalog, currency, dates, enquiries, legal, notify, partners, payments,
-                        policies, ratelimit, seo, stay_calendar, ways_in)
-from ..services.search import SORTS, Filters, search
+from ..services import (app_settings, bookings, catalog, currency, dates, enquiries, kinds, legal, notify, partners,
+                        payments, policies, ratelimit, seo, stay_calendar)
+from ..services.search import discover, largest_room, where_options
 from ..web import base_url, qs, render
 
 router = APIRouter()
@@ -32,35 +33,94 @@ def _flush_messages() -> None:
         notify.flush(conn)
 
 
+def _picked(request: Request) -> list[str]:
+    """The kinds of place chosen on the home page: one or two (Brief 3 v3)."""
+    out = []
+    for k in request.query_params.getlist("kind"):
+        if k in kinds.KIND_IDS and k not in out:
+            out.append(k)
+    return out[:2]
+
+
+def _dated(request: Request) -> bool:
+    q = request.query_params
+    return bool(q.get("check_in") and q.get("check_out")) and q.get("dates") != "any"
+
+
 @router.get("/")
 def home(request: Request):
+    i18n.use(i18n.lang_of(request))
     with db.connect() as conn:
-        destinations = catalog.destinations(conn)
-    stay = dates.parse_stay(None, None, 2)
-    return render(request, "pages/home.html", destinations=destinations, stay=stay, presets=dates.presets(),
-                  ways_in=ways_in.available(destinations))
+        fichua_wa = enquiries.fichua_link(conn, i18n.t("Hello Fichua, I'm not sure which kind of place suits my trip."))
+    return render(request, "pages/home.html", picked=_picked(request), fichua_wa=fichua_wa)
+
+
+@router.get("/lang/{code}")
+def set_language(request: Request, code: str):
+    """The EN/FR switch: remember the choice and go back to the same page."""
+    back = request.query_params.get("next") or "/"
+    if not back.startswith("/") or back.startswith("//"):
+        back = "/"
+    resp = RedirectResponse(back, status_code=303)
+    if code in i18n.LANGS:
+        resp.set_cookie("lang", code, max_age=365 * 86400, samesite="lax")
+    return resp
+
+
+@router.get("/where")
+def where(request: Request):
+    picked = _picked(request)
+    q = request.query_params
+    stay = _stay_from(request)
+    with db.connect() as conn:
+        options = where_options(conn, picked)
+    chosen = q.get("where") or "all"
+    if chosen not in {o["value"] for o in options}:
+        chosen = "all"
+    return render(request, "pages/where.html", picked=picked, options=options, chosen=chosen, stay=stay,
+                  no_dates=q.get("dates") == "any", presets=dates.presets())
 
 
 @router.get("/search")
 def results(request: Request):
     q = request.query_params
-    destination = (q.get("destination") or "").strip()
+    i18n.use(i18n.lang_of(request))
+    picked = _picked(request)
+    where_value = (q.get("where") or q.get("destination") or "").strip() or "all"
     stay = _stay_from(request)
-    filters = Filters.from_query(q)
+    dated = _dated(request)
     with db.connect() as conn:
-        data = search(conn, stay, destination or None, filters)
-        destinations = catalog.destinations(conn)
-        # With no results, say so when the real reason is the group size, not the dates.
-        largest = catalog.largest_room(conn, destination or None) if not data["results"] else 0
-    # How many of the biggest rooms the group needs: offered as a one-tap search (IMP-18).
+        data = discover(conn, picked, where_value, stay, dated)
+        widen = []
+        if data["count"] < 2:  # few or none: offer the nearest wider searches, with their counts
+            if picked:
+                n = discover(conn, [], where_value, stay, dated)["count"]
+                if n > data["count"]:
+                    widen.append({"kind": "all_kinds", "count": n})
+            if where_value != "all":
+                n = discover(conn, picked, "all", stay, dated)["count"]
+                if n > data["count"]:
+                    widen.append({"kind": "everywhere", "count": n})
+            if dated:
+                n = discover(conn, picked, where_value, stay, False)["count"]
+                if n > data["count"]:
+                    widen.append({"kind": "any_dates", "count": n})
+        fichua_wa = enquiries.fichua_link(conn, i18n.t("Hello Fichua, I'm looking for a place to stay and found nothing yet."))
+        commission = app_settings.get_float(conn, "commission_pct")
+        # A big group with nothing found: say no single room fits, and offer the search with enough rooms.
+        largest = largest_room(conn, picked, where_value) if not data["count"] else 0
     rooms_hint = -(-stay.guests // largest) if largest and stay.guests > largest * stay.rooms else 0
     if rooms_hint > dates.MAX_ROOMS:
         rooms_hint = 0
-    base = {"destination": destination, **stay.as_params()}
-    return render(request, "pages/results.html", destination=destination, stay=stay,
-                  filters=filters, sorts=SORTS, base=base, presets=dates.presets(),
-                  destinations=destinations, largest_room=largest, rooms_hint=rooms_hint,
-                  date_note=_date_note(request, stay), **data)
+    base = {"kind": picked, "where": where_value if where_value != "all" else None,
+            "guests": stay.guests, "rooms": stay.rooms}
+    if dated:
+        base.update(check_in=stay.check_in.isoformat(), check_out=stay.check_out.isoformat())
+    else:
+        base["dates"] = "any"
+    return render(request, "pages/results.html", picked=picked, where=where_value, stay=stay, dated=dated,
+                  base=base, widen=widen, fichua_wa=fichua_wa, commission=commission, largest_room=largest,
+                  rooms_hint=rooms_hint, date_note=_date_note(request, stay) if dated else None, **data)
 
 
 def _same_query(path: str, request: Request) -> str:
@@ -87,18 +147,25 @@ def hotel_page(request: Request, country: str, city: str, slug: str):
         if request.url.path != h["path"]:  # renamed, or the country or city in the link is off
             return RedirectResponse(_same_query(h["path"], request), status_code=301)
         rooms = catalog.hotel_rooms(conn, h["id"], stay)
-    back = request.query_params.get("destination") or h["city"]
+        verification = kinds.verification(h, kinds.checks_by_hotel(conn, [h["id"]]).get(h["id"]))
+        similar = catalog.similar(conn, h)
+        commission = h.get("commission_pct")
+        if commission is None:
+            commission = app_settings.get_float(conn, "commission_pct")
+    picked = _picked(request)
     cheapest = next((r for r in rooms if r["available"]), None)
     rules = (policies.timeline(h.get("cancellation_policy"), cheapest["free_cancellation"], stay.check_in,
                                cheapest["total_price"]) if cheapest else [])
     base = base_url(request)
     canonical = base + h["path"]  # one address per hotel, whatever dates are in the link
+    back = {"kind": picked, "where": request.query_params.get("where"), **stay.as_params()}
     return render(request, "pages/hotel.html", hotel=h, rooms=rooms, stay=stay, cheapest=cheapest, rules=rules,
                   can_ask=bool(enquiries.hotel_number(h)), canonical=canonical, summary=seo.summary(h),
                   share_image=seo.absolute((h.get("images") or [None])[0], base),
-                  structured=seo.lodging(h, rooms, canonical, base),
+                  structured=seo.lodging(h, rooms, canonical, base), verification=verification,
+                  similar=similar, commission=commission, picked=picked, dated=_dated(request),
                   policy=policies.POLICIES.get(h.get("cancellation_policy") or "flexible", policies.POLICIES["flexible"]),
-                  back_qs=qs({"destination": back, **stay.as_params()}), date_note=_date_note(request, stay))
+                  back_qs=qs(back), date_note=_date_note(request, stay))
 
 
 @router.get("/sitemap.xml")
@@ -113,10 +180,23 @@ def robots_txt(request: Request):
     return Response(seo.robots(base_url(request)), media_type="text/plain")
 
 
+@router.get("/hotels/{hotel_id}/ask")
+def ask_page(request: Request, hotel_id: str):
+    """Before WhatsApp opens: the message that will be sent, and the rule that booking happens on Fichua."""
+    stay = _stay_from(request)
+    with db.connect() as conn:
+        h = catalog.get_hotel(conn, hotel_id)
+    if not h or not enquiries.hotel_number(h):
+        return render(request, "pages/not_found.html", status_code=404)
+    return render(request, "pages/ask.html", hotel=h, stay=stay, dated=_dated(request),
+                  preview=enquiries.message(h, stay, None, lang=i18n.lang_of(request)))
+
+
 @router.post("/hotels/{hotel_id}/ask")
 def ask_hotel(request: Request, hotel_id: str, check_in: str = Form(""), check_out: str = Form(""),
-              guests: str = Form("2"), rooms: str = Form("1")):
-    """'Ask the hotel on WhatsApp': record an enquiry with a reference, then open WhatsApp (Brief 2 §6.2)."""
+              guests: str = Form("2"), rooms: str = Form("1"), question: str = Form("")):
+    """'Ask your host on WhatsApp': record an enquiry with a reference, then open WhatsApp (Brief 2 §6.2).
+    The traveller talks to the host directly; booking and payment still happen on Fichua."""
     stay = dates.parse_stay(check_in, check_out, guests, rooms)
     ip = ratelimit.client_ip(request)
     with db.connect() as conn:
@@ -127,7 +207,8 @@ def ask_hotel(request: Request, hotel_id: str, check_in: str = Form(""), check_o
         if not ratelimit.blocked(conn, "ask", ip):  # past the limit, WhatsApp still opens, unrecorded
             reference = enquiries.create(conn, h, stay)
             ratelimit.record(conn, "ask", ip)
-    return RedirectResponse(enquiries.whatsapp_link(h, stay, reference), status_code=303)
+    return RedirectResponse(enquiries.whatsapp_link(h, stay, reference, question=question,
+                                                    lang=i18n.lang_of(request)), status_code=303)
 
 
 def _nights_text(stay: dates.Stay, offer: dict | None) -> str:
@@ -152,7 +233,10 @@ def _checkout_context(conn, stay: dates.Stay, room_id: str):
     live = catalog.availability(conn, stay, room_type_id=room_id)
     offer = live[0] if live else None
     policy = (hotel or {}).get("cancellation_policy")
-    return {"room": room, "hotel": hotel, "offer": offer, "stay": stay,
+    commission = (hotel or {}).get("commission_pct")
+    if commission is None:
+        commission = app_settings.get_float(conn, "commission_pct")
+    return {"room": room, "hotel": hotel, "offer": offer, "stay": stay, "commission": commission,
             "policy": partners.POLICIES.get(policy or "flexible"), "nights_text": _nights_text(stay, offer),
             "free_until": policies.open_until(policy, room["free_cancellation"], stay.check_in),
             "rules": policies.timeline(policy, room["free_cancellation"], stay.check_in,

@@ -156,7 +156,38 @@
     ["dragleave", "drop"].forEach((ev) => z.addEventListener(ev, () => z.classList.remove("is-drag")));
   });
 
-  // Hotel page: hide the "See rooms" bar while the rooms are on screen, so it never covers Reserve.
+  // Home (Brief 3 v3): one or two kinds of place. A third tap replaces the first one picked;
+  // the button waits for at least one. Without JS, the form still submits whatever is ticked.
+  const kindForm = $("[data-kind-form]");
+  if (kindForm) {
+    const boxes = $$("[data-kind]", kindForm), submit = $("[data-kind-submit]", kindForm), hint = $("[data-kind-hint]", kindForm);
+    let order = boxes.filter((b) => b.checked);
+    const sync = () => {
+      const any = boxes.some((b) => b.checked);
+      if (submit) submit.disabled = !any;
+      if (hint) hint.hidden = any;
+    };
+    boxes.forEach((b) => b.addEventListener("change", () => {
+      order = order.filter((x) => x !== b);
+      if (b.checked) {
+        order.push(b);
+        if (order.length > 2) { order[0].checked = false; order = order.slice(1); }
+      }
+      sync();
+    }));
+    sync();
+  }
+
+  // Where and when: "Show me without dates" greys out the dates (disabled fields are not sent).
+  const noDates = $("[data-no-dates]");
+  if (noDates) {
+    const dateInputs = $$("[data-dates] input");
+    const syncDates = () => dateInputs.forEach((input) => { input.disabled = noDates.checked; });
+    noDates.addEventListener("change", syncDates);
+    syncDates();
+  }
+
+  // Place page: hide the bottom bar while the rooms are on screen, so it never covers a Book button.
   const cta = $(".sticky-cta"), roomList = document.getElementById("rooms");
   if (cta && roomList && "IntersectionObserver" in window) {
     new IntersectionObserver(([entry]) => cta.classList.toggle("is-hidden", entry.isIntersecting)).observe(roomList);

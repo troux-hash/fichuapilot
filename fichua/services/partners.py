@@ -9,7 +9,7 @@ import uuid
 from datetime import date, timedelta
 
 from ..db import Connection, utcnow
-from . import app_settings, catalog
+from . import app_settings, catalog, kinds
 from .currency import MARKETS, normalize_country
 from .policies import POLICIES  # noqa: F401  (partners.POLICIES is used by the routes)
 
@@ -170,6 +170,17 @@ def update_identity(conn: Connection, hotel_id: str, form: dict) -> list[str]:
     conn.run("UPDATE hotels SET legal_name = :legal, tax_id = :tax WHERE id = :id",
              {"legal": (form.get("legal_name") or "").strip()[:120] or None,
               "tax": (form.get("tax_id") or "").strip()[:40] or None, "id": hotel_id})
+    # The kind of place travellers find it under (Brief 3 v3). The form asks for it; an older form that
+    # doesn't send one keeps what is stored, else the kind inferred from the type and name.
+    stored = conn.one("SELECT category, good_for FROM hotels WHERE id = :id", {"id": hotel_id}) or {}
+    category = (kinds.clean_kind(form.get("category")) or kinds.clean_kind(stored.get("category"))
+                or kinds.guess_kind({"name": form.get("name"), "property_type": form.get("property_type"),
+                                     "city": form.get("city"), "description": form.get("description")}))
+    also = kinds.clean_kind(form.get("category_also"))
+    tags = kinds.clean_tags(form.get("good_for") or []) if form.get("good_for_sent") else kinds.clean_tags(
+        (stored.get("good_for") or "").split(","))
+    conn.run("UPDATE hotels SET category = :c, category_also = :a, good_for = :g WHERE id = :id",
+             {"c": category, "a": also if also != category else None, "g": ",".join(tags) or None, "id": hotel_id})
     conn.run("UPDATE hotels SET name = :name, property_type = :ptype, country = :country, city = :city, area = :area, "
              "address = :address, lat = :lat, lng = :lng, phone = :phone, whatsapp = :whatsapp, email = :email, "
              "check_in_time = :cin, check_out_time = :cout, description = :description, amenities = :amenities, "
@@ -349,6 +360,45 @@ def onboarding_status(conn: Connection, hotel: dict) -> dict:
     }
     return {"steps": steps, "ready": all(steps.values()), "photos": photos, "rooms": len(rooms),
             "room_units": sum(int(r["total_rooms"] or 0) for r in rooms)}
+
+
+def home_stats(conn: Connection, hotel: dict, today: date | None = None) -> dict:
+    """The owner's home page (Brief 3 v3): this month's questions and bookings, the money, where bookings came
+    from and who arrives next. The same figures the traveller's money panel shows."""
+    today = today or date.today()
+    start = date(today.year, today.month, 1)
+    since = {"h": hotel["id"], "s": f"{start.isoformat()} 00:00:00"}
+    questions = conn.scalar("SELECT COUNT(*) FROM enquiries WHERE hotel_id = :h AND created_at >= :s", since) or 0
+    paid = conn.all("SELECT total_price, commission_amount, payout_amount FROM bookings WHERE hotel_id = :h "
+                    "AND COALESCE(source, 'fichua') = 'fichua' AND status = 'confirmed' AND payment_status = 'paid' "
+                    "AND paid_at >= :s", since)
+    offline = conn.all("SELECT COALESCE(offline_source, 'walk-in') AS src, COUNT(*) AS n FROM bookings "
+                       "WHERE hotel_id = :h AND source = 'offline' AND status = 'confirmed' AND created_at >= :s "
+                       "GROUP BY COALESCE(offline_source, 'walk-in')", since)
+    arrivals = conn.all("SELECT reference, guest_name, check_in, nights, guests, rooms, source, payment_status "
+                        "FROM bookings WHERE hotel_id = :h AND status = 'confirmed' AND check_in >= :d "
+                        "ORDER BY check_in, created_at LIMIT 5", {"h": hotel["id"], "d": today.isoformat()})
+    sources = [{"label": "Fichua", "n": len(paid)}] + [{"label": r["src"], "n": int(r["n"])} for r in offline]
+    return {
+        "month": start, "questions": int(questions), "bookings": len(paid),
+        "paid": round(sum(float(r["total_price"] or 0) for r in paid), 2),
+        "received": round(sum(float(r["payout_amount"] or 0) for r in paid), 2),
+        "fee": round(sum(float(r["commission_amount"] or 0) for r in paid), 2),
+        "sources": [s for s in sources if s["n"]] or sources[:1],
+        "arrivals": [{**dict(a), "guest_short": _short_name(a["guest_name"])} for a in arrivals],
+    }
+
+
+def _short_name(name: str | None) -> str:
+    """'Priya Raman' → 'Priya R.': enough for the front desk, no more."""
+    parts = (name or "").split()
+    return f"{parts[0]} {parts[-1][0]}." if len(parts) > 1 else (parts[0] if parts else "")
+
+
+def share_text(hotel: dict, link: str) -> str:
+    """The message owners send their contacts once they are live: book safely on Fichua, in either language."""
+    return (f"{hotel['name']} is now on Fichua. Book with us safely, in English or French: {link}\n"
+            f"{hotel['name']} est maintenant sur Fichua. Réservez chez nous en toute sécurité, en français ou en anglais : {link}")
 
 
 def submit(conn: Connection, hotel: dict) -> bool:

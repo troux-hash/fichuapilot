@@ -75,7 +75,7 @@ def test_guests_meet_the_host_only_with_consent():
         with db.connect() as conn:
             conn.run("UPDATE hotels SET host_consent_at = NULL WHERE id = :id", {"id": hotel_id})
         hidden = guest.get(offer["hotel"]["path"], params={**STAY, "guests": 2}).text
-        assert "Your host" not in hidden and "Divine" not in hidden
+        assert 'aria-label="Your host"' not in hidden and "Divine" not in hidden
     finally:
         with db.connect() as conn:
             conn.run("UPDATE hotels SET host_name = NULL, host_role = NULL, host_languages = NULL, host_welcome = NULL, "

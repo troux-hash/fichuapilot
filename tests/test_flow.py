@@ -80,7 +80,7 @@ def test_weekend_and_season_prices():
 
 def test_pages_render():
     home = guest.get("/").text
-    assert "Know who's behind" in home and "What we check before a place goes live" in home
+    assert "What kind of stay are you looking for?" in home and "We vet every host" in home
     hotel_id = guest.get("/api/search", params={"destination": "Kigali", **STAY}).json()["results"][0]["hotel"]["id"]
     r = guest.get(f"/hotels/{hotel_id}", params=STAY)
     assert r.status_code == 200 and "Choose your room" in r.text
@@ -98,7 +98,7 @@ def test_checkout_requires_whatsapp_number():
 def test_full_payment_commission_payout_and_messages():
     offer, ref, token, location = _book_and_pay("Kigali")
     page = guest.get(location)
-    assert "Paid · confirmed" in page.text and "You're booked." in page.text and "is expecting you on" in page.text
+    assert "Paid · confirmed" in page.text and "You’re booked through Fichua." in page.text and "is expecting you on" in page.text
     with db.connect() as conn:
         b = conn.one("SELECT * FROM bookings WHERE reference = :r", {"r": ref})
         payout = conn.one("SELECT * FROM payouts WHERE booking_id = :b", {"b": b["id"]})
@@ -182,7 +182,7 @@ def test_local_currency_text():
 
 def test_friendly_error_pages():
     page = guest.get("/this-page-does-not-exist")
-    assert page.status_code == 404 and "We couldn't find that page" in page.text  # FIX-08
+    assert page.status_code == 404 and "We couldn’t find that page" in page.text  # FIX-08
     api = guest.get("/api/nope")
     assert api.status_code == 404 and api.json() == {"detail": "Not Found"}
     wrong_method = guest.get("/bookings/FCH-XXXXXX/cancel")

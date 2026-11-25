@@ -12,6 +12,7 @@
   {% endfor %}
   <a class="navlink{% if active == 'host' %} is-active{% endif %}" href="/partners/host">{{ i.icon('users') }}Host profile{% if hotel.host %}<span class="tick">{{ i.icon('check', 16) }}</span>{% endif %}</a>
   <span class="sidebar__group">Run your hotel</span>
+  <a class="navlink{% if active == 'home' %} is-active{% endif %}" href="/partners/home">{{ i.icon('hotel') }}Home</a>
   <a class="navlink{% if active == 'calendar' %} is-active{% endif %}" href="/partners/calendar">{{ i.icon('calendar') }}Calendar and prices</a>
   <a class="navlink{% if active == 'bookings' %} is-active{% endif %}" href="/partners/bookings">{{ i.icon('list') }}Bookings</a>
   <form method="post" action="/partners/logout" class="hide-desktop"><button class="navlink" type="submit" style="background:none;border:0;font:inherit;cursor:pointer">{{ i.icon('logout') }}Log out</button></form>
