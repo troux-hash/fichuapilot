@@ -127,7 +127,7 @@ A second end-to-end run on the local copy after the persona-led redesign: 44 ste
 booking, door card, receipt and refund, then the owner's and the admin's follow-up. Automatic checks on every step found no
 JavaScript errors, no failed requests and no sideways scrolling; the bugs below came from reviewing each screen.
 Walkthrough videos (traveller, operator, admin) are in `qa/2026-11-21-round2/`, kept out of git. Tracking:
-[Fichua QA Backlog](https://claude.ai/artifact/HKnXLZX4Q9WQNiXj2Ct9ab) (61 items).
+[Fichua QA Backlog](https://claude.ai/artifact/HKnXLZX4Q9WQNiXj2Ct9ab) (62 items after round 3).
 
 Bugs, fixed in commit `96412ac` (tests in `tests/test_round2.py`), checked again in round 3 and live since 25 Nov 2026:
 
