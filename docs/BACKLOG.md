@@ -118,6 +118,7 @@ The traveller, operator and admin prototypes were built into the sites, with thr
   in small type below (home page, footer, video end cards).
 - **Payment:** Fichua secures the payment (today's card checkout; the money panel says the fee is paid by the host).
 - **Ranking by reply speed:** removed for good, not a feature to build. Results rank by fit, then verification.
+  The "I reply within …" host promise (R2-O6) is dropped with it: no reply-speed features at all.
 
 Places listed before kinds existed get a kind inferred from their type and name (owners and the team can change it).
 Places reviewed before the five checks show "Reviewed by Fichua" until the team records the checks.
@@ -208,7 +209,7 @@ Improvements to build (not started):
 | R2-O3 | P2 | Owners | A caption on each photo, also used as alt text | Guests and search engines read captions |
 | R2-O4 | P2 | Owners | Bookings totals two per row on phones (✅ done in round 4) | "after commission" wraps over three lines |
 | R2-O5 | P2 | Owners | A "Join with my code" button at the top of the partner page on phones | The form starts below a full screen of pitch |
-| R2-O6 | P2 | Owners | "I reply within …", shown to guests once reply times are measured | Sets expectations and rewards fast hosts |
+| R2-O6 | ~~P2~~ | Owners | ~~"I reply within …", shown to guests once reply times are measured~~ **Dropped 25 Nov 2026** with ranking by reply speed: no reply-speed features | — |
 | R2-A2 | P2 | Admin | Finance export (CSV) | Month-end work happens in a spreadsheet |
 | R2-A3 | P2 | Admin | Audit trail for approvals, commission changes and hiding a hotel | Needed once several people use admin |
 | R2-T8 | P3 | Travellers | An occasion at checkout (anniversary, birthday), passed to the host | A personal touch the host can act on |
