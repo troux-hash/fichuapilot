@@ -327,6 +327,8 @@ async def room_save(request: Request, room_id: str | None = None):
             room = {**data, "id": room_id, "photos": partners.media_list(conn, "room", room_id) if room_id else [],
                     "breakfast_included": data.get("breakfast_included") == "1"}
             return _room_page(request, conn, user, hotel, room, errors, status_code=422)
+    if form.get("stay") == "1":  # photos go up in batches (partners.js): the next batch is sent to this room
+        return RedirectResponse(f"/partners/rooms/{saved_id}", status_code=303)
     return RedirectResponse("/partners/rooms", status_code=303)
 
 

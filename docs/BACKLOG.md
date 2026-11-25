@@ -12,7 +12,7 @@ Markets: Rwanda, Benin, Côte d'Ivoire. Master currency USD (RWF / CFA shown alo
 | Guest site | Full payment at booking (built-in test checkout; Stripe Checkout when a key is set), refunds on cancel |
 | Guest site | Prices in USD with RWF / CFA equivalents; WhatsApp number at checkout; EN / FR message language |
 | Partners | Join with an access code (email + password), hotel ID `FH-xxxxx` |
-| Partners | Onboarding: details + map pin, photos (shrunk on the phone), room types + prices, policies, submit |
+| Partners | Onboarding: details + map pin, photos (shrunk on the phone, sent in batches under the host's 4.5 MB request limit), room types + prices, policies, submit |
 | Partners | Hotel Manager: calendar (prices, rooms to sell, closed dates, ranges, Fri/Sat), offline bookings, bookings list with payouts |
 | Admin | Approvals with automatic anti-scam checks, per-hotel commission, request changes / reject |
 | Admin | Finance: filters by period / hotel / country / source, totals, by-hotel table, payouts to send, Stripe links |
@@ -103,6 +103,23 @@ Waiting on founder decisions: money flow ("Fichua never holds your money" or "he
 (7 / 14 / 30 days), one pricing rule for owners, the founding properties (real photos, host portraits and stories to replace
 the demo catalogue). Waiting on WhatsApp: the build-first "reveal" flow for owners.
 
+## 🧪 QA findings — round 3, before going live (25 Nov 2026)
+
+A third end-to-end run on the local copy with the round-2 fixes in: the same 44 steps in headless Edge (phones at
+390 × 844, admin at 1280 × 800), then a page-by-page check of the guest site, the partner portal and admin at phone and
+laptop widths (124 page views). No JavaScript errors, no failed requests and no sideways scrolling, and each round-2 fix
+was checked on screen. The one bug below shows only on the live host, so it was confirmed there with a test upload sent
+without signing in, which stored nothing. Walkthrough videos (traveller, operator, admin) are in `qa/2026-11-25-round3/`,
+kept out of git. Tests are in `tests/test_round3.py`.
+
+| ID | Priority | Bug | Fix | Status |
+|---|---|---|---|---|
+| R3-B1 | **P1** | Photos and room pages sent every chosen photo in one request. Vercel refuses requests over 4.5 MB (on the live site a 4 MB upload got through and a 5 MB one was refused), so choosing a handful of phone photos at once (roughly 6 to 15, depending on the photos) ended on a bare "Request Entity Too Large" page | Photos go up in batches under 3.5 MB, each with its card copy. A new room's later batches go to the room the first batch created. Each photo is decoded once instead of twice, and a phone that stalls while resizing gets 20 seconds before the photo goes as it is; a photo still over 3 MB is stopped before sending, with a plain message. Checked in a normal browser: 12 photos went in 3 batches, 9 room photos in 3, and a host photo in 1 | ✅ Live 25 Nov |
+
+Test tool, not the product: in long headless sessions the test browser froze while resizing photos, which never happened
+in single runs or a normal browser. The test now sends its photos directly, and the batch upload above was checked
+separately in a normal browser.
+
 ## 🧪 QA findings — round 2, after the redesign (21 Nov 2026)
 
 A second end-to-end run on the local copy after the persona-led redesign: 44 steps in headless Edge (phones at
@@ -112,17 +129,17 @@ JavaScript errors, no failed requests and no sideways scrolling; the bugs below 
 Walkthrough videos (traveller, operator, admin) are in `qa/2026-11-21-round2/`, kept out of git. Tracking:
 [Fichua QA Backlog](https://claude.ai/artifact/HKnXLZX4Q9WQNiXj2Ct9ab) (61 items).
 
-Bugs, fixed on the local copy and **not deployed yet** (commit `96412ac`, tests in `tests/test_round2.py`):
+Bugs, fixed in commit `96412ac` (tests in `tests/test_round2.py`), checked again in round 3 and live since 25 Nov 2026:
 
 | ID | Priority | Bug | Fix | Status |
 |---|---|---|---|---|
-| R2-B1 | P1 | Hotel page on phones: the sticky bar grows to a third of the screen once the WhatsApp button is there | Two rows: total and dates, then WhatsApp and See rooms side by side | 🟡 Fixed, not live |
-| R2-B2 | P1 | Multi-night prices with cents and a misleading "From $178.33 / night" (an average, not a minimum) | The total for the stay first; the nightly figure in whole dollars, "avg" when nights differ | 🟡 Fixed, not live |
-| R2-B3 | P2 | The photos step claims "8 or more photos get more bookings" with no data behind it | Plain guidance on what to photograph | 🟡 Fixed, not live |
-| R2-B4 | P2 | Room list: the RWF figure follows the Fri–Sat price, so it reads as the weekend price | RWF sits next to the standard price it converts | 🟡 Fixed, not live |
-| R2-B5 | P2 | The calendar reopens on the current month after saving another month's prices | It reopens on the month that changed | 🟡 Fixed, not live |
-| R2-B6 | P1 | The approval page hides the host profile and the business details, though both reach guests | Both shown before approving, with the host's consent state | 🟡 Fixed, not live |
-| R2-B7 | P3 | Admin sign-in still sets the old navy browser colour on phones | Ink | 🟡 Fixed, not live |
+| R2-B1 | P1 | Hotel page on phones: the sticky bar grows to a third of the screen once the WhatsApp button is there | Two rows: total and dates, then WhatsApp and See rooms side by side | ✅ Live 25 Nov |
+| R2-B2 | P1 | Multi-night prices with cents and a misleading "From $178.33 / night" (an average, not a minimum) | The total for the stay first; the nightly figure in whole dollars, "avg" when nights differ | ✅ Live 25 Nov |
+| R2-B3 | P2 | The photos step claims "8 or more photos get more bookings" with no data behind it | Plain guidance on what to photograph | ✅ Live 25 Nov |
+| R2-B4 | P2 | Room list: the RWF figure follows the Fri–Sat price, so it reads as the weekend price | RWF sits next to the standard price it converts | ✅ Live 25 Nov |
+| R2-B5 | P2 | The calendar reopens on the current month after saving another month's prices | It reopens on the month that changed | ✅ Live 25 Nov |
+| R2-B6 | P1 | The approval page hides the host profile and the business details, though both reach guests | Both shown before approving, with the host's consent state | ✅ Live 25 Nov |
+| R2-B7 | P3 | Admin sign-in still sets the old navy browser colour on phones | Ink | ✅ Live 25 Nov |
 
 Improvements to build (not started):
 

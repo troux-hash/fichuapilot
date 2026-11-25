@@ -37,22 +37,34 @@
   window.addEventListener("load", initMap);
 
   /* ---------- Photos: shrink on the phone before upload (max 1600px, JPEG), plus an 800px card copy ---------- */
-  function shrink(file, max = 1600, quality = 0.82) {
+  const PHOTO_LIMIT = 3 * 1024 * 1024;       // the server's limit for one photo (partners.MAX_PHOTO_BYTES)
+  const REQUEST_BUDGET = 3.5 * 1024 * 1024;  // the host refuses requests over 4.5 MB, so photos go up in batches
+  function toJpeg(img, max, quality, name) {
     return new Promise((resolve) => {
-      if (!file.type.startsWith("image/")) return resolve(null);
+      const scale = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(img.naturalWidth * scale); canvas.height = Math.round(img.naturalHeight * scale);
+      canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob((blob) => resolve(blob ? new File([blob], name, { type: "image/jpeg" }) : null), "image/jpeg", quality);
+    });
+  }
+  // One decode gives both sizes. A phone that stalls gets 20 seconds; then the photo goes as it is.
+  function prepare(file) {
+    const none = { full: null, card: null };
+    if (!file.type.startsWith("image/")) return Promise.resolve(none);
+    const work = new Promise((resolve) => {
       const img = new Image();
       const url = URL.createObjectURL(file);
-      img.onload = () => {
-        const scale = Math.min(1, max / Math.max(img.width, img.height));
-        const canvas = document.createElement("canvas");
-        canvas.width = Math.round(img.width * scale); canvas.height = Math.round(img.height * scale);
-        canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
-        URL.revokeObjectURL(url);
-        canvas.toBlob((blob) => resolve(blob ? new File([blob], file.name.replace(/\.\w+$/, "") + ".jpg", { type: "image/jpeg" }) : null), "image/jpeg", quality);
+      const name = file.name.replace(/\.\w+$/, "") + ".jpg";
+      img.onload = async () => {
+        try {
+          resolve({ full: await toJpeg(img, 1600, 0.82, name), card: await toJpeg(img, 800, 0.78, name) });
+        } catch { resolve(none); } finally { URL.revokeObjectURL(url); }
       };
-      img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+      img.onerror = () => { URL.revokeObjectURL(url); resolve(none); };
       img.src = url;
     });
+    return Promise.race([work, new Promise((resolve) => setTimeout(() => resolve(none), 20000))]);
   }
   // On the photos page, choosing photos uploads them straight away: no second tap.
   $$("input[type=file][data-autoupload]").forEach((input) => input.addEventListener("change", () => {
@@ -64,29 +76,58 @@
     e.preventDefault();
     const status = $("[data-upload-status]", form) || $("[data-upload-status]");
     const button = $("button[type=submit]", form);
+    const say = (text) => { if (status) status.textContent = text; };
+    const stop = (text) => { say(text); if (button) button.disabled = false; };
     if (button) { button.disabled = true; }
-    const data = new FormData(form);
+    const photos = [];
     for (const input of inputs) {
-      data.delete(input.name);
-      data.delete("thumbs");
       let i = 0;
       for (const file of input.files) {
         i += 1;
-        if (status) status.textContent = `Preparing photo ${i} of ${input.files.length}…`;
-        // Each photo travels with its small copy in the same position: guests' result cards load that one.
-        const full = await shrink(file), card = await shrink(file, 800, 0.78);
-        data.append(input.name, full || file);
-        data.append("thumbs", card || "");  // an empty entry keeps photos and copies in step
+        say(`Preparing photo ${i} of ${input.files.length}…`);
+        const { full, card } = await prepare(file);
+        const photo = full || file;
+        if (photo.size > PHOTO_LIMIT) {
+          return stop(`“${file.name}” is over 3 MB and could not be resized on this device. Choose a smaller copy.`);
+        }
+        photos.push({ field: input.name, photo, card });
       }
     }
-    if (status) status.textContent = "Uploading…";
-    try {
-      const resp = await fetch(form.action, { method: "POST", body: data, credentials: "same-origin" });
+    // Batches under the request limit; a photo and its small copy always travel together.
+    const batches = [[]];
+    let size = 0;
+    for (const p of photos) {
+      const bytes = p.photo.size + (p.card ? p.card.size : 0);
+      if (batches[batches.length - 1].length && size + bytes > REQUEST_BUDGET) { batches.push([]); size = 0; }
+      batches[batches.length - 1].push(p);
+      size += bytes;
+    }
+    let action = form.action, sent = 0;
+    const onward = new URL(action, location.href).pathname.replace(/\/new$/, "/");  // where the next batch may go
+    for (const [b, batch] of batches.entries()) {
+      const last = b === batches.length - 1;
+      const data = new FormData(form);
+      for (const input of inputs) data.delete(input.name);
+      data.delete("thumbs");
+      for (const p of batch) {
+        data.append(p.field, p.photo);
+        data.append("thumbs", p.card || "");  // an empty entry keeps photos and their small copies in step
+      }
+      if (!last) data.set("stay", "1");
+      say(batches.length > 1 ? `Uploading photos ${sent + 1}–${sent + batch.length} of ${photos.length}…` : "Uploading…");
+      let resp;
+      try {
+        resp = await fetch(action, { method: "POST", body: data, credentials: "same-origin" });
+      } catch {
+        return stop(sent ? `${sent} of ${photos.length} photos are in. Check your connection, then add the rest.`
+                         : "Upload failed. Check your connection and try again.");
+      }
+      sent += batch.length;
+      if (!last && resp.redirected && new URL(resp.url).pathname.startsWith(onward)) { action = resp.url; continue; }
       if (resp.redirected) { window.location = resp.url; return; }
+      if (resp.status === 413) return stop("Those photos are too large to send together. Choose fewer at a time.");
       document.open(); document.write(await resp.text()); document.close();
-    } catch {
-      if (status) status.textContent = "Upload failed. Check your connection and try again.";
-      if (button) button.disabled = false;
+      return;
     }
   }));
 
