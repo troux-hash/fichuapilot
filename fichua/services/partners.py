@@ -6,7 +6,7 @@ import hmac
 import re
 import secrets
 import uuid
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
 from ..db import Connection, utcnow
 from . import app_settings, catalog, kinds
@@ -367,7 +367,7 @@ def home_stats(conn: Connection, hotel: dict, today: date | None = None) -> dict
     from and who arrives next. The same figures the traveller's money panel shows."""
     today = today or date.today()
     start = date(today.year, today.month, 1)
-    since = {"h": hotel["id"], "s": f"{start.isoformat()} 00:00:00"}
+    since = {"h": hotel["id"], "s": datetime(start.year, start.month, 1)}  # a real timestamp: Postgres won't compare text
     questions = conn.scalar("SELECT COUNT(*) FROM enquiries WHERE hotel_id = :h AND created_at >= :s", since) or 0
     paid = conn.all("SELECT total_price, commission_amount, payout_amount FROM bookings WHERE hotel_id = :h "
                     "AND COALESCE(source, 'fichua') = 'fichua' AND status = 'confirmed' AND payment_status = 'paid' "
@@ -377,7 +377,7 @@ def home_stats(conn: Connection, hotel: dict, today: date | None = None) -> dict
                        "GROUP BY COALESCE(offline_source, 'walk-in')", since)
     arrivals = conn.all("SELECT reference, guest_name, check_in, nights, guests, rooms, source, payment_status "
                         "FROM bookings WHERE hotel_id = :h AND status = 'confirmed' AND check_in >= :d "
-                        "ORDER BY check_in, created_at LIMIT 5", {"h": hotel["id"], "d": today.isoformat()})
+                        "ORDER BY check_in, created_at LIMIT 5", {"h": hotel["id"], "d": today})
     sources = [{"label": "Fichua", "n": len(paid)}] + [{"label": r["src"], "n": int(r["n"])} for r in offline]
     return {
         "month": start, "questions": int(questions), "bookings": len(paid),

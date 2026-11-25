@@ -43,8 +43,8 @@
         {% for c in verification['items'] %}
         <div class="checks-form__row">
           <label for="check_{{ c.id }}"><strong>{{ c.name.en }}</strong></label>
-          <input id="check_{{ c.id }}" name="check_{{ c.id }}" type="date" max="{{ today }}" value="{{ c.done_on or '' }}" aria-label="{{ c.name.en }}: date done">
-          <input name="note_{{ c.id }}" value="{{ c.note }}" maxlength="200" placeholder="What was seen, e.g. ID seen by Amani" aria-label="{{ c.name.en }}: what was seen">
+          <input class="input" id="check_{{ c.id }}" name="check_{{ c.id }}" type="date" max="{{ today }}" value="{{ c.done_on or '' }}" aria-label="{{ c.name.en }}: date done">
+          <input class="input" name="note_{{ c.id }}" value="{{ c.note }}" maxlength="200" placeholder="What was seen, e.g. ID seen by Amani" aria-label="{{ c.name.en }}: what was seen">
         </div>
         {% endfor %}
       </div>

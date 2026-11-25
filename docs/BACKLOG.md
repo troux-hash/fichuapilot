@@ -21,6 +21,13 @@ Markets: Rwanda, Benin, Côte d'Ivoire. Master currency USD (RWF / CFA shown alo
 | Platform | WhatsApp 3-way messages (guest, hotel, Fichua) after payment, cancellations, approval decisions |
 | Platform | Daily payout job (Vercel Cron), portable Postgres schema with automatic column migrations |
 | Trust | "Built at MIT" section with the MIT, MIT Sandbox and MIT Kuo Sharper Center logos in the guest footer, partner landing page and partner portal ([guide](BRAND_ASSETS.md)) |
+| Guest site | Brief 3 v3: search starts with the kind of stay (five kinds), then where and when with dates optional; results grouped by kind, ranked by fit then verification (never price, fees or reply speed) |
+| Guest site | Each place shows the five checks with their dates, its host, price and terms, where the money goes (host's share, Fichua's fee paid by the host) and how it runs (people, place, money) |
+| Guest site | "Ask your host" page before WhatsApp: the message, the traveller's question, and the rule that booking and payment stay on Fichua |
+| Guest site | Every traveller page in English and French (EN/FR switch, remembered; the browser's language on a first visit) |
+| Guest site | "Starting in Rwanda, Benin and Côte d'Ivoire", with "Built at MIT, for Africa and the World" in small type below |
+| Partners | Kind of place and "good for" tags on the hotel details step; a home page with this month's questions, bookings, money, next arrivals and a share kit |
+| Admin | The kind of place, the five checks with dates and how the place runs, recorded on the review page; catalogue depth by kind and country on the dashboard |
 
 ## 🧪 QA findings — end-to-end test, 21 Nov 2026
 
@@ -103,6 +110,49 @@ Waiting on founder decisions: money flow ("Fichua never holds your money" or "he
 (7 / 14 / 30 days), one pricing rule for owners, the founding properties (real photos, host portraits and stories to replace
 the demo catalogue). Waiting on WhatsApp: the build-first "reveal" flow for owners.
 
+## 🧭 Brief 3 v3 build and decisions (25 Nov 2026)
+
+The traveller, operator and admin prototypes were built into the sites, with three decisions taken the same day:
+
+- **Countries:** say only "Starting in Rwanda, Benin and Côte d'Ivoire", with "Built at MIT, for Africa and the World"
+  in small type below (home page, footer, video end cards).
+- **Payment:** Fichua secures the payment (today's card checkout; the money panel says the fee is paid by the host).
+- **Ranking by reply speed:** removed for good, not a feature to build. Results rank by fit, then verification.
+
+Places listed before kinds existed get a kind inferred from their type and name (owners and the team can change it).
+Places reviewed before the five checks show "Reviewed by Fichua" until the team records the checks.
+
+Still in the prototypes, not built (each needs a decision or a service first):
+
+| ID | Priority | Side | From the prototypes | Needs |
+|---|---|---|---|---|
+| B3-01 | P2 | Owners | Sign in with a code sent on WhatsApp, no password | WhatsApp connected (SET-02) |
+| B3-02 | P2 | Owners | Fichua drafts the page from what the owner shared; the owner approves each item ("Looks right" / "Change") | Decision on concierge onboarding |
+| B3-03 | P2 | Travellers | Partly verified places take booking requests, paid once the host accepts | Decision, then a request flow |
+| B3-04 | P2 | Travellers | 30% deposit and mobile money (MTN MoMo, Airtel, Moov) | Payment decision and a provider |
+| B3-05 | P2 | Travellers | "Tell me when one joins" for searches with no place yet, listed for the team | — |
+| B3-06 | P2 | Travellers | Facts with their source, "Nearby", and "Why you haven't seen it elsewhere" on each page | Owner and team content |
+| B3-07 | P2 | Everyone | Partner portal and admin in French (the traveller pages already are) | — |
+| B3-08 | P3 | Admin | Search health: the friction map from Brief 3 with targets | Analytics (R2-T1) |
+| B3-09 | P3 | Owners | First 10 bookings free, then 7–12% | Pricing decision |
+
+## 🧪 QA findings — round 4, the Brief 3 v3 build (25 Nov 2026)
+
+A fourth end-to-end run on the local copy, rewritten for the new journeys: 55 steps in headless Edge (the traveller
+picks a kind of stay, then where and when, reads the dated checks and the money panel, asks the host, books, pays and
+cancels a second stay; the owner picks a kind of place and opens the new home; the team records the five checks and
+approves). No JavaScript errors, no failed requests and no sideways scrolling. 88 automated tests pass (9 new in
+`tests/test_kinds.py`). Narrated walkthrough videos are in `qa/2026-11-25-round4/`, kept out of git.
+
+| ID | Priority | Bug | Fix | Status |
+|---|---|---|---|---|
+| R4-B1 | P1 | The redesign dropped the big-group help ("no single room sleeps 12", with a one-tap search for enough rooms) | Restored on the new results page (caught by the tests before release) | ✅ Live 25 Nov |
+| R4-B2 | P2 | French header on phones: "Gérer une réservation" was cut off next to the EN/FR switch | Header links hide under 480 px; both are in the footer | ✅ Live 25 Nov |
+| R4-B3 | P2 | Owner home and bookings: three number tiles squeezed into one row on phones (also R2-O4) | Two tiles per row on phones | ✅ Live 25 Nov |
+| R4-B4 | P2 | The new owner-home and dashboard counts compared timestamps with text: fine on SQLite, risky on Postgres | Real timestamps in the queries | ✅ Live 25 Nov |
+| R4-B5 | P3 | French "why it matches" read with two colons in a row | "Kind. Reason." in both languages | ✅ Live 25 Nov |
+| R4-B6 | P3 | Admin check dates and notes used the browser's plain inputs | Styled like every other field | ✅ Live 25 Nov |
+
 ## 🧪 QA findings — round 3, before going live (25 Nov 2026)
 
 A third end-to-end run on the local copy with the round-2 fixes in: the same 44 steps in headless Edge (phones at
@@ -147,8 +197,8 @@ Improvements to build (not started):
 |---|---|---|---|---|
 | R2-T1 | **P1** | Travellers | Funnel analytics: search → hotel view → ask → checkout → paid, with the channel (`utm_source`), stored in Fichua's own database and shown in admin; no third-party tracker | No go-to-market decision can rest on data today |
 | R2-T2 | **P1** | Travellers | Destination pages ("Where to stay near Volcanoes National Park", "Lake Kivu", "Ouidah") listing reviewed places with plain facts, in the sitemap with schema.org data | Travellers decide in AI answers and search before they reach a booking site |
-| R2-O1 | **P1** | Owners | Owners see their "Ask on WhatsApp" enquiries (`ASK-` codes) and a monthly count | The first proof of value, before any booking |
-| R2-A1 | **P1** | Admin | Dashboard: enquiries, enquiry-to-booking rate, hotels with a host profile, approvals as a list | The numbers that run the pilot |
+| R2-O1 | **P1** | Owners | Owners see their "Ask on WhatsApp" enquiries (`ASK-` codes) and a monthly count (the count is on the new owner home; the list is still to do) | The first proof of value, before any booking |
+| R2-A1 | **P1** | Admin | Dashboard: enquiries, enquiry-to-booking rate, hotels with a host profile, approvals as a list (enquiries and verified places are on the dashboard; the rate and the list are still to do) | The numbers that run the pilot |
 | R2-T3 | P2 | Travellers | One WhatsApp button per phone screen (the sticky bar); the others become text links | Three equal calls to action dilute the path to booking |
 | R2-T4 | P2 | Travellers | "Share with family" on WhatsApp, with the dates and the total | Many trips are decided with family on WhatsApp |
 | R2-T5 | P2 | Travellers | Shortlist and compare up to three places, no account | Travellers compare in tabs and lose track |
@@ -156,7 +206,7 @@ Improvements to build (not started):
 | R2-T7 | P2 | Travellers | Search suggestions for regions, parks and lakes | People type "Lake Kivu", not "Rubavu" |
 | R2-O2 | P2 | Owners | The review step suggests the optional host profile | Owners may submit without ever seeing it |
 | R2-O3 | P2 | Owners | A caption on each photo, also used as alt text | Guests and search engines read captions |
-| R2-O4 | P2 | Owners | Bookings totals two per row on phones | "after commission" wraps over three lines |
+| R2-O4 | P2 | Owners | Bookings totals two per row on phones (✅ done in round 4) | "after commission" wraps over three lines |
 | R2-O5 | P2 | Owners | A "Join with my code" button at the top of the partner page on phones | The form starts below a full screen of pitch |
 | R2-O6 | P2 | Owners | "I reply within …", shown to guests once reply times are measured | Sets expectations and rewards fast hosts |
 | R2-A2 | P2 | Admin | Finance export (CSV) | Month-end work happens in a spreadsheet |

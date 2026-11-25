@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import re
-from datetime import date
+from datetime import date, datetime
 from urllib.parse import quote, urlencode
 
 from fastapi import APIRouter, Form, Request, UploadFile
@@ -86,7 +86,7 @@ def _stats(conn) -> dict:
     month = finance.report(conn, finance.FinanceFilter(period="month"))["totals"]
     live = catalog.live_hotels(conn)
     checks = kinds.checks_by_hotel(conn, [h["id"] for h in live])
-    start = date.today().replace(day=1).isoformat() + " 00:00:00"
+    start = datetime.combine(date.today().replace(day=1), datetime.min.time())  # a timestamp, not text, for Postgres
     return {
         "questions": conn.scalar("SELECT COUNT(*) FROM enquiries WHERE created_at >= :s", {"s": start}) or 0,
         "verified": sum(1 for h in live if len(checks.get(h["id"], {})) == len(kinds.CHECKS)),

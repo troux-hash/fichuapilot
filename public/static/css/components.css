@@ -592,7 +592,7 @@ input[type="range"] { width: 100%; accent-color: var(--color-primary); }
 .kind-card__body { display: grid; gap: 3px; padding: var(--space-3) var(--space-4) var(--space-3) 0; }
 .kind-card__name { font-family: var(--font-display); font-size: var(--text-lg); line-height: 1.15; }
 .kind-card__line { font-size: var(--text-sm); color: var(--color-muted); }
-.kind-card__good { font-size: var(--text-sm); font-weight: var(--weight-bold); color: var(--color-success); }
+.kind-card__good { font-size: var(--text-sm); font-weight: 600; color: var(--color-success); }
 .kind-help { margin: var(--space-4) 0 0; }
 
 /* The trust band: talk to your host directly, we take care of the rest */

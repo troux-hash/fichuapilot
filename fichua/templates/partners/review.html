@@ -8,7 +8,7 @@
 <div class="split">
   <section class="panel">
     {% set rows = [
-      ('hotel', 'Hotel details', status.steps.identity, (hotel.name ~ ' · ' ~ (hotel.city or 'city missing') ~ ', ' ~ (hotel.country or '')) if status.steps.identity else 'Add the address, phone numbers and map pin'),
+      ('hotel', 'Hotel details', status.steps.identity, (hotel.name ~ ' · ' ~ (hotel.city or 'city missing') ~ ', ' ~ (hotel.country or '') ~ ' · ' ~ kind_name(hotel.kind)) if status.steps.identity else 'Add the address, phone numbers and map pin'),
       ('photos', 'Photos', status.steps.photos, status.photos ~ ' hotel photos' ~ ('' if status.steps.photos else ' (at least 3 needed)')),
       ('rooms', 'Rooms and prices', status.steps.rooms, (status.rooms ~ (' room type · ' if status.rooms == 1 else ' room types · ') ~ status.room_units ~ (' room' if status.room_units == 1 else ' rooms')) if status.steps.rooms else 'Add at least one room type with a price'),
       ('policies', 'Policies and payment', status.steps.policies, 'Terms accepted' if status.steps.policies else 'Accept the partner terms'),
