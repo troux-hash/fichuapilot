@@ -10,8 +10,18 @@
   <div class="container container--narrow">
     <header class="kind-intro">
       <h1 class="kind-intro__title">{{ t("What kind of stay are you looking for?") }}</h1>
-      <ul class="proof-line" aria-label="{{ t('Why book on Fichua') }}">
-        <li>{{ t("Verified hosts") if proven else t("Places reviewed by our team") }}</li><li>{{ t("The money shown") }}</li><li>{{ t("WhatsApp the host") }}</li>
+      {# Five promises, in the traveller's words (26 Nov 2026): less friction, a smooth booking, the host directly,
+         a secured payment, the money shown. Phones show the short line; laptops add the sentence under it. #}
+      <ul class="promise-row" aria-label="{{ t('Why book on Fichua') }}">
+        {% for icon, title, line in [
+          ('zap', t("Book in a few taps"), t("One page, no account needed.")),
+          ('calendar-check', t("Confirmed on the spot"), t("Your Fichua reference arrives straight away.")),
+          ('chat', t("Talk to your host directly"), t("Ask anything on WhatsApp before you book.")),
+          ('lock', t("Payment secured by Fichua"), t("Refunds follow the rules you saw.")),
+          ('eye', t("See where your money goes"), t("What your host receives, and Fichua’s fee."))] %}
+        <li class="promise-row__item"><span class="promise-row__icon">{{ i.icon(icon, 18) }}</span>
+          <span class="promise-row__text"><strong>{{ title }}</strong><span class="promise-row__line">{{ line }}</span></span></li>
+        {% endfor %}
       </ul>
     </header>
 

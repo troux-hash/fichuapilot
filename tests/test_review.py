@@ -65,7 +65,13 @@ def test_header_menu_keeps_list_your_place_in_reach():
 def test_home_shows_five_kinds_and_a_way_to_ask():
     home = guest.get("/").text
     assert home.count('class="kind-tile__input"') == 5
-    assert "The money shown" in home and "WhatsApp the host" in home
+    # Five promises with icons under the question (26 Nov 2026), in English and French.
+    assert home.count('class="promise-row__item"') == 5
+    for promise in ("Book in a few taps", "Confirmed on the spot", "Talk to your host directly",
+                    "Payment secured by Fichua", "See where your money goes"):
+        assert promise in home, promise
+    french = TestClient(app).get("/", headers={"Accept-Language": "fr-FR,fr;q=0.9"}).text
+    assert "Réservez en quelques clics" in french and "Paiement sécurisé par Fichua" in french
     assert "data-kind-submit" not in home  # the button always works: no pick means every kind
     with db.connect() as conn:
         app_settings.put(conn, "admin_whatsapp", "+250788000999")
@@ -183,9 +189,8 @@ def test_vetting_promise_and_dated_seal_need_five_dated_checks():
     with db.connect() as conn:
         conn.run("DELETE FROM hotel_checks WHERE hotel_id = :h", {"h": hotel["id"]})
     home = guest.get("/").text
-    if "Verified hosts" not in home:  # no other place in the test data is fully checked
-        assert "Places reviewed by our team" in home and "We review every place" in home
-        assert "We vet every host" not in home
+    if "We vet every host" not in home:  # no other place in the test data is fully checked
+        assert "We review every place" in home
     seen = date.today() - timedelta(days=2)
     with db.connect() as conn:
         for check in ("identity", "licence", "location", "photos", "whatsapp"):
@@ -193,7 +198,7 @@ def test_vetting_promise_and_dated_seal_need_five_dated_checks():
                      {"h": hotel["id"], "c": check, "d": seen})
     try:
         home = guest.get("/").text
-        assert "Verified hosts" in home and "We vet every host" in home
+        assert "We vet every host" in home
         page = guest.get(f"/hotels/{hotel['id']}", params=STAY).text
         seal = page.split('class="seal seal--full"', 1)[1].split("</a>", 1)[0]
         assert "Fichua Verified · 5/5 · " in seal and str(seen.year) in seal

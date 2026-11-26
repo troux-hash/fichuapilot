@@ -20,8 +20,13 @@ def test_trust_section_on_guest_and_partner_pages():
         assert "https://kuosharper.mit.edu" in html, path
 
 
-def test_logos_stay_off_until_mit_says_yes():
-    assert not web.settings.mit_logos_approved
+def test_the_three_mit_logos_show_now_that_mit_said_yes(monkeypatch):
+    assert web.settings.mit_logos_approved  # MIT's written OK arrived on 26 Nov 2026
+    html = TestClient(app).get("/").text
+    for name in ("mit.png", "mit-sandbox.png", "kuo-sharper-white.png"):
+        assert f"/static/img/trust/{name}" in html, name
+    # The switch still turns them off (MIT_LOGOS_APPROVED=0): names only, as words.
+    monkeypatch.setattr(web, "settings", dataclasses.replace(web.settings, mit_logos_approved=False))
     assert all(p["logo"] is None for p in web.trust_partners())
     html = TestClient(app).get("/").text
     assert "/static/img/trust/mit.png" not in html and "MIT Sandbox Innovation Fund" in html

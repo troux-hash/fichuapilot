@@ -75,8 +75,9 @@ def load_settings() -> Settings:
         auto_migrate=_bool("AUTO_MIGRATE", True),
         default_currency=os.getenv("DEFAULT_CURRENCY", "USD"),
         max_upload_mb=int(os.getenv("MAX_UPLOAD_MB", "4")),
-        # MIT's logos stay off until MIT's written OK is on file (backlog P1 #7); "Built at MIT" shows as words.
-        mit_logos_approved=_bool("MIT_LOGOS_APPROVED", False),
+        # MIT's written OK for the three logos arrived on 26 Nov 2026 (backlog P1 #7). MIT_LOGOS_APPROVED=0 turns
+        # them off again: "Built at MIT" then shows as words only.
+        mit_logos_approved=_bool("MIT_LOGOS_APPROVED", True),
         public_url=os.getenv("PUBLIC_URL", "").rstrip("/"),
         # Payments: without a Stripe key the site uses Fichua's built-in test checkout.
         stripe_secret_key=os.getenv("STRIPE_SECRET_KEY", "").strip(),
