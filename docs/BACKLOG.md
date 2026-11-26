@@ -268,7 +268,7 @@ founder decisions above, and real photos and host stories for the founding prope
 | # | Feature | Needs |
 |---|---|---|
 | 1 | Switch Stripe from test mode to live (test mode is connected and working) | US company, Stripe account activation, `sk_live_` key |
-| 2 | Connect WhatsApp (Meta test number, then verified business number + message templates) | Meta developer app |
+| 2 | Connect WhatsApp: connected 26 Nov 2026 on Meta's test number, 19 template versions waiting for Meta's approval; next, verify +1 201-435-6758 ("Fichua Travel") and switch to it | Number verification on Meta |
 | 3 | French for the partner portal and guest site (Benin, Côte d'Ivoire) | — |
 | 4 | Automatic payouts to hotel bank accounts (Stripe Global Payouts: Benin + CI; Rwanda on request) | Stripe access |
 | 5 | Map view on the guest results page (hotels already have pins) | — |
