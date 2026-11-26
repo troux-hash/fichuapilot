@@ -30,7 +30,7 @@ Markets: Rwanda, Benin, Côte d'Ivoire. Master currency USD (RWF / CFA shown alo
 | Admin | The kind of place, the five checks with dates and how the place runs, recorded on the review page; catalogue depth by kind and country on the dashboard |
 | Guest site | Design review, ten changes: "Demo place" labels, a pilot notice while payments are tests, the dated Verified seal, compact host-first cards with a money bar, local money first for local visitors, laptop layouts with compare |
 | Trust | The MIT, MIT Sandbox and MIT Kuo Sharper Center logos, with MIT's written OK (26 Nov 2026), in the guest footer, the owners' page and the portal |
-| Guest site | Five promises with icons under the home question, in English and French: book in a few taps, confirmed on the spot, talk to your host directly, payment secured by Fichua, see where your money goes |
+| Guest site | Home page, top to bottom: what "Fichua" means (Swahili for "to reveal, to uncover") and the mission; "What kind of stay are you looking for?"; the five kinds, each with a very short line; then "Talk to your host directly. We take care of the rest." with five icon points (book in minutes, confirmed instantly, ask before you book, secure payment, nothing hidden). English and French |
 | Partners | "List your place" in the phone menu, the 7% on the owners' page, "No code? Ask on WhatsApp", hotel details in three short parts |
 | Admin | No place goes live without a phone and the dated "WhatsApp tested" check; a "Demo place" switch on the review page |
 
