@@ -17,6 +17,7 @@ PHOTO_TYPES = {"image/jpeg", "image/png", "image/webp"}
 MAX_PHOTO_BYTES = 3 * 1024 * 1024
 MAX_THUMB_BYTES = 600 * 1024  # the ~800 px card copy the browser makes next to each photo
 JPEG_START = bytes([0xFF, 0xD8, 0xFF])
+PNG_START = bytes([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A])
 MIN_HOTEL_PHOTOS = 3
 ROOM_KINDS = ["Single", "Double", "Twin", "Suite", "Family", "Dormitory"]
 PROPERTY_TYPES = ["Hotel", "Guesthouse", "Lodge", "Apartment", "Resort", "Boutique"]
@@ -358,10 +359,31 @@ def media_list(conn: Connection, owner_type: str, owner_id: str) -> list[dict]:
                     "ORDER BY sort, created_at", {"t": owner_type, "o": owner_id})
 
 
+HEIF_BRANDS = (b"heic", b"heix", b"hevc", b"hevx", b"heim", b"heis", b"mif1", b"msf1")  # iPhone photos
+
+
+def photo_type(data: bytes) -> str | None:
+    """What a file really is, from its first bytes. Phones label photos inconsistently ("image/jpg", empty,
+    "application/octet-stream"), so the label is not trusted: a real JPEG, PNG or WebP is accepted whatever it says."""
+    if data[:3] == JPEG_START:
+        return "image/jpeg"
+    if data[:8] == PNG_START:
+        return "image/png"
+    if data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+        return "image/webp"
+    if data[4:8] == b"ftyp" and data[8:12] in HEIF_BRANDS:
+        return "image/heic"
+    return None
+
+
 def add_photo(conn: Connection, owner_type: str, owner_id: str, data: bytes, content_type: str,
               label: str = "", thumb: bytes | None = None) -> str:
     """Store a photo, and its small card copy when the browser made one (it is skipped if odd)."""
-    if content_type not in PHOTO_TYPES:
+    content_type = photo_type(data) or content_type
+    if content_type == "image/heic":
+        raise PartnerError("That is an iPhone HEIC photo, which browsers can't show. Choose it in Safari, or set the "
+                           "iPhone's Settings > Camera > Formats to \"Most Compatible\", then upload it again.")
+    if content_type not in PHOTO_TYPES or not photo_type(data):
         raise PartnerError("Upload JPG, PNG or WebP photos.")
     if len(data) > MAX_PHOTO_BYTES:
         raise PartnerError("That photo is too large (over 3 MB). Try again: the page shrinks photos before upload.")

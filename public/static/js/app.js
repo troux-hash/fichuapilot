@@ -5,7 +5,7 @@
   const iso = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
   const addDays = (s, n) => { const d = new Date(s + "T12:00:00"); d.setDate(d.getDate() + n); return iso(d); };
   const store = {
-    get(k, fallback) { try { return JSON.parse(localStorage.getItem(k)) ?? fallback; } catch { return fallback; } },
+    get(k, fallback) { try { const v = JSON.parse(localStorage.getItem(k)); return v === null || v === undefined ? fallback : v; } catch { return fallback; } },
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* private mode */ } },
   };
 
@@ -79,7 +79,8 @@
     const panel = $("[data-search-panel]");
     const open = panel.classList.toggle("is-open");
     btn.setAttribute("aria-expanded", open);
-    if (open) $("input[name=destination]", panel)?.focus();
+    const dest = $("input[name=destination]", panel);
+    if (open && dest) dest.focus();
   }));
 
   // Filters: instant on laptop, bottom sheet on phone/tablet.
@@ -95,19 +96,21 @@
       // An untouched price slider isn't a filter — don't put it in the URL.
       if (range && range.value === range.max) range.disabled = true;
     });
-    range?.addEventListener("input", () => { rangeLabel.textContent = "$" + Number(range.value).toLocaleString(); });
+    if (range) range.addEventListener("input", () => { rangeLabel.textContent = "$" + Number(range.value).toLocaleString(); });
     filterForm.addEventListener("change", () => { if (wide.matches) submit(); });
-    $("[data-sort]")?.addEventListener("change", submit);
-    $("[data-open-filters]")?.addEventListener("click", () => open(true));
-    $("[data-close-filters]")?.addEventListener("click", () => open(false));
-    scrim?.addEventListener("click", () => open(false));
+    const on = (el, type, fn) => { if (el) el.addEventListener(type, fn); };
+    on($("[data-sort]"), "change", submit);
+    on($("[data-open-filters]"), "click", () => open(true));
+    on($("[data-close-filters]"), "click", () => open(false));
+    on(scrim, "click", () => open(false));
   }
 
   // After a failed form post: show the error even if it sits below the fold, and put the cursor in
   // the field to fix (the partner sign-up form sits under the pitch on small phones).
   const toFix = $("[data-error-focus]");
   if (toFix) {
-    const alert = toFix.closest("form")?.querySelector(".alert-error") || toFix;
+    const host = toFix.closest("form");
+    const alert = (host && host.querySelector(".alert-error")) || toFix;
     const show = () => { alert.scrollIntoView({ block: "start" }); toFix.focus({ preventScroll: true }); };
     // After load: fonts and images can still move the page while it loads.
     if (document.readyState === "complete") show(); else window.addEventListener("load", show, { once: true });
@@ -116,9 +119,10 @@
   // A field's error goes away as soon as the guest starts fixing it; its hint comes back.
   $$(".field.has-error").forEach((field) => {
     const input = $("input, textarea, select", field);
-    input?.addEventListener("input", () => {
+    if (input) input.addEventListener("input", () => {
       field.classList.remove("has-error");
-      $(".error", field)?.remove();
+      const shown = $(".error", field);
+      if (shown) shown.remove();
       const hint = $(".hint", field);
       if (hint) { hint.hidden = false; input.setAttribute("aria-describedby", hint.id); }
       else input.removeAttribute("aria-describedby");
@@ -140,9 +144,12 @@
   $$("[data-copy]").forEach((el) => {
     el.style.cursor = "copy";
     el.title = "Tap to copy";
-    el.addEventListener("click", () => navigator.clipboard?.writeText(el.dataset.copy).then(() => {
-      const t = el.textContent; el.textContent = "Copied ✓"; setTimeout(() => (el.textContent = t), 1200);
-    }));
+    el.addEventListener("click", () => {
+      if (!navigator.clipboard) return;  // older phones: the reference stays selectable
+      navigator.clipboard.writeText(el.dataset.copy).then(() => {
+        const t = el.textContent; el.textContent = "Copied ✓"; setTimeout(() => (el.textContent = t), 1200);
+      });
+    });
   });
 
   // Admin upload drop zone label.

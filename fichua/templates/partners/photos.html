@@ -19,7 +19,8 @@
       <span class="muted small">JPG, PNG or WebP · they upload as soon as you choose them, resized on your phone for slow connections</span>
       <input type="file" name="files" accept="image/jpeg,image/png,image/webp" multiple required data-autoupload>
     </label>
-    <div class="form-actions" style="margin-top:var(--space-3)"><span class="muted small" data-upload-status aria-live="polite"></span><button class="btn btn-primary js-hide" type="submit">Upload photos</button></div>
+    {# The button stays visible: if a phone doesn't start the upload by itself, one tap here sends the photos. #}
+    <div class="form-actions" style="margin-top:var(--space-3)"><span class="muted small" data-upload-status aria-live="polite"></span><button class="btn btn-secondary" type="submit">Upload photos</button></div>
   </form>
   {% if photos %}
   <div class="photo-grid">

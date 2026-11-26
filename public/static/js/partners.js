@@ -11,7 +11,7 @@
     if (!el || !window.L) return;
     const latIn = $("input[data-lat]"), lngIn = $("input[data-lng]"), coords = $("[data-coords]"), country = $("[data-country]");
     const has = el.dataset.lat !== "" && el.dataset.lng !== "";
-    const start = has ? [parseFloat(el.dataset.lat), parseFloat(el.dataset.lng)] : (CITY[country?.value] || CITY.Rwanda);
+    const start = has ? [parseFloat(el.dataset.lat), parseFloat(el.dataset.lng)] : (CITY[country && country.value] || CITY.Rwanda);
     const map = L.map(el, { scrollWheelZoom: false }).setView(start, has ? 17 : 13);
     L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19, attribution: "&copy; OpenStreetMap contributors",
@@ -25,8 +25,9 @@
     };
     if (marker) marker.on("dragend", () => set(marker.getLatLng()));
     map.on("click", (e) => set(e.latlng));
-    country?.addEventListener("change", () => { if (!marker && CITY[country.value]) map.setView(CITY[country.value], 13); });
-    $("[data-locate]")?.addEventListener("click", () => {
+    if (country) country.addEventListener("change", () => { if (!marker && CITY[country.value]) map.setView(CITY[country.value], 13); });
+    const locate = $("[data-locate]");
+    if (locate) locate.addEventListener("click", () => {
       if (!navigator.geolocation) return;
       navigator.geolocation.getCurrentPosition((p) => {
         const ll = L.latLng(p.coords.latitude, p.coords.longitude);
@@ -49,9 +50,10 @@
     });
   }
   // One decode gives both sizes. A phone that stalls gets 20 seconds; then the photo goes as it is.
+  // Files without a type (some Android pickers) are tried too: a picture decodes, anything else falls through.
   function prepare(file) {
     const none = { full: null, card: null };
-    if (!file.type.startsWith("image/")) return Promise.resolve(none);
+    if (file.type && !file.type.startsWith("image/")) return Promise.resolve(none);
     const work = new Promise((resolve) => {
       const img = new Image();
       const url = URL.createObjectURL(file);
@@ -66,9 +68,22 @@
     });
     return Promise.race([work, new Promise((resolve) => setTimeout(() => resolve(none), 20000))]);
   }
+  // Submit a form the way its own button would. form.requestSubmit() is missing on older phones (iPhones before
+  // iOS 16): calling it there threw, so choosing photos did nothing at all (fixed 27 Nov 2026).
+  function submitForm(form) {
+    if (typeof form.requestSubmit === "function") { form.requestSubmit(); return; }
+    const button = document.createElement("button");
+    button.type = "submit";
+    button.style.display = "none";
+    form.appendChild(button);
+    button.click();
+    form.removeChild(button);
+  }
+  const WEB_TYPES = /^image\/(jpeg|png|webp)$/;
+  const WEB_NAMES = /\.(jpe?g|png|webp)$/i;
   // On the photos page, choosing photos uploads them straight away: no second tap.
   $$("input[type=file][data-autoupload]").forEach((input) => input.addEventListener("change", () => {
-    if (input.files.length) input.form.requestSubmit();
+    if (input.files.length) submitForm(input.form);
   }));
   $$("form[data-upload]").forEach((form) => form.addEventListener("submit", async (e) => {
     const inputs = $$("input[type=file]", form).filter((i) => i.files.length);
@@ -79,6 +94,7 @@
     const say = (text) => { if (status) status.textContent = text; };
     const stop = (text) => { say(text); if (button) button.disabled = false; };
     if (button) { button.disabled = true; }
+    try {
     const photos = [];
     for (const input of inputs) {
       let i = 0;
@@ -86,6 +102,11 @@
         i += 1;
         say(`Preparing photo ${i} of ${input.files.length}…`);
         const { full, card } = await prepare(file);
+        if (!full && !WEB_TYPES.test(file.type) && !WEB_NAMES.test(file.name)) {
+          return stop(/\.(heic|heif)$/i.test(file.name) || /hei[cf]/.test(file.type)
+            ? `“${file.name}” is an iPhone HEIC photo this browser can't convert. Choose it in Safari, or set the iPhone's Settings › Camera › Formats to “Most Compatible”, then try again.`
+            : `“${file.name}” isn't a JPG, PNG or WebP photo. Choose a photo in one of those formats.`);
+        }
         const photo = full || file;
         if (photo.size > PHOTO_LIMIT) {
           return stop(`“${file.name}” is over 3 MB and could not be resized on this device. Choose a smaller copy.`);
@@ -128,6 +149,10 @@
       if (resp.status === 413) return stop("Those photos are too large to send together. Choose fewer at a time.");
       document.open(); document.write(await resp.text()); document.close();
       return;
+    }
+    } catch (err) {
+      // Never fail silently: say what happened and leave the Upload button ready for another try.
+      stop(`The upload stopped (${(err && err.message) || "unknown error"}). Try again, or choose fewer photos at a time.`);
     }
   }));
 

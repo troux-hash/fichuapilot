@@ -55,7 +55,8 @@ def test_sign_up_errors_point_at_the_field(admin):  # IMP-09
 def test_photos_upload_in_one_tap_with_a_card_copy(admin):  # IMP-10 and IMP-07
     p = _join(admin, "PHOTO-TEST", "photos@example.com", "Photo Lodge")
     page = p.get("/partners/photos").text
-    assert 'data-autoupload' in page and "Choose photos" in page and "js-hide" in page
+    # The Upload button stays visible: on phones where choosing photos does not start the upload, it does (27 Nov 2026).
+    assert 'data-autoupload' in page and "Choose photos" in page and "js-hide" not in page and "Upload photos</button>" in page
     assert re.search(r'class="btn btn-secondary" href="/partners/rooms">Continue', page)  # 0 photos: not the main button
     r = p.post("/partners/photos", files=[("files", ("a.jpg", PNG, "image/png")), ("thumbs", ("a.jpg", JPEG, "image/jpeg")),
                                           ("files", ("b.png", PNG, "image/png")), ("thumbs", ("", b"", "application/octet-stream")),
