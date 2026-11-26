@@ -13,6 +13,7 @@
 {% elif decided == 'hide' %}<div class="alert alert-info" role="status">Hidden. Guests can't find or book {{ hotel.name }}. Existing bookings stay as they are.</div>
 {% elif decided == 'show' %}<div class="alert alert-success" role="status">{{ hotel.name }} is back on Fichua. Guests can book it again.</div>
 {% elif decided == 'bad-commission' %}<div class="alert alert-error" role="alert">Commission must be between 0% and 50%. Nothing was changed.</div>
+{% elif decided == 'no-whatsapp' %}<div class="alert alert-error" role="alert"><strong>Not approved yet.</strong> A place goes live only with a reception number travellers can message and the WhatsApp check dated below. Test the number, record the check, then approve.</div>
 {% elif decided == 'trust' %}<div class="alert alert-success" role="status">Saved. Travellers see the kind of place, each check with its date and how the place runs on its page.</div>
 {% elif decided == 'trust-errors' %}<div class="alert alert-error" role="alert">Saved, except: {{ request.query_params.get('why', '') }}</div>{% endif %}
 <div class="split">
@@ -54,7 +55,9 @@
         <input id="{{ p.field }}" name="{{ p.field }}" value="{{ hotel[p.field] or '' }}" maxlength="200" placeholder="{{ p.name.en }}: {{ {'people': 'e.g. 6 staff from Rubavu (seen 12 Nov 2026)', 'place': 'e.g. solar hot water (seen 12 Nov 2026)', 'money': 'e.g. buys coffee from 12 neighbouring farms (receipts seen 12 Nov 2026)'}[p.id] }}">
         {% endfor %}
       </div>
-      <div class="form-actions"><span class="muted small">Leave a date empty for a check not done yet.</span><button class="btn btn-primary" type="submit">Save</button></div>
+      <label class="toggle-row"><span><strong>Demo place</strong><br><span class="muted small">Shown to explain Fichua, not a real listing: labelled “Demo place”, never “Reviewed”.</span></span>
+        <input type="checkbox" name="is_demo" value="1" {% if hotel.demo %}checked{% endif %}></label>
+      <div class="form-actions"><span class="muted small">Leave a date empty for a check not done yet. Approval needs the WhatsApp check.</span><button class="btn btn-primary" type="submit">Save</button></div>
     </form>
     <section class="panel panel-pad" style="display:grid;gap:var(--space-4)">
       <h2>Photos</h2>

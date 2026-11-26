@@ -187,6 +187,30 @@
     syncDates();
   }
 
+  // Results: tick up to three places to compare. The bar shows the count; a fourth tick is not possible.
+  // Without JS the "Compare the places you ticked" button submits the same form (the page keeps the first three).
+  const compareForm = $("[data-compare-form]");
+  if (compareForm) {
+    const ticks = $$("[data-compare]", compareForm), bar = $("[data-compare-bar]", compareForm);
+    const count = $("[data-compare-count]", compareForm), barButton = bar && $("button", bar);
+    const sync = () => {
+      const n = ticks.filter((b) => b.checked).length;
+      ticks.forEach((b) => { b.disabled = !b.checked && n >= 3; });
+      if (count) count.textContent = n;
+      if (bar) bar.hidden = n === 0;
+      if (barButton) barButton.disabled = n < 2;
+    };
+    ticks.forEach((b) => b.addEventListener("change", sync));
+    sync();
+  }
+
+  // Place page: the seal on the photo opens the dated checks below it (design review F22).
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest('a[href="#checks"]')) return;
+    const details = $("#checks details");
+    if (details) details.open = true;
+  });
+
   // Place page: hide the bottom bar while the rooms are on screen, so it never covers a Book button.
   const cta = $(".sticky-cta"), roomList = document.getElementById("rooms");
   if (cta && roomList && "IntersectionObserver" in window) {

@@ -44,6 +44,7 @@ class Settings:
     auto_migrate: bool
     default_currency: str
     max_upload_mb: int
+    mit_logos_approved: bool
     public_url: str
     stripe_secret_key: str
     stripe_webhook_secret: str
@@ -74,6 +75,8 @@ def load_settings() -> Settings:
         auto_migrate=_bool("AUTO_MIGRATE", True),
         default_currency=os.getenv("DEFAULT_CURRENCY", "USD"),
         max_upload_mb=int(os.getenv("MAX_UPLOAD_MB", "4")),
+        # MIT's logos stay off until MIT's written OK is on file (backlog P1 #7); "Built at MIT" shows as words.
+        mit_logos_approved=_bool("MIT_LOGOS_APPROVED", False),
         public_url=os.getenv("PUBLIC_URL", "").rstrip("/"),
         # Payments: without a Stripe key the site uses Fichua's built-in test checkout.
         stripe_secret_key=os.getenv("STRIPE_SECRET_KEY", "").strip(),

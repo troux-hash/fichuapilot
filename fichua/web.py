@@ -13,7 +13,7 @@ from fastapi.templating import Jinja2Templates
 
 from . import i18n
 from .config import settings
-from .services import currency, kinds
+from .services import currency, kinds, payments
 
 templates = Jinja2Templates(directory=str(Path(__file__).with_name("templates")))
 
@@ -127,6 +127,9 @@ def trust_partners() -> list[dict]:
     out = []
     for p in TRUST_PARTNERS:
         logo, plate = None, "light"
+        if not settings.mit_logos_approved:  # words only until MIT's written OK is on file (design review F02)
+            out.append({**p, "logo": None, "plate": plate})
+            continue
         for name, tone in ((p["key"], "light"), (f"{p['key']}-white", "dark")):
             ext = next((e for e in TRUST_LOGO_EXTS if (folder / f"{name}.{e}").exists()), None)
             if ext:
@@ -143,6 +146,41 @@ def local_price(amount, country) -> str:
         return ""
     value, code = found
     return f"≈ {i18n.number(value)} {code}"
+
+
+def money_pair(amount, country) -> dict:
+    """A price as two lines: the traveller's own currency first when they are in the place's country (design
+    review F19, for local travellers), else dollars first with the local amount beside it."""
+    usd = i18n.money(amount)
+    found = currency.local_amount(amount, country, rates()) if amount is not None else None
+    if not found:
+        return {"main": usd, "sub": "", "local_first": False}
+    value, code = found
+    local = f"{i18n.number(value)} {code}"
+    info = currency.country_info(country)
+    if info and i18n.visitor() == info["iso"]:
+        return {"main": local, "sub": usd, "local_first": True}
+    return {"main": usd, "sub": "≈ " + local, "local_first": False}
+
+
+def img_srcset(url: str | None, card: bool = True) -> str:
+    """Smaller copies for phones (design review F27). Cards never load more than 800 px; the first photo of a
+    place may use the full 1,600 px upload on large screens. Unsplash resizes on request."""
+    if not url:
+        return ""
+    if url.startswith("/media/"):
+        base = url.split("?")[0]
+        return "" if card else f"{base}?size=card 800w, {base} 1600w"
+    if "images.unsplash.com" in url:
+        def at(width: int) -> str:
+            return _WIDTH.sub(rf"\g<1>w={width}", url) if _WIDTH.search(url) else f"{url}{'&' if '?' in url else '?'}w={width}"
+        return ", ".join(f"{at(w)} {w}w" for w in ((400, 800) if card else (800, 1200, 1600)))
+    return ""
+
+
+def is_pilot() -> bool:
+    """Payments are tests (no Stripe key, or a test key): pages that take or confirm a booking say so (F03)."""
+    return not payments.is_live()
 
 
 def money_split(total, commission_pct) -> dict:
@@ -165,6 +203,7 @@ templates.env.globals["trust_partners"] = trust_partners
 templates.env.globals.update(
     t=i18n.t, tn=i18n.tn, pick=i18n.pick, fdate=i18n.fdate, frange=i18n.frange, price=i18n.money,
     number=i18n.number, pct=i18n.pct, join_words=i18n.join, local_price=local_price, money_split=money_split,
+    money_pair=money_pair, img_srcset=img_srcset, is_pilot=is_pilot,
     kinds=kinds, KINDS=kinds.KINDS, TAGS=kinds.TAGS,
     kind_name=lambda k: kinds.kind_name(k, i18n.current()), tag_name=lambda tg: kinds.tag_name(tg, i18n.current()))
 templates.env.filters["money"] = money
@@ -179,4 +218,6 @@ templates.env.globals["app_name"] = settings.app_name
 def render(request: Request, name: str, status_code: int = 200, **context):
     # Templates render right here, so every t() in them (and in their macros) sees this page's language.
     context["lang"] = i18n.use(context.get("lang") or i18n.lang_of(request))
+    # Where the visitor is (Vercel's own header; ?visitor=RW to try it locally): prices in their currency first.
+    i18n.set_visitor(request.headers.get("x-vercel-ip-country") or request.query_params.get("visitor"))
     return templates.TemplateResponse(request, name, context, status_code=status_code)

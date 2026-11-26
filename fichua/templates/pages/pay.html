@@ -1,10 +1,13 @@
 {% extends "base.html" %}
+{% import "components/ui.html" as ui with context %}
 {% block title %}{{ t("Test payment") }} · {{ app_name }}{% endblock %}
+{% block pilot %}{% endblock %}
 {% block content %}
 <div class="container">
   <form class="card paycard" method="post" action="/pay/{{ booking.reference }}" data-checkout>
     <input type="hidden" name="t" value="{{ token }}">
     <span class="badge badge--warning" style="align-self:flex-start">{{ t("Test checkout · no real money") }}</span>
+    {{ ui.pilot_banner() }}
     {% if error %}<div class="alert alert-error" role="alert">{{ t(error) }}</div>{% endif %}
     <div>
       <div class="muted small">{{ booking.hotel_name }} · {{ booking.room_name }}{% if (booking.rooms or 1) > 1 %} × {{ booking.rooms }}{% endif %}</div>

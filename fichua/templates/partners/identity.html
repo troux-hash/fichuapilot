@@ -1,15 +1,26 @@
 {% extends "partners/_layout.html" %}
+{# Step 1 in three short screens (design review F29): each saves on its own, so an owner on a phone can stop after any. #}
 {% block ptitle %}Hotel details{% endblock %}
-{% block app_head %}<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">{% endblock %}
+{% block app_head %}{% if part == 2 %}<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">{% endif %}{% endblock %}
 {% block page_title %}Hotel details{% endblock %}
-{% block page_sub %}<p>Step 1 of 5 · This is what guests see first. Your hotel ID is <strong class="mono">{{ hotel.id }}</strong>.</p>{% endblock %}
+{% block page_sub %}<p>Step 1 of 5 · Part {{ part }} of {{ parts|length }}: {{ parts[part][0] }}. Your hotel ID is <strong class="mono">{{ hotel.id }}</strong>.</p>{% endblock %}
 {% block partner_content %}
+{% set onboarding = hotel.status in ('draft', 'changes') %}
+<nav class="part-steps" aria-label="Parts of the hotel details">
+  {% for n, (label, _) in parts.items() %}
+  <a class="part-steps__item{% if n == part %} is-current{% endif %}" href="/partners/hotel?part={{ n }}"{% if n == part %} aria-current="step"{% endif %}><span class="part-steps__n">{{ n }}</span>{{ label }}</a>
+  {% endfor %}
+</nav>
 <form method="post" action="/partners/hotel" class="split">
+  <input type="hidden" name="part" value="{{ part }}">
   <div style="display:grid;gap:var(--space-5)">
     {% if errors %}<div class="alert alert-error" role="alert"><strong>Almost there:</strong><ul>{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul></div>{% endif %}
-    {% if request.query_params.get('saved') %}<div class="alert alert-success" role="status">Saved.</div>{% endif %}
+    {% if request.query_params.get('incomplete') %}<div class="alert alert-info" role="status">One thing is still missing here before you add photos.</div>{% endif %}
+    {% if request.query_params.get('saved') %}<div class="alert alert-success" role="status">Saved.{% if onboarding %} Log in any time to carry on from here.{% endif %}</div>{% endif %}
+
+    {% if part == 1 %}
     <section class="panel panel-pad" style="display:grid;gap:var(--space-4)">
-      <h2>About the hotel</h2>
+      <h2>Your place</h2>
       <div class="field"><label for="name">Hotel name</label><input id="name" name="name" value="{{ hotel.name or '' }}" required></div>
       <div class="field">
         <span class="label" id="ptype-label">Type of property</span>
@@ -17,18 +28,7 @@
           {% for t in property_types %}<label class="choice"><input type="radio" name="property_type" value="{{ t }}" {% if (hotel.property_type or 'Hotel') == t %}checked{% endif %}>{{ t }}</label>{% endfor %}
         </div>
       </div>
-      <div class="form-grid-2">
-        <div class="field"><label for="star_rating">Official star rating</label>
-          <select id="star_rating" name="star_rating"><option value="">Not rated</option>{% for s in [1,2,3,4,5] %}<option value="{{ s }}" {% if hotel.star_rating == s %}selected{% endif %}>{{ s }} star{{ 's' if s > 1 }}</option>{% endfor %}</select></div>
-        <div class="field"><label for="email">Bookings email</label><input id="email" name="email" type="email" value="{{ hotel.email or '' }}" autocomplete="email"></div>
-      </div>
       <div class="field"><label for="description">Short description</label><textarea id="description" name="description" maxlength="1200" placeholder="2 or 3 sentences. What makes your hotel worth choosing?">{{ hotel.description or '' }}</textarea></div>
-      <div class="field">
-        <span class="label" id="amen-label">What the hotel offers</span>
-        <div class="choice-grid" role="group" aria-labelledby="amen-label">
-          {% for a in amenities %}<label class="choice"><input type="checkbox" name="amenities" value="{{ a }}" {% if a in hotel.amenities %}checked{% endif %}>{{ a }}</label>{% endfor %}
-        </div>
-      </div>
     </section>
 
     {# Brief 3 v3: travellers search by kind of place first. Fichua confirms the kind when it reviews the page. #}
@@ -52,6 +52,7 @@
       </div>
     </section>
 
+    {% elif part == 2 %}
     <section class="panel panel-pad" style="display:grid;gap:var(--space-4)">
       <h2>Where it is</h2>
       <div class="form-grid-3">
@@ -71,30 +72,49 @@
       </div>
     </section>
 
+    {% else %}
     <section class="panel panel-pad" style="display:grid;gap:var(--space-4)">
       <h2>Contact and times</h2>
       <div class="form-grid-2">
         <div class="field"><label for="phone">Reception phone</label><input id="phone" name="phone" type="tel" value="{{ hotel.phone or '' }}" placeholder="+250 788 000 000" required><span class="hint">Guests can call or WhatsApp this number, before and after they book.</span></div>
-        <div class="field"><label for="whatsapp">WhatsApp for booking alerts</label><input id="whatsapp" name="whatsapp" type="tel" value="{{ hotel.whatsapp or '' }}" placeholder="+250 788 000 000" required><span class="hint">New bookings and payments arrive here.</span></div>
+        <div class="field"><label for="whatsapp">WhatsApp for booking alerts <span class="muted" style="font-weight:400">(if different)</span></label><input id="whatsapp" name="whatsapp" type="tel" value="{{ hotel.whatsapp or '' }}" placeholder="+250 788 000 000"><span class="hint">New bookings and payments arrive here. Leave it empty to use the reception phone.</span></div>
+        <div class="field"><label for="email">Bookings email <span class="muted" style="font-weight:400">(optional)</span></label><input id="email" name="email" type="email" value="{{ hotel.email or '' }}" autocomplete="email"></div>
+        <div class="field"><label for="star_rating">Official star rating</label>
+          <select id="star_rating" name="star_rating"><option value="">Not rated</option>{% for s in [1,2,3,4,5] %}<option value="{{ s }}" {% if hotel.star_rating == s %}selected{% endif %}>{{ s }} star{{ 's' if s > 1 }}</option>{% endfor %}</select></div>
         <div class="field"><label for="check_in_time">Check-in from</label><input id="check_in_time" name="check_in_time" type="time" value="{{ hotel.check_in_time or '14:00' }}"></div>
         <div class="field"><label for="check_out_time">Check-out until</label><input id="check_out_time" name="check_out_time" type="time" value="{{ hotel.check_out_time or '11:00' }}"></div>
       </div>
+      <div class="field">
+        <span class="label" id="amen-label">What the hotel offers</span>
+        <div class="choice-grid" role="group" aria-labelledby="amen-label">
+          {% for a in amenities %}<label class="choice"><input type="checkbox" name="amenities" value="{{ a }}" {% if a in hotel.amenities %}checked{% endif %}>{{ a }}</label>{% endfor %}
+        </div>
+      </div>
     </section>
 
-    <section class="panel panel-pad" style="display:grid;gap:var(--space-4)">
-      <h2>Business details <span class="muted small" style="font-weight:400">(optional)</span></h2>
-      <p class="muted small" style="margin:0">Printed on guests' receipts, so people travelling for work can claim their stay.</p>
+    <details class="panel panel-pad"{% if hotel.legal_name or hotel.tax_id %} open{% endif %}>
+      <summary><strong>Business details</strong> <span class="muted small">(optional)</span></summary>
+      <p class="muted small">Printed on guests' receipts, so people travelling for work can claim their stay.</p>
       <div class="form-grid-2">
         <div class="field"><label for="legal_name">Registered business name</label><input id="legal_name" name="legal_name" value="{{ hotel.legal_name or '' }}" maxlength="120" autocomplete="organization"></div>
         <div class="field"><label for="tax_id">Tax number</label><input id="tax_id" name="tax_id" value="{{ hotel.tax_id or '' }}" maxlength="40"><span class="hint">TIN in Rwanda, IFU in Benin, NCC in Côte d'Ivoire.</span></div>
       </div>
-    </section>
+    </details>
+    {% endif %}
   </div>
   <aside class="panel panel-pad" style="position:sticky;top:var(--space-5);display:grid;gap:var(--space-3)">
-    <h2>Save and continue</h2>
-    <p class="muted small" style="margin:0">Everything can be changed later. Next you add photos, then your rooms and prices.</p>
-    <button class="btn btn-primary btn-block" type="submit">{{ 'Save and continue' if hotel.status in ('draft', 'changes') else 'Save changes' }}</button>
+    {% set last = part == parts|length %}
+    {% if onboarding %}
+    <h2>{{ 'Save, then photos' if last else 'Save and continue' }}</h2>
+    <p class="muted small" style="margin:0">{% if last %}Next you add photos, then your rooms and prices.{% else %}Next: {{ parts[part + 1][0]|lower }}. Everything can be changed later.{% endif %}</p>
+    <button class="btn btn-primary btn-block" type="submit">Save and continue</button>
+    <button class="btn btn-ghost btn-block" type="submit" name="later" value="1">Save and finish later</button>
+    {% else %}
+    <h2>Save changes</h2>
+    <p class="muted small" style="margin:0">Changes to this part show on your page straight away.</p>
+    <button class="btn btn-primary btn-block" type="submit">Save changes</button>
+    {% endif %}
   </aside>
 </form>
 {% endblock %}
-{% block partner_scripts %}<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>{% endblock %}
+{% block partner_scripts %}{% if part == 2 %}<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>{% endif %}{% endblock %}

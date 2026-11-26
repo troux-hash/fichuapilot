@@ -52,6 +52,18 @@ def current() -> str:
     return _current.get()
 
 
+_visitor: ContextVar[str] = ContextVar("visitor", default="")
+
+
+def set_visitor(country_iso: str | None) -> None:
+    """The visitor's country (two letters), to show prices in their own currency first."""
+    _visitor.set((country_iso or "").strip().upper()[:2])
+
+
+def visitor() -> str:
+    return _visitor.get()
+
+
 def t(text: str, **values) -> str:
     out = FR.get(text, text) if current() == "fr" else text
     return out.format(**values) if values else out

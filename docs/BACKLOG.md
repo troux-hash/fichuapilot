@@ -28,6 +28,9 @@ Markets: Rwanda, Benin, Côte d'Ivoire. Master currency USD (RWF / CFA shown alo
 | Guest site | "Starting in Rwanda, Benin and Côte d'Ivoire", with "Built at MIT, for Africa first and the World" in small type below |
 | Partners | Kind of place and "good for" tags on the hotel details step; a home page with this month's questions, bookings, money, next arrivals and a share kit |
 | Admin | The kind of place, the five checks with dates and how the place runs, recorded on the review page; catalogue depth by kind and country on the dashboard |
+| Guest site | Design review, ten changes: "Demo place" labels, a pilot notice while payments are tests, the dated Verified seal, compact host-first cards with a money bar, local money first for local visitors, laptop layouts with compare |
+| Partners | "List your place" in the phone menu, the 7% on the owners' page, "No code? Ask on WhatsApp", hotel details in three short parts |
+| Admin | No place goes live without a phone and the dated "WhatsApp tested" check; a "Demo place" switch on the review page |
 
 ## 🧪 QA findings — end-to-end test, 21 Nov 2026
 
@@ -109,6 +112,49 @@ and Abidjan weekenders; Benin: heritage and diaspora travel around the January V
 Waiting on founder decisions: money flow ("Fichua never holds your money" or "held until you arrive"), cancellation presets
 (7 / 14 / 30 days), one pricing rule for owners, the founding properties (real photos, host portraits and stories to replace
 the demo catalogue). Waiting on WhatsApp: the build-first "reveal" flow for owners.
+
+## 🎯 Design review: the ten changes, and the rest (26 Nov 2026)
+
+The [design review](https://claude.ai/artifact/4AU219MSDEKxqcKK4JK1r7) of 25 Nov 2026 found 30 issues (F01–F30) and
+ranked ten changes by impact for effort. All ten are built. 101 automated tests pass (12 new in
+`tests/test_review.py`); a fifth end-to-end run (58 steps, owner sign-up in three parts, approval with the WhatsApp
+check, booking, compare on a laptop) found no errors, failed requests or sideways scrolling.
+
+| # | Change | What is live | Findings | Status |
+|---|---|---|---|---|
+| 1 | Only real, checked places in public | The 24 synthetic places are flagged and say "Demo place" on the photo, the card, the page and at checkout; "Fichua Verified" only with five dated checks; "We check each place" only once a real place has them, else "Reviewed by our team". When payments go live, demo places can't be booked | F01, F04 | ✅ Live 26 Nov |
+| 2 | Honest pilot signals | "Pilot · Bookings are tests for now" under the header while payments are tests, and in full at checkout, payment and confirmation; MIT shown in words until the written OK (`MIT_LOGOS_APPROVED`) | F02, F03 | ✅ Live 26 Nov |
+| 3 | WhatsApp on every card | No place goes live without a phone and the dated "WhatsApp tested" check; "Ask on WhatsApp" on cards and in the booking box | F18 | ✅ Live 26 Nov |
+| 4 | A home page that shows | The question, one proof line, then a 2 × 3 grid: five kind tiles (a real photo from the best-checked real place of that kind, else its colour) and "Not sure? Ask us on WhatsApp"; all within 760 px on a phone; the button always works | F05, F06, F07 | ✅ Live 26 Nov |
+| 5 | Compact, host-first card | 4:3 photo with the seal, serif name, kind and town on one line, host face, total, cancellation, dated check, a 4 px money bar ("Host gets $215.76 of $232"); 530 to 580 px on a phone instead of 653 | F12, F14, F21, F25 | ✅ Live 26 Nov |
+| 6 | Local money, both methods | Visitors in Rwanda, Benin or Côte d'Ivoire see RWF or FCFA first and dollars second ("One price for everyone"); checkout offers Visa or card, and mobile money marked "Coming soon" until a provider is chosen | F19, F20 | ✅ Live 26 Nov (mobile money: B3-04) |
+| 7 | The seal and the receipt | "Fichua Verified · 5/5 · 25 Nov 2026" on the photo, opening the dated checks; the money panel as a receipt on the place page, checkout and confirmation | F22, F21 | ✅ Live 26 Nov |
+| 8 | Laptop layouts | Results in three columns; place page with a sticky booking box beside it; tick up to three places and compare them side by side | F15, F16 | ✅ Live 26 Nov |
+| 9 | A way in for owners | "Menu" on phones with "List your place"; "7% of the bookings Fichua brings. Nothing else." on the owners' page; "No code? Ask on WhatsApp" (shows once Fichua's number is in Settings); step 1 in three short screens with "Save and finish later" | F08, F28, F29 | ✅ Live 26 Nov |
+| 10 | Speed for slow phones | Cards load at most 800 px photos (400 px on small screens), with width, height and a colour placeholder, so nothing jumps | F27 | ✅ Live 26 Nov (EU region: DR-07) |
+
+Also done on the way: 44 px header targets and 48 px footer rows (F09, F10).
+
+Logged from the review, not built yet:
+
+| ID | Priority | Finding | Change | Needs |
+|---|---|---|---|---|
+| DR-01 | P1 | F11 Field borders are 1.7:1 on white (WCAG asks 3:1) | Field border #8A7D76 (4.0:1) and a 2 px ink focus ring | — |
+| DR-02 | P1 | F13 Stock photos; a heritage place shows a resort pool | Real photos only; "Photo matches the kind" on the review checklist | Team process |
+| DR-03 | P1 | F17 A place page opened from a shared link doesn't say what Fichua is | One line under the photos: "On Fichua: a verified host, one total, book here, talk on WhatsApp" | — |
+| DR-04 | P1 | The review's test plan | Five-second test (10 people per version) and six moderated sessions before the next build | People to test with |
+| DR-05 | P1 | The review's checklist: alt text, focus order, text at 200 %, layout shift not yet measured | Measure each, fix what fails | — |
+| DR-06 | P1 | Open decision: which five checks (the brief's list or the site's) | Decide, then align the checks | Decision |
+| DR-07 | P1 | F26 1.8 s to the first byte; servers in US West | Move the database and the functions to an EU region together; cache anonymous pages for 60 s | Supabase migration (owner's account) |
+| DR-08 | P2 | F23 The mission is stated once; no story of how money reaches the host | A "How Fichua works" page: four steps and the money | — |
+| DR-09 | P2 | F24 Clay is used for buttons, links, labels and badges | Clay for the one action per screen; ink underlined links; green only for verified facts | Direction A tokens (DR-10) |
+| DR-10 | P2 | Direction A, "Open house" | The starter design system: paper and sand backgrounds, one job per colour | — |
+| DR-11 | P2 | F27 remainder | AVIF copies of uploads | An image encoder on the server (a new dependency) |
+| DR-12 | P2 | Page notes: home sections and kind pages | "How Fichua works" with a money-bar example and three verified hosts on the home page; a landing page per kind and country | Real places to show |
+| DR-13 | P2 | Imagery guide | The twelve-shot list taken during the team's visit; "Photos taken on site" check | Team process |
+| DR-14 | P2 | Open: "what big platforms take" | Compare Fichua's 7 % with other platforms' fees | Sourced figures |
+
+French for the owner pages (F30) stays B3-07; mobile money (F20) stays B3-04.
 
 ## 🧭 Brief 3 v3 build and decisions (25 Nov 2026)
 
@@ -227,14 +273,14 @@ founder decisions above, and real photos and host stories for the founding prope
 | 4 | Automatic payouts to hotel bank accounts (Stripe Global Payouts: Benin + CI; Rwanda on request) | Stripe access |
 | 5 | Map view on the guest results page (hotels already have pins) | — |
 | 6 | Email confirmations (needs a verified domain) | Domain |
-| 7 | Get written OK from MIT for the logos, and swap in official SVG files when they arrive | ioc-useofname@mit.edu, sandbox@mit.edu, kuosharper@mit.edu ([guide](BRAND_ASSETS.md)) |
+| 7 | Get written OK from MIT for the logos, then set `MIT_LOGOS_APPROVED=1` on Vercel (the names show as words until then) and swap in official SVG files when they arrive | ioc-useofname@mit.edu, sandbox@mit.edu, kuosharper@mit.edu ([guide](BRAND_ASSETS.md)) |
 
 ## 💡 P2 — later
 
 | # | Feature |
 |---|---|
 | 8 | Deposit / pay-at-hotel options per hotel |
-| 9 | Mobile money (MTN MoMo, Orange Money, Moov, Wave, Airtel) via one regional aggregator |
+| 9 | Mobile money (MTN MoMo, Orange Money, Moov, Wave, Airtel) via one regional aggregator; checkout already shows it as "Coming soon" (B3-04) |
 | 10 | Hotel Manager subscription billing (monthly fee, deducted from payouts) |
 | 11 | Several users per hotel; one login for hotel groups |
 | 12 | Rate options: non-refundable discount, minimum stay, promotions |

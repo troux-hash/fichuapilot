@@ -78,9 +78,17 @@ def test_admin_approves_with_custom_commission(admin):
     assert "Ubuntu Stay" in page.text
     detail = admin.get(f"/admin/approvals/{state['hotel_id']}")
     assert "Map pin is inside Rwanda" in detail.text
+    # Not without a tested WhatsApp: travellers may message the host before they book (design review F18).
     r = admin.post(f"/admin/approvals/{state['hotel_id']}", data={"action": "approve", "commission": "10"},
                    follow_redirects=False)
-    assert r.status_code == 303
+    assert r.status_code == 303 and "decided=no-whatsapp" in r.headers["location"]
+    with db.connect() as conn:
+        assert conn.scalar("SELECT status FROM hotels WHERE id = :id", {"id": state["hotel_id"]}) == "pending"
+    admin.post(f"/admin/approvals/{state['hotel_id']}/trust",
+               data={"category": "heritage", "check_whatsapp": date.today().isoformat(), "note_whatsapp": "Replied"})
+    r = admin.post(f"/admin/approvals/{state['hotel_id']}", data={"action": "approve", "commission": "10"},
+                   follow_redirects=False)
+    assert r.status_code == 303 and "decided=approve" in r.headers["location"]
     results = TestClient(app).get("/api/search", params={"destination": "Huye", **STAY}).json()["results"]
     assert len(results) == 1 and results[0]["total_price"] in (100, 110, 120)
     with db.connect() as conn:

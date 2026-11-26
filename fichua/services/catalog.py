@@ -105,6 +105,7 @@ def hydrate_hotel(row: dict, photos: list[str] | None = None) -> dict:
     row["images"] = (photos or []) + split_list(row.get("image_urls")) or [PLACEHOLDER_IMAGE]
     row["full_address"] = full_address(row)
     row.update(map_links(row))
+    row["demo"] = bool(row.get("is_demo"))
     return kinds.apply(row)
 
 
@@ -291,8 +292,13 @@ def hotel_rooms(conn: Connection, hotel_id: str, stay: Stay) -> list[dict]:
 def live_hotels(conn: Connection) -> list[dict]:
     """Every live place, hydrated (kind, tags, photos), in name order."""
     rows = conn.all("SELECT * FROM hotels WHERE is_active = TRUE ORDER BY name")
-    photos = media_urls(conn, "hotel", [r["id"] for r in rows])
-    return [hydrate_hotel(r, photos.get(r["id"])) for r in rows]
+    ids = [r["id"] for r in rows]
+    photos, faces = media_urls(conn, "hotel", ids), media_urls(conn, "host", ids)
+    hotels = [hydrate_hotel(r, photos.get(r["id"])) for r in rows]
+    for h in hotels:  # the host's face on result cards (design review F14), only where the profile is public
+        if h["host"]:
+            h["host"]["photo"] = (faces.get(h["id"]) or [None])[0]
+    return hotels
 
 
 def from_prices(conn: Connection, hotel_ids: list[str], guests: int = 1, rooms: int = 1) -> dict[str, float]:

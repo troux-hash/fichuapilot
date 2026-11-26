@@ -11,7 +11,7 @@ from fastapi.responses import RedirectResponse
 from .. import auth
 from ..config import settings
 from ..db import db
-from ..services import app_settings, bookings, catalog, currency, dates, notify, partners, ratelimit
+from ..services import app_settings, bookings, catalog, currency, dates, enquiries, notify, partners, ratelimit
 from ..web import base_url, render
 
 router = APIRouter(prefix="/partners")
@@ -51,12 +51,21 @@ def _form_dict(form) -> dict:
 
 # --------------------------------------------------------------------------- access
 
+def _landing(request: Request, conn, status_code: int = 200, **ctx):
+    """The owners' front door: the price in one line and a way in without a code (design review F28)."""
+    rates = app_settings.all_settings(conn)
+    wa = enquiries.fichua_link(conn, "Hello Fichua, I run a place to stay and would like an invitation code.")
+    ctx.setdefault("form", {})
+    return render(request, "partners/landing.html", status_code=status_code, commission=rates["commission_pct"],
+                  fichua_wa=wa, **{"join_error": None, "login_error": None, **ctx})
+
+
 @router.get("")
 def home(request: Request):
     with db.connect() as conn:
         user, hotel = _current(conn, request)
         if not user or not hotel:
-            return render(request, "partners/landing.html", join_error=None, login_error=None, form={})
+            return _landing(request, conn)
         if hotel["status"] in ("draft", "changes"):
             steps = partners.onboarding_status(conn, hotel)["steps"]
             for key, _ in STEPS[:-1]:
@@ -80,16 +89,14 @@ def join(request: Request, code: str = Form(""), name: str = Form(""), hotel_nam
     ip = ratelimit.client_ip(request)
     with db.connect() as conn:
         if ratelimit.blocked(conn, "join", ip):
-            return render(request, "partners/landing.html", status_code=429, join_error=ratelimit.MESSAGES["join"],
-                          login_error=None, form=form)
+            return _landing(request, conn, 429, join_error=ratelimit.MESSAGES["join"], form=form)
         try:
             created = partners.join(conn, code=code, name=name, hotel_name=hotel_name, email=email,
                                     phone=phone, password=password)
         except partners.PartnerError as exc:
             conn.raw.rollback()
             ratelimit.record(conn, "join", ip)  # after the rollback, so the attempt is kept
-            return render(request, "partners/landing.html", status_code=422, join_error=str(exc),
-                          join_field=exc.field, login_error=None, form=form)
+            return _landing(request, conn, 422, join_error=str(exc), join_field=exc.field, form=form)
     return _start_session(created["user_id"], "/partners/hotel")
 
 
@@ -98,17 +105,17 @@ def login(request: Request, email: str = Form(""), password: str = Form("")):
     key = f"{ratelimit.client_ip(request)}|{email.strip().lower()}"
     with db.connect() as conn:
         if ratelimit.blocked(conn, "partner", key):
-            return render(request, "partners/landing.html", status_code=429, join_error=None,
-                          login_error=ratelimit.MESSAGES["partner"], form={"login_email": email})
+            return _landing(request, conn, 429, login_error=ratelimit.MESSAGES["partner"],
+                            form={"login_email": email})
         user = partners.authenticate(conn, email, password)
         if not user:
             ratelimit.record(conn, "partner", key)
         else:
             ratelimit.clear(conn, "partner", key)
-    if not user:
-        return render(request, "partners/landing.html", status_code=401, join_error=None,
-                      login_error="Wrong email or password.", login_field="login_password" if email.strip()
-                      else "login_email", form={"login_email": email})
+        if not user:
+            return _landing(request, conn, 401, login_error="Wrong email or password.",
+                            login_field="login_password" if email.strip() else "login_email",
+                            form={"login_email": email})
     return _start_session(user["id"], "/partners")
 
 
@@ -121,32 +128,60 @@ def logout():
 
 # --------------------------------------------------------------------------- onboarding steps
 
+def _part(value) -> int | None:
+    """Which of the three short screens of step 1 (design review F29); None for the full form."""
+    try:
+        part = int(value)
+    except (TypeError, ValueError):
+        return None
+    return part if part in partners.IDENTITY_PARTS else None
+
+
+def _identity_page(request: Request, conn, user, hotel, part: int, errors: list, status_code: int = 200):
+    return _page(request, conn, user, hotel, "partners/identity.html", "hotel", status_code=status_code,
+                 errors=errors, part=part, parts=partners.IDENTITY_PARTS, markets=currency.MARKETS,
+                 property_types=partners.PROPERTY_TYPES, amenities=partners.AMENITIES)
+
+
 @router.get("/hotel")
 def identity_form(request: Request):
     with db.connect() as conn:
         user, hotel = _current(conn, request)
         if not hotel:
             return _login_redirect()
-        return _page(request, conn, user, hotel, "partners/identity.html", "hotel", errors=[],
-                     markets=currency.MARKETS, property_types=partners.PROPERTY_TYPES,
-                     amenities=partners.AMENITIES)
+        return _identity_page(request, conn, user, hotel, _part(request.query_params.get("part")) or 1, [])
 
 
 @router.post("/hotel")
 async def identity_save(request: Request):
     data = _form_dict(await request.form())
+    part = _part(data.get("part"))
     with db.connect() as conn:
         user, hotel = _current(conn, request)
         if not hotel:
             return _login_redirect()
-        errors = partners.update_identity(conn, hotel["id"], data)
-        if not errors:
-            return RedirectResponse("/partners/photos" if hotel["status"] in ("draft", "changes")
-                                    else "/partners/hotel?saved=1", status_code=303)
+        onboarding = hotel["status"] in ("draft", "changes")
+        if part is None:  # the whole form at once
+            errors = partners.update_identity(conn, hotel["id"], data)
+            if not errors:
+                return RedirectResponse("/partners/photos" if onboarding else "/partners/hotel?saved=1",
+                                        status_code=303)
+        else:
+            errors = partners.update_identity_part(conn, hotel["id"], part, data)
+            if not errors:
+                if data.get("later") or not onboarding:
+                    return RedirectResponse(f"/partners/hotel?part={part}&saved=1", status_code=303)
+                if part < len(partners.IDENTITY_PARTS):
+                    return RedirectResponse(f"/partners/hotel?part={part + 1}", status_code=303)
+                # The last part: on to photos once all three are complete, else back to the part still missing.
+                fresh = partners.user_hotel(conn, user["id"])
+                if partners.onboarding_status(conn, fresh)["steps"]["identity"]:
+                    return RedirectResponse("/partners/photos", status_code=303)
+                missing = next((p for p in partners.IDENTITY_PARTS
+                                if partners.identity_part_errors(conn, hotel["id"], p)), part)
+                return RedirectResponse(f"/partners/hotel?part={missing}&incomplete=1", status_code=303)
         hotel = partners.user_hotel(conn, user["id"])
-        return _page(request, conn, user, hotel, "partners/identity.html", "hotel", status_code=422,
-                     errors=errors, markets=currency.MARKETS, property_types=partners.PROPERTY_TYPES,
-                     amenities=partners.AMENITIES)
+        return _identity_page(request, conn, user, hotel, part or 1, errors, status_code=422)
 
 
 @router.get("/photos")

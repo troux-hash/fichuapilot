@@ -3,6 +3,7 @@
 
 {% block title %}{{ t("Confirm and pay") }} · {{ app_name }}{% endblock %}
 
+{% block pilot %}{% endblock %}
 {% block content %}
 {% macro field(name, label, type='text', autocomplete='', hint='', required=true) %}
 {# An error replaces the hint until the guest types in the field again (app.js, IMP-05). #}
@@ -27,6 +28,8 @@
     <form class="card card-pad stack" method="post" action="/book" novalidate data-checkout>
       <input type="hidden" name="room" value="{{ room.id }}">
       {% for k, v in stay.as_params().items() %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endfor %}
+      {{ ui.pilot_banner() }}
+      {% if hotel.demo %}<div class="alert alert-warning" role="note"><strong>{{ t("Demo place") }}.</strong> {{ t("Shown to explain how Fichua works. It is not a real listing, and nothing here has been checked.") }}</div>{% endif %}
       {% if date_note %}<div class="alert alert-info date-note" role="status">{{ date_note }}</div>{% endif %}
       {% if errors.general %}<div class="alert alert-error" role="alert">{{ t(errors.general) }}</div>{% endif %}
       {% if not offer and not errors.general %}<div class="alert alert-error" role="alert">{{ t("This room is no longer available for these dates.") }} <a href="{{ hotel.path }}?{{ qs(stay.as_params()) }}#rooms">{{ t("Choose another room") }}</a>.</div>{% endif %}
@@ -61,6 +64,16 @@
           </div>
         </details>
       </div>
+
+      {# Mobile money and Visa (decision of 25 Nov 2026): Visa works today; mobile money waits for a provider and says so. #}
+      <fieldset class="pay-methods">
+        <legend class="label-caps">{{ t("How you pay") }}</legend>
+        <label class="option pay-method"><input type="radio" name="pay_method" value="card" checked>
+          <span class="option__stack"><span>{{ t("Visa or card") }}</span><span class="muted small">{{ t("Through Fichua’s secure checkout, charged in US dollars") }}</span></span></label>
+        <div class="option pay-method is-soon" aria-disabled="true">
+          <span class="option__stack"><span>{{ t("Mobile money") }}</span><span class="muted small">{{ t("From your phone, in your own currency") }}</span></span>
+          <span class="badge badge--muted">{{ t("Coming soon") }}</span></div>
+      </fieldset>
 
       <div class="pay-box">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>

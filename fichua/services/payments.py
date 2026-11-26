@@ -27,6 +27,11 @@ def provider() -> str:
     return "stripe" if settings.stripe_secret_key else "test"
 
 
+def is_live() -> bool:
+    """Real money moves: a live Stripe key. Until then every booking is a test (the pilot notice, F03)."""
+    return settings.stripe_secret_key.startswith(("sk_live_", "rk_live_"))
+
+
 def is_stripe_test_mode() -> bool:
     return settings.stripe_secret_key.startswith("sk_test_")
 

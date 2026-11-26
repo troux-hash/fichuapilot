@@ -300,3 +300,31 @@
   --bubble-fg: #1F3A2C;
   --container-narrow: 760px;
 }
+
+/* Design review of 25 Nov 2026: the dated seal, the pilot notice, the money bar and the receipt; touch targets. */
+:root {
+  --seal-bg: var(--verified);
+  --seal-fg: #FFFFFF;
+  --seal-partly-bg: #FBF1DC;
+  --seal-partly-fg: #6B4600;
+  --seal-demo-bg: rgba(255, 255, 255, 0.94);
+  --seal-demo-fg: var(--ink);
+  --seal-demo-border: var(--ink);
+  --pilot-bg: #FBF1DC;
+  --pilot-fg: #6B4600;
+  --money-host: var(--verified);
+  --money-fee: #CDC6BE;
+  --receipt-bg: #FBF8F3;
+  --receipt-rule: #CDC6BE;
+  --tile-help-bg: #E6F0EA;
+  --tap-min: 44px;                             /* every link and button in the header */
+  --row-min: 48px;                             /* footer links and menu rows */
+  --aside-w: 360px;                            /* the sticky booking box on laptops */
+}
+[data-theme="aurora"] {
+  --receipt-bg: rgba(255, 255, 255, 0.06);
+  --receipt-rule: rgba(255, 255, 255, 0.24);
+  --pilot-bg: rgba(255, 179, 107, 0.16);
+  --pilot-fg: #FFB36B;
+  --tile-help-bg: rgba(59, 232, 176, 0.12);
+}

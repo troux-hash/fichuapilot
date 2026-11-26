@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 {% import "components/ui.html" as ui with context %}
-{# Brief 3 v3: one question first, the kind of stay; then where and when. No ranking by price, fees or reply speed. #}
+{% import "components/icons.html" as i %}
+{# Brief 3 v3: one question first, the kind of stay; then where and when. No ranking by price, fees or reply speed.
+   Design review (25 Nov 2026): show, not tell. All five kinds and one proof line within the first 800 px on a phone. #}
 {% block body_class %}has-sticky-cta{% endblock %}
 
 {% block content %}
@@ -8,37 +10,48 @@
   <div class="container container--narrow">
     <header class="kind-intro">
       <h1 class="kind-intro__title">{{ t("What kind of stay are you looking for?") }}</h1>
-      <p class="kind-intro__mission">{{ t("Independent places that run responsibly, and travellers who want to support them, meet here directly. Choose from five kinds of stay.") }}</p>
-      <p class="where-from where-from--intro"><span class="where-from__line">{{ t("Starting in Rwanda, Benin and Côte d’Ivoire") }}</span>
-        <span class="where-from__mit">{{ t("Built at MIT, for Africa first and the World") }}</span></p>
+      <ul class="proof-line" aria-label="{{ t('Why book on Fichua') }}">
+        <li>{{ t("Verified hosts") if proven else t("Places reviewed by our team") }}</li><li>{{ t("The money shown") }}</li><li>{{ t("WhatsApp the host") }}</li>
+      </ul>
     </header>
 
-    <fieldset class="kinds">
+    <fieldset class="kinds kinds--grid">
       <legend class="kinds__head"><span class="label-caps">{{ t("Kind of place") }}</span><span class="muted small">{{ t("Pick one or two") }}</span></legend>
-      {% for k in KINDS %}
-      <label class="kind-card kind-card--{{ k.id }}">
-        <input class="kind-card__input" type="checkbox" name="kind" value="{{ k.id }}" {% if k.id in picked %}checked{% endif %} data-kind>
-        <span class="kind-card__tone" aria-hidden="true">
-          <span class="kind-card__tick"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
-        </span>
-        <span class="kind-card__body">
-          <span class="kind-card__name">{{ pick(k.name) }}</span>
-          <span class="kind-card__line">{{ pick(k.line) }}</span>
-          {% set goods = [] %}{% for tid in kinds.typical_tags(k.id) %}{% set _ = goods.append(tag_name(tid)) %}{% endfor %}
-          <span class="kind-card__good">{{ t("Good for: {list}", list=goods|join(', ')) }}</span>
-        </span>
-      </label>
-      {% endfor %}
+      <div class="kind-grid">
+        {% for k in KINDS %}
+        <label class="kind-tile kind-tile--{{ k.id }}">
+          <input class="kind-tile__input" type="checkbox" name="kind" value="{{ k.id }}" {% if k.id in picked %}checked{% endif %} data-kind>
+          <span class="kind-tile__media" aria-hidden="true">
+            {% if kind_photos.get(k.id) %}{{ ui.photo(kind_photos[k.id], '', sizes='(min-width: 720px) 240px, 45vw') }}
+            {% else %}<span class="kind-tile__mark">{{ pick(k.name)[:1] }}</span>{% endif %}
+            <span class="kind-tile__tick"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+          </span>
+          <span class="kind-tile__name">{{ pick(k.name) }}</span>
+        </label>
+        {% endfor %}
+        {% if fichua_wa %}
+        <a class="kind-tile kind-tile--help" href="{{ fichua_wa }}" target="_blank" rel="noopener">
+          <span class="kind-tile__media" aria-hidden="true">{{ i.icon('chat', 28) }}</span>
+          <span class="kind-tile__name">{{ t("Not sure? Ask us on WhatsApp") }}</span>
+        </a>
+        {% else %}
+        <button class="kind-tile kind-tile--help" type="submit">
+          <span class="kind-tile__media" aria-hidden="true"><span class="kind-tile__mark">5</span></span>
+          <span class="kind-tile__name">{{ t("Not sure? See every kind") }}</span>
+        </button>
+        {% endif %}
+      </div>
     </fieldset>
 
-    {% if fichua_wa %}<p class="kind-help"><a class="link-strong" href="{{ fichua_wa }}" target="_blank" rel="noopener">{{ t("Not sure? Message us on WhatsApp") }}</a></p>{% endif %}
+    <p class="kind-intro__mission">{{ t("Independent places that run responsibly, and travellers who want to support them, meet here directly. Choose from five kinds of stay.") }}</p>
+    <p class="where-from where-from--intro"><span class="where-from__line">{{ t("Starting in Rwanda, Benin and Côte d’Ivoire") }}</span>
+      <span class="where-from__mit">{{ t("Built at MIT, for Africa first and the World") }}</span></p>
 
-    {{ ui.trust_band() }}
+    {{ ui.trust_band(proven=proven) }}
   </div>
 
   <div class="sticky-cta sticky-cta--stack">
-    <button class="btn btn-primary btn-block" type="submit" data-kind-submit>{{ t("Show matching places") }}</button>
-    <span class="muted small" data-kind-hint>{{ t("Pick one or two kinds of place to start.") }}</span>
+    <button class="btn btn-primary btn-block" type="submit">{{ t("Show matching places") }}</button>
   </div>
 </form>
 {% endblock %}

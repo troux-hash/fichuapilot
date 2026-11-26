@@ -21,16 +21,20 @@
 {% set available = rooms|selectattr('available')|list %}
 {% set v = verification %}
 {% set ask_query = dict(stay.as_params(), kind=picked) %}
-{% set ask_label = t("Ask {name}", name=hotel.host.name) if hotel.host else t("Ask the host") %}
-<div class="container container--narrow place-page">
+{% set ask_label = t("Ask on WhatsApp") %}
+<div class="container place-page">
   <a class="back-link" href="/search?{{ back_qs }}">← {{ t("All places") }}</a>
   {% if date_note %}<div class="alert alert-info date-note" role="status">{{ date_note }}</div>{% endif %}
+  {% if hotel.demo %}<div class="alert alert-warning" role="note"><strong>{{ t("Demo place") }}.</strong> {{ t("Shown to explain how Fichua works. It is not a real listing, and nothing here has been checked.") }}</div>{% endif %}
 
+  {# Laptops: the page on the left, the booking box sticky on the right (design review F15, F16). Phones: one column. #}
+  <div class="place-layout">
+  <div class="place-main">
   <div class="place-hero">
     <div class="photo-strip photo-strip--hero">
-      {% for img in hotel.images[:6] %}<img src="{{ img if loop.first else img|card_img }}" alt="{{ t('{name}, photo {n}', name=hotel.name, n=loop.index) }}" {% if not loop.first %}loading="lazy"{% endif %}>{% endfor %}
+      {% for img in hotel.images[:6] %}{{ ui.photo(img, t('{name}, photo {n}', name=hotel.name, n=loop.index), sizes='(min-width: 1080px) 560px, 92vw', eager=loop.first, card=not loop.first) }}{% endfor %}
     </div>
-    {{ ui.verified_badge(v) }}
+    {{ ui.verified_badge(v, hotel, href='#checks') }}
   </div>
 
   <header class="place-head">
@@ -42,7 +46,7 @@
   </header>
 
   <section class="box verify-box" id="checks" aria-label="{{ t('What Fichua checked') }}">
-    <p class="verify-box__line"><span class="dot" aria-hidden="true">✓</span><span>{{ ui.verified_line(v) }}</span></p>
+    <p class="verify-box__line{% if hotel.demo %} is-demo{% endif %}">{% if not hotel.demo %}<span class="dot" aria-hidden="true">✓</span>{% endif %}<span>{{ ui.verified_line(v, hotel) }}</span></p>
     <details class="verify-box__details"{% if v.count %} data-checks{% endif %}>
       <summary>{{ t("See the five checks") }}</summary>
       <dl class="checks">
@@ -57,6 +61,8 @@
 
   {% if hotel.host %}{{ ui.host_card(hotel.host, hotel, stay, can_ask, query=ask_query) }}{% endif %}
 
+  <div class="only-phone">{{ ui.booking_box(hotel, stay, cheapest, rules, commission, can_ask, ask_query, 'p') }}</div>
+
   <section class="place-section">
     <h2>{{ t("About this place") }}</h2>
     <p class="lede">{{ hotel.description or t("A place to stay in {city}.", city=hotel.city) }}</p>
@@ -65,21 +71,6 @@
     {% if matched %}<p class="why"><strong>{{ t("Why it matches your search:") }}</strong> {{ kind_name(matched) }}. {{ pick(kinds.kind(matched).reason) }}</p>{% endif %}
     {% endif %}
   </section>
-
-  <section class="box price-box" aria-labelledby="price-title">
-    <h2 id="price-title">{{ t("Price and terms") }}</h2>
-    {% if cheapest %}
-      <p class="price-box__main">{{ t("{total} for {nights}", total=price(cheapest.total_price), nights=tn(stay.nights, "1 night", "{n} nights")) }}{% if stay.rooms > 1 %}, {{ tn(stay.rooms, "1 room", "{n} rooms") }}{% endif %}</p>
-      <p class="muted small">{{ frange(stay.check_in, stay.check_out) }} · {{ tn(stay.guests, "1 guest", "{n} guests") }} · {{ ui.night_price(cheapest.per_night, cheapest.even_nights) }}{% set loc = local_price(cheapest.total_price, hotel.country) %}{% if loc %} · {{ loc }}{% endif %}</p>
-    {% else %}
-      <p class="price-box__main">{{ t("Not available for these dates") }}</p>
-      <p class="muted small">{{ ui.stay_summary(stay) }}</p>
-    {% endif %}
-    <p class="small"><strong>{{ t("Payment:") }}</strong> {{ t("by card, in full, through Fichua’s secure checkout. Nothing more to pay on arrival.") }}</p>
-    {% if rules %}<p class="rules__title">{{ t("If you cancel") }} <span class="muted">({{ cheapest.name }})</span></p>{{ ui.rules_bar(rules) }}{% endif %}
-  </section>
-
-  {{ ui.money_panel(cheapest.total_price if cheapest else none, commission) }}
 
   {% if hotel.practice.any %}
   <section class="place-section" aria-labelledby="runs-title">
@@ -136,7 +127,8 @@
             <span class="price__meta">{% if stay.rooms > 1 %}{{ tn(stay.rooms, "1 room", "{n} rooms") }} · {% endif %}{{ tn(stay.nights, "1 night", "{n} nights") }} · {{ ui.night_price(r.per_night, r.even_nights) }}</span>
             {% set loc = local_price(r.total_price, hotel.country) %}{% if loc %}<span class="price__local">{{ loc }}</span>{% endif %}
           </div>
-          <a class="btn btn-primary" href="/book?{{ qs(stay.as_params(), room=r.id) }}">{{ t("Book this room") if stay.rooms == 1 else t("Book {n} rooms", n=stay.rooms) }}</a>
+          {% if hotel.demo and not is_pilot() %}<span class="muted small">{{ t("Demo place: not bookable") }}</span>
+          {% else %}<a class="btn btn-primary" href="/book?{{ qs(stay.as_params(), room=r.id) }}">{{ t("Book this room") if stay.rooms == 1 else t("Book {n} rooms", n=stay.rooms) }}</a>{% endif %}
         {% elif not r.fits_party %}
           <span class="muted small">{{ t("Sleeps {n} per room: not enough for {guests} guests", n=r.max_guests, guests=stay.guests) if stay.rooms > 1 else t("Sleeps {n}: not enough for {guests} guests", n=r.max_guests, guests=stay.guests) }}</span>
           {% if r.rooms_needed <= 8 %}<a class="btn btn-secondary btn-sm" href="{{ hotel.path }}?{{ qs(stay.as_params(), rooms=r.rooms_needed, kind=picked) }}#rooms">{{ t("Show {n} rooms", n=r.rooms_needed) }}</a>{% endif %}
@@ -162,7 +154,7 @@
   </section>
   {% endif %}
 
-  {{ ui.trust_band(compact=true) }}
+  {{ ui.trust_band(compact=true, proven=v.full and not hotel.demo) }}
 
   {% if similar %}
   <section class="place-section" aria-labelledby="similar-title">
@@ -174,6 +166,9 @@
     </div>
   </section>
   {% endif %}
+  </div>
+  <aside class="place-aside only-laptop" aria-label="{{ t('Price and terms') }}">{{ ui.booking_box(hotel, stay, cheapest, rules, commission, can_ask, ask_query, 'l') }}</aside>
+  </div>
 </div>
 
 <div class="sticky-cta sticky-cta--two">

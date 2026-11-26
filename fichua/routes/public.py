@@ -52,7 +52,19 @@ def home(request: Request):
     i18n.use(i18n.lang_of(request))
     with db.connect() as conn:
         fichua_wa = enquiries.fichua_link(conn, i18n.t("Hello Fichua, I'm not sure which kind of place suits my trip."))
-    return render(request, "pages/home.html", picked=_picked(request), fichua_wa=fichua_wa)
+        hotels = catalog.live_hotels(conn)
+        checks = kinds.checks_by_hotel(conn, [h["id"] for h in hotels])
+    # Each kind's tile shows a real photo from a real place of that kind, the most verified first (design
+    # review F05, F06). Demo places and placeholders never stand in: without a real photo the tile is a designed tone.
+    kind_photos = {}
+    for h in sorted(hotels, key=lambda h: -len(checks.get(h["id"], {}))):
+        photo = next((img for img in h["images"] if img != catalog.PLACEHOLDER_IMAGE), None)
+        if photo and not h["demo"] and h["kind"] not in kind_photos:
+            kind_photos[h["kind"]] = photo
+    # "We check each place" only once a real place shows five dated checks; until then "Reviewed by our team" (F04).
+    proven = any(not h["demo"] and len(checks.get(h["id"], {})) >= len(kinds.CHECKS) for h in hotels)
+    return render(request, "pages/home.html", picked=_picked(request), fichua_wa=fichua_wa, kind_photos=kind_photos,
+                  proven=proven)
 
 
 @router.get("/lang/{code}")
@@ -121,6 +133,32 @@ def results(request: Request):
     return render(request, "pages/results.html", picked=picked, where=where_value, stay=stay, dated=dated,
                   base=base, widen=widen, fichua_wa=fichua_wa, commission=commission, largest_room=largest,
                   rooms_hint=rooms_hint, date_note=_date_note(request, stay) if dated else None, **data)
+
+
+@router.get("/compare")
+def compare(request: Request):
+    """Up to three ticked places side by side (design review F15), priced for the same stay."""
+    q = request.query_params
+    ids = []
+    for i in q.getlist("id"):
+        if i and i not in ids:
+            ids.append(i)
+    ids = ids[:3]
+    stay = _stay_from(request)
+    dated = _dated(request)
+    with db.connect() as conn:
+        found = discover(conn, [], "all", stay, dated) if ids else {"groups": []}
+        commission = app_settings.get_float(conn, "commission_pct")
+    by_id = {it["hotel"]["id"]: it for g in found["groups"] for it in g["places"]}
+    items = [by_id[i] for i in ids if i in by_id]
+    base = {"guests": stay.guests, "rooms": stay.rooms}
+    if dated:
+        base.update(check_in=stay.check_in.isoformat(), check_out=stay.check_out.isoformat())
+    else:
+        base["dates"] = "any"
+    back = {**base, "where": q.get("where"), "kind": [k for k in q.getlist("kind") if k]}
+    return render(request, "pages/compare.html", items=items, stay=stay, dated=dated, base=base, back_qs=qs(back),
+                  commission=commission, policies=policies.POLICIES)
 
 
 def _same_query(path: str, request: Request) -> str:

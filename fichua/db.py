@@ -79,6 +79,15 @@ COLUMN_MIGRATIONS: list[tuple[str, str, str]] = [
     ("hotels", "practice_people", "TEXT"),
     ("hotels", "practice_place", "TEXT"),
     ("hotels", "practice_money", "TEXT"),
+    # Synthetic places used to show how Fichua works: labelled "Demo place", never "Reviewed" (design review F01).
+    ("hotels", "is_demo", "BOOLEAN"),
+]
+
+# Run on every start, so each must be safe to repeat. The synthetic seed (no owner, no phone, never approved,
+# loaded before 27 Nov 2026) is marked demo once; places listed later are never touched.
+DATA_MIGRATIONS: list[str] = [
+    "UPDATE hotels SET is_demo = TRUE WHERE is_demo IS NULL AND owner_id IS NULL AND phone IS NULL "
+    "AND approved_at IS NULL AND created_at < '2026-11-27'",
 ]
 
 
@@ -219,6 +228,8 @@ class Database:
                 if column not in cols:
                     raw.execute(f"ALTER TABLE {table} ADD COLUMN {column} {ddl}")
                     cols.add(column)
+            for statement in DATA_MIGRATIONS:
+                raw.execute(statement)
             raw.commit()
         finally:
             raw.close()

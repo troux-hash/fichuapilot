@@ -1,12 +1,19 @@
 {# Reusable UI macros. Import with: {% import "components/ui.html" as ui with context %} #}
 {# No guest ratings or review counts anywhere: Fichua shows only reviews from verified Fichua stays (Brief 2), and none exist yet.
-   Every sentence goes through t() so the traveller pages read in English or French (i18n.py). #}
+   Every sentence goes through t() so the traveller pages read in English or French (i18n.py).
+   Design review of 25 Nov 2026: a dated seal (or "Demo place"), host-first compact cards, the money bar and receipt. #}
 {% import "components/icons.html" as i %}
 
 {# A night's price beside the total: "$165 a night" when every night costs the same, else a rounded average.
    Never "$178.33": the total is the honest number, the nightly figure only helps compare. #}
 {% macro night_price(per_night, even) -%}
   {%- if even %}{{ t("{price} a night", price=price(per_night)) }}{% else %}{{ t("avg {price} a night", price=price(per_night|round)) }}{% endif -%}
+{%- endmacro %}
+
+{# A photo with smaller copies for phones and its space reserved, so the page does not jump while it loads (F27). #}
+{% macro photo(src, alt, sizes='(min-width: 1080px) 360px, 86vw', eager=false, card=true) -%}
+{%- set srcs = img_srcset(src, card) -%}
+<img src="{{ src|card_img if card else src }}"{% if srcs %} srcset="{{ srcs }}" sizes="{{ sizes }}"{% endif %} width="800" height="600" alt="{{ alt }}"{% if not eager %} loading="lazy"{% endif %} decoding="async">
 {%- endmacro %}
 
 {# The cancellation rules beside the price, drawn as a bar with dollar amounts (policies.timeline). #}
@@ -38,14 +45,14 @@
     <h2 class="host__name">{{ host.name }}{% if host.role %}<span>, {{ t(host.role)|lower }}</span>{% endif %}</h2>
     {% if host.welcome %}<blockquote class="host__welcome">“{{ host.welcome }}”</blockquote>{% endif %}
     {% if host.languages %}<p class="host__speaks">{{ t("Speaks {langs}", langs=host.languages|join(', ')) }}</p>{% endif %}
-    {% if can_ask and hotel and stay %}{{ ask_link(hotel, stay, t("Ask {name}", name=host.name), query=query) }}{% endif %}
+    {% if can_ask and hotel and stay %}{{ ask_link(hotel, stay, t("Ask {name} on WhatsApp", name=host.name), query=query) }}{% endif %}
   </div>
 </section>
 {% endmacro %}
 
 {# "Ask your host": a page first, which shows the message and says booking happens on Fichua (Brief 3 v3). #}
 {% macro ask_link(hotel, stay, label=none, cls='btn-whatsapp-outline', query=none) %}
-<a class="btn {{ cls }}" href="/hotels/{{ hotel.id }}/ask?{{ qs(query or stay.as_params()) }}">{{ i.icon('chat', 18) }}<span>{{ label or t("Ask the host") }}</span></a>
+<a class="btn {{ cls }}" href="/hotels/{{ hotel.id }}/ask?{{ qs(query or stay.as_params()) }}">{{ i.icon('chat', 18) }}<span>{{ label or t("Ask on WhatsApp") }}</span></a>
 {% endmacro %}
 
 {# The official class as words ("4-star"): the star symbol is kept for Fichua's own mark (Brief 2 §9). #}
@@ -73,35 +80,65 @@
 {{ [h.area, h.city]|select|join(', ') }}{% if h.country %}, {{ t(h.country) }}{% endif %}
 {%- endmacro %}
 
-{# What Fichua checked, in one line: "Verified on 12 Nov 2026 · 5 of 5 checks", else what is known. #}
-{% macro verified_line(v) -%}
-{%- if v.full %}{{ t("Verified on {date} · 5 of 5 checks", date=fdate(v.latest, 'long')) }}
+{# What Fichua checked, in one line. A demo place says so and claims nothing (design review F01). #}
+{% macro verified_line(v, h=none) -%}
+{%- if h and h.demo %}{{ t("Demo place: shown to explain Fichua, not a real listing") }}
+{%- elif v.full %}{{ t("Fichua Verified on {date} · 5 of 5 checks", date=fdate(v.latest, 'long')) }}
 {%- elif v.count %}{{ t("Partly verified · {n} of 5 checks", n=v.count) }}
-{%- elif v.reviewed_on %}{{ t("Reviewed by Fichua on {date}", date=fdate(v.reviewed_on, 'long')) }}
-{%- else %}{{ t("Reviewed by Fichua before it went live") }}{% endif -%}
+{%- elif v.reviewed_on %}{{ t("Reviewed by our team on {date}", date=fdate(v.reviewed_on, 'long')) }}
+{%- else %}{{ t("Reviewed by our team") }}{% endif -%}
 {%- endmacro %}
 
-{% macro verified_badge(v) %}
-<span class="verified-badge{% if not v.full %} verified-badge--reviewed{% endif %}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>{{ t("Verified") if v.full else t("Reviewed") }}</span>
+{# The seal on a photo: dated when all five checks are done; a demo place is labelled, never "Verified" (F22, F01).
+   With href (the place page), the seal is a link that opens the dated checks. #}
+{% macro verified_badge(v, h=none, href=none) %}
+{%- set tag = 'a' if href else 'span' %}{% set link %}{% if href %} href="{{ href }}"{% endif %}{% endset -%}
+{%- if h and h.demo %}<{{ tag }} class="seal seal--demo"{{ link }}>{{ t("Demo place") }}</{{ tag }}>
+{%- elif v.full %}<{{ tag }} class="seal seal--full"{{ link }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>{{ t("Fichua Verified · 5/5 · {date}", date=fdate(v.latest, 'long')) }}</{{ tag }}>
+{%- elif v.count %}<{{ tag }} class="seal seal--partly"{{ link }}>{{ t("Partly verified · {n}/5", n=v.count) }}</{{ tag }}>
+{%- else %}<{{ tag }} class="seal seal--reviewed"{{ link }}>{{ t("Reviewed") }}</{{ tag }}>{% endif -%}
 {% endmacro %}
 
-{# Price lines for a place: the total for dated stays, "from" a night without dates. #}
+{# How travellers pay. Visa works today; mobile money is shown as coming, never as available (decision of 25 Nov 2026). #}
+{% macro pay_methods() -%}
+{{ t("Pay by Visa or card. Mobile money is coming soon.") }}
+{%- endmacro %}
+
+{# Payments are tests until Stripe's live keys are in: every page that takes or confirms a booking says so (F03). #}
+{% macro pilot_banner() %}
+{% if is_pilot() %}<div class="pilot-banner" role="note"><strong>{{ t("Pilot") }}</strong> <span>{{ t("Bookings are tests for now: no real money is taken and no stay is booked.") }}</span></div>{% endif %}
+{% endmacro %}
+
+{# Price lines for a place: the total for dated stays, "from" a night without dates; the traveller's currency first
+   when they are in the place's country (F19). #}
 {% macro place_price(item, stay, dated, country) %}
 {% set o = item.offer %}
 {% if dated and o %}
-  <span class="place-price__main">{{ t("{total} for {nights}", total=price(o.total_price), nights=tn(stay.nights, "1 night", "{n} nights")) }}{% if stay.rooms > 1 %}, {{ tn(stay.rooms, "1 room", "{n} rooms") }}{% endif %}</span>
-  <span class="place-price__sub">{{ night_price(o.per_night, o.even_nights) }}{% set loc = local_price(o.total_price, country) %}{% if loc %} · {{ loc }}{% endif %}</span>
+  {% set pair = money_pair(o.total_price, country) %}
+  <span class="place-price__main">{{ t("{total} for {nights}", total=pair.main, nights=tn(stay.nights, "1 night", "{n} nights")) }}{% if stay.rooms > 1 %}, {{ tn(stay.rooms, "1 room", "{n} rooms") }}{% endif %}</span>
+  <span class="place-price__sub">{{ night_price(o.per_night, o.even_nights) }}{% if pair.sub %} · {{ pair.sub }}{% endif %}</span>
 {% else %}
-  <span class="place-price__main">{{ t("From {price} a night", price=price(item['from'])) }}</span>
-  {% set loc = local_price(item['from'], country) %}{% if loc %}<span class="place-price__sub">{{ t("{amount} a night", amount=loc) }}</span>{% endif %}
+  {% set pair = money_pair(item['from'], country) %}
+  <span class="place-price__main">{{ t("From {price} a night", price=pair.main) }}</span>
+  {% if pair.sub %}<span class="place-price__sub">{{ t("{amount} a night", amount=pair.sub) }}</span>{% endif %}
 {% endif %}
 {% endmacro %}
 
-{# Where the traveller's money goes (Brief 3 v3): the same figures travellers and hosts see. #}
-{% macro money_panel(total, commission, compact=false) %}
+{# The money on a card: one bar and one line, the host's share first (F21). #}
+{% macro money_bar(total, commission) %}
 {% set split = money_split(total, commission) %}
-<section class="money-panel{% if compact %} money-panel--compact{% endif %}" aria-labelledby="money-title-{{ 'c' if compact else 'f' }}">
-  <h2 class="money-panel__title" id="money-title-{{ 'c' if compact else 'f' }}">{{ t("Where your money goes") }}</h2>
+<div class="money-bar">
+  <span class="money-bar__track" aria-hidden="true"><span style="width:{{ split.host_pct }}%"></span></span>
+  <span class="money-bar__text">{% if split.total %}{{ t("Host gets {host} of {total}", host=price(split.host), total=price(split.total)) }}{% else %}{{ t("Host gets {pct} of what you pay", pct=pct(split.host_pct)) }}{% endif %}</span>
+</div>
+{% endmacro %}
+
+{# Where the traveller's money goes (Brief 3 v3): a receipt with the same figures travellers and hosts see (F21). #}
+{% macro money_panel(total, commission, compact=false, suffix='') %}
+{% set split = money_split(total, commission) %}
+{% set id = 'money-title-' ~ ('c' if compact else 'f') ~ suffix %}
+<section class="money-panel money-panel--receipt{% if compact %} money-panel--compact{% endif %}" aria-labelledby="{{ id }}">
+  <h2 class="money-panel__title" id="{{ id }}">{{ t("Where your money goes") }}</h2>
   <div class="money-panel__bar" aria-hidden="true"><span style="flex-grow:{{ split.host_pct }}"></span><span style="flex-grow:{{ split.pct }}"></span></div>
   <dl class="money-panel__rows">
     {% if split.total %}
@@ -113,52 +150,74 @@
     <div><dt>{{ t("Fichua’s fee") }}</dt><dd>{{ pct(split.pct) }}</dd></div>
     {% endif %}
   </dl>
-  <p class="muted small">{{ t("Fichua’s fee is paid by the host. It is not added to your price.") }}</p>
+  <p class="muted small">{{ t("Fichua’s fee is paid by the host. It is not added to your price.") }} {{ t("Fichua secures your payment.") }}</p>
 </section>
 {% endmacro %}
 
-{# One place in the results: photos, kind, the host, why it matches, what was checked, the price, the money. #}
-{% macro place_card(item, base, picked, stay, dated, commission) %}
+{# One place in the results, compact and host-first (F12, F14): photo, seal, kind, name, host, price, checks, money. #}
+{% macro place_card(item, base, picked, stay, dated, commission, compare=false) %}
 {% set h = item.hotel %}{% set v = item.verification %}
 {% set link = h.path ~ '?' ~ qs(base) %}
-{% set matched = h.kind if (not picked or h.kind in picked) else h.kind_also %}
-<article class="place-card">
+{% set c = h.commission_pct if h.commission_pct is not none else commission %}
+{% set total = item.offer.total_price if (dated and item.offer) else none %}
+<article class="place-card{% if h.demo %} place-card--demo{% endif %}">
   <div class="place-card__media">
-    <div class="photo-strip">{% for img in h.images[:3] %}<img src="{{ img|card_img }}" alt="{{ t('{name}, photo {n}', name=h.name, n=loop.index) }}" loading="lazy">{% endfor %}</div>
-    {{ verified_badge(v) }}
+    <div class="photo-strip">{% for img in h.images[:3] %}{{ photo(img, t('{name}, photo {n}', name=h.name, n=loop.index)) }}{% endfor %}</div>
+    {{ verified_badge(v, h) }}
+    {% if compare %}<label class="compare-pick"><input type="checkbox" name="id" value="{{ h.id }}" data-compare> <span>{{ t("Compare") }}</span></label>{% endif %}
   </div>
   <div class="place-card__body">
-    <p class="place-card__kinds"><span class="kind-label">{{ kind_name(h.kind) }}</span>{% for tg in h.tags[:3] %}<span class="tag">{{ tag_name(tg) }}</span>{% endfor %}</p>
     <div>
       <h3 class="place-card__name"><a href="{{ link }}">{{ h.name }}</a></h3>
-      <p class="muted small place-card__where">{{ place_where(h) }}</p>
+      <p class="small place-card__where"><span class="kind-label">{{ kind_name(h.kind) }}</span> <span class="muted">· {{ [h.city, t(h.country) if h.country else none]|select|join(', ') }}</span></p>
     </div>
-    {% if h.host %}<p class="place-card__host"><span class="avatar" aria-hidden="true">{{ h.host.name[:1] }}</span><span>{{ t("With {name}", name=h.host.name) }}{% if h.host.languages %} · {{ h.host.languages|join(', ') }}{% endif %}</span></p>{% endif %}
-    {% set reason = pick(kinds.kind(matched).reason) %}
-    <p class="why"><strong>{{ t("Why it matches:") }}</strong> {{ kind_name(matched) }}. {{ reason }}</p>
-    <p class="place-card__trust">{{ verified_line(v) }}</p>
-    {% if h.practice.badge %}<span class="tag tag--match">{{ t("Responsible practice") }}</span>{% endif %}
+    {% if h.host %}{% set langs = h.host.languages or [] %}<p class="place-card__host">{% if h.host.photo %}<img class="face" src="{{ h.host.photo }}?size=card" alt="" width="36" height="36" loading="lazy">{% endif %}<span>{{ t("With {name}", name=h.host.name) }}{% if langs %} · {{ langs[:2]|join(', ') }}{% if langs|length > 2 %} +{{ langs|length - 2 }}{% endif %}{% endif %}</span></p>{% endif %}
     <div class="place-price">{{ place_price(item, stay, dated, h.country) }}</div>
     {% if dated and item.offer %}<p class="small place-card__terms">{% if item.offer.free_until %}{{ t("Free cancellation until {date}", date=fdate(item.offer.free_until, 'short')) }}{% else %}{{ t("Non-refundable") }}{% endif %}</p>{% endif %}
-    <p class="small place-card__terms">{{ t("Card · paid in full through Fichua’s secure checkout") }}</p>
-    {% set c = h.commission_pct if h.commission_pct is not none else commission %}
-    <p class="small place-card__terms">{{ t("Your host receives {pct} of what you pay", pct=pct(100 - c|float)) }}</p>
+    <p class="place-card__trust{% if h.demo %} is-demo{% endif %}">{{ verified_line(v, h) }}</p>
+    {{ money_bar(total, c) }}
     <div class="place-card__actions">
       <a class="btn btn-secondary" href="{{ link }}">{{ t("See the place") }}</a>
-      {% if item.can_ask %}{{ ask_link(h, stay, t("Ask {name}", name=h.host.name) if h.host else t("Ask the host"), query=base) }}{% endif %}
+      {% if item.can_ask %}{{ ask_link(h, stay, t("Ask on WhatsApp"), query=base) }}{% endif %}
     </div>
   </div>
 </article>
 {% endmacro %}
 
+{# The booking box on a place page: inline on phones, sticky beside the page on laptops (F16). #}
+{% macro booking_box(hotel, stay, cheapest, rules, commission, can_ask, ask_query, suffix) %}
+<section class="box price-box booking-box-v2" aria-labelledby="price-title-{{ suffix }}">
+  <h2 id="price-title-{{ suffix }}">{{ t("Price and terms") }}</h2>
+  {% if hotel.demo %}<p class="pilot-banner pilot-banner--inline">{{ t("Demo place: shown to explain Fichua, not a real listing") }}</p>{% endif %}
+  {% if cheapest %}
+    {% set pair = money_pair(cheapest.total_price, hotel.country) %}
+    <p class="price-box__main">{{ t("{total} for {nights}", total=pair.main, nights=tn(stay.nights, "1 night", "{n} nights")) }}{% if stay.rooms > 1 %}, {{ tn(stay.rooms, "1 room", "{n} rooms") }}{% endif %}</p>
+    <p class="muted small">{{ frange(stay.check_in, stay.check_out) }} · {{ tn(stay.guests, "1 guest", "{n} guests") }} · {{ night_price(cheapest.per_night, cheapest.even_nights) }}{% if pair.sub %} · {{ pair.sub }}{% endif %}</p>
+    {% if pair.local_first %}<p class="muted small">{{ t("One price for everyone. Cards are charged in US dollars.") }}</p>{% endif %}
+  {% else %}
+    <p class="price-box__main">{{ t("Not available for these dates") }}</p>
+    <p class="muted small">{{ stay_summary(stay) }}</p>
+  {% endif %}
+  <p class="small"><strong>{{ t("Payment:") }}</strong> {{ pay_methods() }}</p>
+  {% if rules %}<p class="rules__title">{{ t("If you cancel") }} <span class="muted">({{ cheapest.name }})</span></p>{{ rules_bar(rules) }}{% endif %}
+  <div class="booking-box-v2__actions">
+    <a class="btn btn-primary btn-block" href="#rooms">{{ t("Check dates and book") }}</a>
+    {% if can_ask %}{{ ask_link(hotel, stay, t("Ask on WhatsApp"), cls='btn-whatsapp-outline btn-block', query=ask_query) }}{% endif %}
+  </div>
+  {{ money_panel(cheapest.total_price if cheapest else none, commission, compact=true, suffix=suffix) }}
+</section>
+{% endmacro %}
+
 {# "Talk to your host directly. We take care of the rest." The four promises, in the traveller's words. #}
-{% macro trust_band(compact=false) %}
+{# proven: a real place shows five dated checks. Until then the first promise says "reviewed", not "vetted" (F04). #}
+{% macro trust_band(compact=false, proven=true) %}
 <section class="trust-band{% if compact %} trust-band--compact{% endif %}" aria-labelledby="trust-band-title{{ '-c' if compact }}">
   <h2 class="trust-band__title" id="trust-band-title{{ '-c' if compact }}">{{ t("Talk to your host directly. We take care of the rest.") }}</h2>
   {% if not compact %}
   <ul class="trust-band__list">
     {% for title, text in [
-      (t("We vet every host"), t("We check each place before it goes live, and show you what we checked and when.")),
+      (t("We vet every host"), t("We check each place before it goes live, and show you what we checked and when.")) if proven
+        else (t("We review every place"), t("Our team reviews each place before it goes live.")),
       (t("We handle the booking"), t("One Fichua reference, shared with your host. Nothing to arrange on the side.")),
       (t("We secure your payment"), t("You pay through Fichua’s secure checkout, and refunds follow the rule you saw before paying.")),
       (t("We show the money"), t("What you pay, what your host receives and Fichua’s fee. Travellers and hosts see the same figures."))] %}
@@ -167,7 +226,7 @@
     {% endfor %}
   </ul>
   {% else %}
-  <p class="small">{{ t("We vet the host, handle the booking, secure your payment and show where the money goes.") }}</p>
+  <p class="small">{% if proven %}{{ t("We vet the host, handle the booking, secure your payment and show where the money goes.") }}{% else %}{{ t("We review the place, handle the booking, secure your payment and show where the money goes.") }}{% endif %}</p>
   {% endif %}
   <p class="trust-band__close">{{ t("Fichua is built on trust, and rewards it: verified hosts come first, and no one can pay to rank higher.") }}</p>
 </section>

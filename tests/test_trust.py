@@ -1,5 +1,7 @@
 """The "Built at MIT" trust section: on guest pages and the partner landing page, with names as text
 until official logo files are added (a `-white` file means a reversed logo on a dark plate)."""
+import dataclasses
+
 from fastapi.testclient import TestClient
 
 from fichua import web
@@ -18,7 +20,15 @@ def test_trust_section_on_guest_and_partner_pages():
         assert "https://kuosharper.mit.edu" in html, path
 
 
-def test_supplied_logo_files_are_used():
+def test_logos_stay_off_until_mit_says_yes():
+    assert not web.settings.mit_logos_approved
+    assert all(p["logo"] is None for p in web.trust_partners())
+    html = TestClient(app).get("/").text
+    assert "/static/img/trust/mit.png" not in html and "MIT Sandbox Innovation Fund" in html
+
+
+def test_supplied_logo_files_are_used(monkeypatch):
+    monkeypatch.setattr(web, "settings", dataclasses.replace(web.settings, mit_logos_approved=True))
     found = {p["key"]: p for p in web.trust_partners()}
     assert found["mit"]["logo"].startswith("/static/img/trust/mit.png?v=") and found["mit"]["plate"] == "light"
     assert found["mit-sandbox"]["logo"].startswith("/static/img/trust/mit-sandbox.png?v=")
@@ -29,6 +39,7 @@ def test_supplied_logo_files_are_used():
 
 
 def test_logos_switch_on_when_official_files_are_added(tmp_path, monkeypatch):
+    monkeypatch.setattr(web, "settings", dataclasses.replace(web.settings, mit_logos_approved=True))
     monkeypatch.setattr(web, "STATIC_DIR", tmp_path)
     assert all(p["logo"] is None and p["plate"] == "light" for p in web.trust_partners())
 

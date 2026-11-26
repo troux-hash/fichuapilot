@@ -69,6 +69,10 @@ def create_booking(conn: Connection, stay: Stay, room_type_id: str, *, guest_nam
     room = conn.one("SELECT id, hotel_id FROM room_types WHERE id = :rt" + conn.lock_clause(), {"rt": room_type_id})
     if not room:
         raise BookingError("That room type no longer exists.")
+    # A demo place explains Fichua; it never takes real money (design review F01). Test bookings stay possible.
+    if source != "offline" and payments.is_live() and conn.scalar(
+            "SELECT is_demo FROM hotels WHERE id = :h", {"h": room["hotel_id"]}):
+        raise BookingError("This is a demo place, shown to explain Fichua. It can’t be booked.")
     live = catalog.availability(conn, stay, room_type_id=room_type_id, include_inactive=(source == "offline"))
     if not live:
         raise BookingError("Sorry — this room just sold out for these dates. Please pick another." if stay.rooms == 1

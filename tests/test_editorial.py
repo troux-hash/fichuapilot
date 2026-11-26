@@ -51,7 +51,7 @@ def test_ask_the_hotel_records_an_enquiry_with_a_reference():
         conn.run("UPDATE hotels SET phone = :p WHERE id = :id", {"p": "0788 123 456", "id": hotel_id})
     try:
         page = guest.get(f"/hotels/{hotel_id}", params=STAY).text
-        assert f'href="/hotels/{hotel_id}/ask?' in page and "Ask the host" in page
+        assert f'href="/hotels/{hotel_id}/ask?' in page and "Ask on WhatsApp" in page
         # The ask page shows the message first and says booking stays on Fichua (no codes from hosts).
         ask = guest.get(f"/hotels/{hotel_id}/ask", params=STAY).text
         assert f'action="/hotels/{hotel_id}/ask"' in ask and "Hosts never take payment outside Fichua" in ask

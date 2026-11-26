@@ -30,14 +30,24 @@
   <header class="site-header">
     <div class="container">
       <a class="logo" href="/" aria-label="{{ app_name }}"><span class="logo-mark" aria-hidden="true">F</span>{{ app_name }}</a>
-      <nav class="nav">{% block nav %}<a href="/manage">{{ t("Manage booking") }}</a><a href="/partners">{{ t("For hosts") }}</a>{% endblock %}</nav>
+      <nav class="nav" aria-label="{{ t('Main') }}">{% block nav %}<a href="/manage">{{ t("Manage booking") }}</a><a href="/partners">{{ t("List your place") }}</a>{% endblock %}</nav>
       <div class="lang-switch" role="group" aria-label="{{ t('Language') }}">
         <a href="/lang/en?{{ qs({'next': here(request)}) }}" class="{{ 'is-on' if lang != 'fr' }}" hreflang="en" lang="en" {% if lang != 'fr' %}aria-current="true"{% endif %}>EN</a>
         <a href="/lang/fr?{{ qs({'next': here(request)}) }}" class="{{ 'is-on' if lang == 'fr' }}" hreflang="fr" lang="fr" {% if lang == 'fr' %}aria-current="true"{% endif %}>FR</a>
       </div>
+      {# Phones: the same links behind one button, so owners always find "List your place" (design review F08). #}
+      <details class="menu">
+        <summary>{{ t("Menu") }}</summary>
+        <div class="menu__panel">
+          <a href="/manage">{{ t("Manage booking") }}<small>{{ t("Find, change or cancel a stay") }}</small></a>
+          <a href="/partners">{{ t("List your place") }}<small>{{ t("For owners of independent places") }}</small></a>
+        </div>
+      </details>
     </div>
   </header>
   {% endblock %}
+  {# While payments are tests, every traveller page says so (design review F03). Pages with their own notice override this. #}
+  {% block pilot %}{% if is_pilot() %}<div class="pilot-strip" role="note"><div class="container"><strong>{{ t("Pilot") }}</strong><span>{{ t("Bookings are tests for now: no real money is taken.") }}</span></div></div>{% endif %}{% endblock %}
   <main id="main">{% block content %}{% endblock %}</main>
   {% block footer %}
   {% import "components/trust.html" as trust with context %}

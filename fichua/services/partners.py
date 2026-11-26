@@ -154,18 +154,70 @@ def _int(value) -> int | None:
     return int(v) if v is not None else None
 
 
-def update_identity(conn: Connection, hotel_id: str, form: dict) -> list[str]:
+# Step 1 in three short screens (design review F29): each part saves on its own, so an owner on a phone can
+# stop after any of them. The full form (all fields at once) still works.
+IDENTITY_PARTS = {
+    1: ("Your place", ["name", "property_type", "category", "category_also", "good_for", "good_for_sent",
+                       "description"]),
+    2: ("Where it is", ["country", "city", "area", "address", "lat", "lng"]),
+    3: ("Contact and details", ["phone", "whatsapp", "email", "check_in_time", "check_out_time", "star_rating",
+                                "amenities", "legal_name", "tax_id"]),
+}
+LIST_FIELDS = ("amenities", "good_for")
+
+
+def identity_values(row: dict) -> dict:
+    """The stored hotel details, shaped like the form sends them."""
+    def text(key: str) -> str:
+        value = row.get(key)
+        return "" if value is None else str(value)
+    values = {key: text(key) for _, keys in IDENTITY_PARTS.values() for key in keys if key not in LIST_FIELDS}
+    values["amenities"] = [a.strip() for a in text("amenities").split(",") if a.strip()]
+    values["good_for"] = [g for g in text("good_for").split(",") if g]
+    values["good_for_sent"] = "1"
+    return values
+
+
+def _identity_errors(form: dict) -> list[tuple[int, str]]:
+    """Each problem with the part of step 1 it belongs to."""
     errors = []
-    country = normalize_country(form.get("country"))
-    if country not in MARKETS:
-        errors.append("Choose Rwanda, Benin or Côte d'Ivoire.")
-    for key, label in [("name", "hotel name"), ("city", "city"), ("address", "street address"),
-                       ("phone", "reception phone"), ("whatsapp", "WhatsApp number")]:
+    if (form.get("name") or "").strip() == "":
+        errors.append((1, "Enter the hotel name."))
+    if normalize_country(form.get("country")) not in MARKETS:
+        errors.append((2, "Choose Rwanda, Benin or Côte d'Ivoire."))
+    for key, label in [("city", "city"), ("address", "street address")]:
         if not (form.get(key) or "").strip():
-            errors.append(f"Enter the {label}.")
+            errors.append((2, f"Enter the {label}."))
+    if _float(form.get("lat")) is None or _float(form.get("lng")) is None:
+        errors.append((2, "Drop the pin on your entrance on the map."))
+    for key, label in [("phone", "reception phone"), ("whatsapp", "WhatsApp number")]:
+        if not (form.get(key) or "").strip():
+            errors.append((3, f"Enter the {label}."))
+    return errors
+
+
+def identity_part_errors(conn: Connection, hotel_id: str, part: int) -> list[str]:
+    """What is still missing in one part of step 1, from what is stored."""
+    row = conn.one("SELECT * FROM hotels WHERE id = :id", {"id": hotel_id}) or {}
+    return [message for p, message in _identity_errors(identity_values(row)) if p == part]
+
+
+def update_identity_part(conn: Connection, hotel_id: str, part: int, form: dict) -> list[str]:
+    """Save one part of step 1 over what is stored; report only that part's problems."""
+    row = conn.one("SELECT * FROM hotels WHERE id = :id", {"id": hotel_id}) or {}
+    data = identity_values(row)
+    for key in IDENTITY_PARTS[part][1]:
+        data[key] = form.get(key) or ([] if key in LIST_FIELDS else "")
+    if part == 3 and not data["whatsapp"].strip():
+        data["whatsapp"] = data["phone"]  # one number is enough: the reception phone gets the alerts too
+    update_identity(conn, hotel_id, data)
+    return [message for p, message in _identity_errors(data) if p == part]
+
+
+def update_identity(conn: Connection, hotel_id: str, form: dict) -> list[str]:
+    errors = [message for _, message in _identity_errors(form)]
+    country = normalize_country(form.get("country"))
     lat, lng = _float(form.get("lat")), _float(form.get("lng"))
-    if lat is None or lng is None:
-        errors.append("Drop the pin on your entrance on the map.")
     amenities = ", ".join(a for a in form.get("amenities", []) if a in AMENITIES)
     conn.run("UPDATE hotels SET legal_name = :legal, tax_id = :tax WHERE id = :id",
              {"legal": (form.get("legal_name") or "").strip()[:120] or None,

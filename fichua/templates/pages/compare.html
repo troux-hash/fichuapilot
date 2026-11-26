@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% import "components/ui.html" as ui with context %}
+{# Up to three places side by side (design review F15): the same facts in the same order, for laptop comparison. #}
+{% block title %}{{ t("Compare side by side") }} · {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="container compare-page">
+  <a class="back-link" href="/search?{{ back_qs }}">← {{ t("Back to the results") }}</a>
+  <header class="page-head">
+    <h1>{{ t("Compare side by side") }}</h1>
+    <p class="muted small">{{ t("Ordered by fit and verification. Places cannot pay to rank higher.") }}</p>
+  </header>
+  {% if not items %}
+  <div class="alert alert-info">{{ t("Tick two or three places on the results page, then compare them here.") }}</div>
+  {% else %}
+  <div class="compare-scroll">
+    <table class="compare-table">
+      <thead>
+        <tr><th scope="col"><span class="sr-only">{{ t("Fact") }}</span></th>
+          {% for it in items %}<th scope="col"><div class="compare-table__photo">{{ ui.photo(it.hotel.images[0], it.hotel.name, sizes='240px') }}{{ ui.verified_badge(it.verification, it.hotel) }}</div><a class="compare-table__name" href="{{ it.hotel.path }}?{{ qs(base) }}">{{ it.hotel.name }}</a></th>{% endfor %}</tr>
+      </thead>
+      <tbody>
+        <tr><th scope="row">{{ t("Kind of place") }}</th>{% for it in items %}<td>{{ kind_name(it.hotel.kind) }}</td>{% endfor %}</tr>
+        <tr><th scope="row">{{ t("Where") }}</th>{% for it in items %}<td>{{ ui.place_where(it.hotel) }}</td>{% endfor %}</tr>
+        <tr><th scope="row">{{ t("Your host") }}</th>{% for it in items %}<td>{% if it.hotel.host %}{{ it.hotel.host.name }}{% if it.hotel.host.languages %}<br><span class="muted small">{{ it.hotel.host.languages|join(', ') }}</span>{% endif %}{% else %}<span class="muted">{{ t("Not shown yet") }}</span>{% endif %}</td>{% endfor %}</tr>
+        <tr><th scope="row">{{ t("All-in price") }}</th>{% for it in items %}<td>{{ ui.place_price(it, stay, dated, it.hotel.country) }}</td>{% endfor %}</tr>
+        <tr><th scope="row">{{ t("If you cancel") }}</th>{% for it in items %}<td>{% if dated and it.offer %}{% if it.offer.free_until %}{{ t("Free cancellation until {date}", date=fdate(it.offer.free_until, 'short')) }}{% else %}{{ t("Non-refundable") }}{% endif %}{% else %}{{ t(policies.get(it.hotel.cancellation_policy or 'flexible', policies['flexible'])[1]) }}{% endif %}</td>{% endfor %}</tr>
+        <tr><th scope="row">{{ t("What Fichua checked") }}</th>{% for it in items %}<td>{{ ui.verified_line(it.verification, it.hotel) }}</td>{% endfor %}</tr>
+        <tr><th scope="row">{{ t("Where your money goes") }}</th>{% for it in items %}{% set c = it.hotel.commission_pct if it.hotel.commission_pct is not none else commission %}<td>{{ ui.money_bar(it.offer.total_price if (dated and it.offer) else none, c) }}</td>{% endfor %}</tr>
+        <tr><th scope="row">{{ t("Payment") }}</th>{% for it in items %}<td>{{ ui.pay_methods() }}</td>{% endfor %}</tr>
+        <tr><th scope="row"><span class="sr-only">{{ t("Next step") }}</span></th>{% for it in items %}<td class="compare-table__actions"><a class="btn btn-primary btn-sm" href="{{ it.hotel.path }}?{{ qs(base) }}">{{ t("See the place") }}</a>{% if it.can_ask %}{{ ui.ask_link(it.hotel, stay, t("Ask on WhatsApp"), cls='btn-whatsapp-outline btn-sm', query=base) }}{% endif %}</td>{% endfor %}</tr>
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

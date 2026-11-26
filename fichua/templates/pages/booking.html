@@ -4,9 +4,11 @@
 
 {% block title %}{{ t("Booking {ref}", ref=booking.reference) }} · {{ app_name }}{% endblock %}
 
+{% block pilot %}{% endblock %}
 {% block content %}
 {% set host = booking.host_name if booking.host_consent_at and booking.host_name else booking.hotel_name %}
 <div class="container narrow" style="padding-bottom:var(--space-8)">
+  <div style="margin-top:var(--space-4)">{{ ui.pilot_banner() }}</div>
   {% if booking.awaiting_payment %}
   <div class="confirm-hero">
     <div class="confirm-check is-pending" aria-hidden="true"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>

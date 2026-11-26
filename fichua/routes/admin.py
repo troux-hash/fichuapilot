@@ -195,6 +195,7 @@ async def approval_trust(request: Request, hotel_id: str):
             return RedirectResponse("/admin/approvals", status_code=303)
         kind = kinds.clean_kind(data.get("category"))
         also = kinds.clean_kind(data.get("category_also"))
+        conn.run("UPDATE hotels SET is_demo = :demo WHERE id = :id", {"demo": data.get("is_demo") == "1", "id": hotel_id})
         conn.run("UPDATE hotels SET category = COALESCE(:c, category), category_also = :a, good_for = :g, "
                  "practice_people = :pp, practice_place = :pl, practice_money = :pm WHERE id = :id",
                  {"c": kind, "a": also if also != kind else None,
@@ -216,6 +217,14 @@ def _commission(text: str) -> tuple[float | None, bool]:
     except ValueError:
         return None, True
     return (pct, False) if 0 <= pct <= 50 else (None, True)
+
+
+def _whatsapp_ready(conn, hotel: dict) -> bool:
+    """A number travellers can message, and the WhatsApp check dated by the team."""
+    if not (hotel.get("phone") or "").strip():
+        return False
+    return bool(conn.scalar("SELECT COUNT(*) FROM hotel_checks WHERE hotel_id = :h AND check_id = 'whatsapp'",
+                            {"h": hotel["id"]}))
 
 
 DECISIONS = ("approve", "changes", "reject")
@@ -244,6 +253,9 @@ def approval_decide(request: Request, hotel_id: str, action: str = Form(...), co
             else:
                 conn.run("UPDATE hotels SET is_active = :on WHERE id = :id", {"on": action == "show", "id": hotel_id})
             return RedirectResponse(f"{back}?decided={action}", status_code=303)
+        if action == "approve" and not _whatsapp_ready(conn, hotel):
+            # Travellers may talk to the host before booking: no place goes live without a tested WhatsApp (F18).
+            return RedirectResponse(f"{back}?decided=no-whatsapp#trust", status_code=303)
         if action == "approve":
             conn.run("UPDATE hotels SET status = 'live', is_active = TRUE, approved_at = :t, commission_pct = :p, "
                      "review_note = :n WHERE id = :id", {"t": utcnow(), "p": pct, "n": note.strip(), "id": hotel_id})
