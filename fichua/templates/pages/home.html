@@ -1,28 +1,19 @@
 {% extends "base.html" %}
 {% import "components/ui.html" as ui with context %}
 {% import "components/icons.html" as i %}
-{# Brief 3 v3: one question first, the kind of stay; then where and when. No ranking by price, fees or reply speed.
-   Design review (25 Nov 2026): show, not tell. All five kinds and one proof line within the first 800 px on a phone. #}
+{# The home page, top to bottom (26 Nov 2026): who Fichua is, the one question, the five kinds of place, then how
+   Fichua takes care of the rest. Brief 3 v3: no ranking by price, fees or reply speed. #}
 {% block body_class %}has-sticky-cta{% endblock %}
 
 {% block content %}
 <form class="kind-page" action="/where" method="get" data-kind-form>
   <div class="container container--narrow">
     <header class="kind-intro">
+      <div class="mission">
+        <p class="mission__meaning">{{ t("Fichua is Swahili for “to reveal, to uncover”.") }}</p>
+        <p class="mission__text">{{ t("We put small, independent hotels and lodges on the map, connect them with conscious travellers, bring them more bookings and champion sustainable, responsible tourism.") }}</p>
+      </div>
       <h1 class="kind-intro__title">{{ t("What kind of stay are you looking for?") }}</h1>
-      {# Five promises, in the traveller's words (26 Nov 2026): less friction, a smooth booking, the host directly,
-         a secured payment, the money shown. Phones show the short line; laptops add the sentence under it. #}
-      <ul class="promise-row" aria-label="{{ t('Why book on Fichua') }}">
-        {% for icon, title, line in [
-          ('zap', t("Book in a few taps"), t("One page, no account needed.")),
-          ('calendar-check', t("Confirmed on the spot"), t("Your Fichua reference arrives straight away.")),
-          ('chat', t("Talk to your host directly"), t("Ask anything on WhatsApp before you book.")),
-          ('lock', t("Payment secured by Fichua"), t("Refunds follow the rules you saw.")),
-          ('eye', t("See where your money goes"), t("What your host receives, and Fichua’s fee."))] %}
-        <li class="promise-row__item"><span class="promise-row__icon">{{ i.icon(icon, 18) }}</span>
-          <span class="promise-row__text"><strong>{{ title }}</strong><span class="promise-row__line">{{ line }}</span></span></li>
-        {% endfor %}
-      </ul>
     </header>
 
     <fieldset class="kinds kinds--grid">
@@ -36,28 +27,27 @@
             {% else %}<span class="kind-tile__mark">{{ pick(k.name)[:1] }}</span>{% endif %}
             <span class="kind-tile__tick"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
           </span>
-          <span class="kind-tile__name">{{ pick(k.name) }}</span>
+          <span class="kind-tile__text"><span class="kind-tile__name">{{ pick(k.name) }}</span><span class="kind-tile__line">{{ pick(k.short) }}</span></span>
         </label>
         {% endfor %}
         {% if fichua_wa %}
         <a class="kind-tile kind-tile--help" href="{{ fichua_wa }}" target="_blank" rel="noopener">
           <span class="kind-tile__media" aria-hidden="true">{{ i.icon('chat', 28) }}</span>
-          <span class="kind-tile__name">{{ t("Not sure? Ask us on WhatsApp") }}</span>
+          <span class="kind-tile__text"><span class="kind-tile__name">{{ t("Not sure? Ask us on WhatsApp") }}</span></span>
         </a>
         {% else %}
         <button class="kind-tile kind-tile--help" type="submit">
           <span class="kind-tile__media" aria-hidden="true"><span class="kind-tile__mark">5</span></span>
-          <span class="kind-tile__name">{{ t("Not sure? See every kind") }}</span>
+          <span class="kind-tile__text"><span class="kind-tile__name">{{ t("Not sure? See every kind") }}</span></span>
         </button>
         {% endif %}
       </div>
     </fieldset>
 
-    <p class="kind-intro__mission">{{ t("Independent places that run responsibly, and travellers who want to support them, meet here directly. Choose from five kinds of stay.") }}</p>
+    {{ ui.trust_band(proven=proven) }}
+
     <p class="where-from where-from--intro"><span class="where-from__line">{{ t("Starting in Rwanda, Benin and Côte d’Ivoire") }}</span>
       <span class="where-from__mit">{{ t("Built at MIT, for Africa first and the World") }}</span></p>
-
-    {{ ui.trust_band(proven=proven) }}
   </div>
 
   <div class="sticky-cta sticky-cta--stack">

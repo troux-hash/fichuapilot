@@ -80,7 +80,7 @@ def test_weekend_and_season_prices():
 
 def test_pages_render():
     home = guest.get("/").text
-    assert "What kind of stay are you looking for?" in home and "We handle the booking" in home
+    assert "What kind of stay are you looking for?" in home and "We take care of the rest." in home
     hotel_id = guest.get("/api/search", params={"destination": "Kigali", **STAY}).json()["results"][0]["hotel"]["id"]
     r = guest.get(f"/hotels/{hotel_id}", params=STAY)
     assert r.status_code == 200 and "Choose your room" in r.text

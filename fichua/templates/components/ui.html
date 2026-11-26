@@ -214,20 +214,22 @@
 <section class="trust-band{% if compact %} trust-band--compact{% endif %}" aria-labelledby="trust-band-title{{ '-c' if compact }}">
   <h2 class="trust-band__title" id="trust-band-title{{ '-c' if compact }}">{{ t("Talk to your host directly. We take care of the rest.") }}</h2>
   {% if not compact %}
-  <ul class="trust-band__list">
-    {% for title, text in [
-      (t("We vet every host"), t("We check each place before it goes live, and show you what we checked and when.")) if proven
-        else (t("We review every place"), t("Our team reviews each place before it goes live.")),
-      (t("We handle the booking"), t("One Fichua reference, shared with your host. Nothing to arrange on the side.")),
-      (t("We secure your payment"), t("You pay through Fichua’s secure checkout, and refunds follow the rule you saw before paying.")),
-      (t("We show the money"), t("What you pay, what your host receives and Fichua’s fee. Travellers and hosts see the same figures."))] %}
-    <li><span class="trust-band__dot" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
-      <div><strong>{{ title }}</strong><span>{{ text }}</span></div></li>
+  {# Five promises, short and in the traveller's words: less friction, a smooth booking, the host directly,
+     a secure payment, nothing hidden. #}
+  <ul class="promise-list">
+    {% for icon, title, line in [
+      ('zap', t("Book in minutes"), t("One page. No account.")),
+      ('calendar-check', t("Confirmed instantly"), t("Your Fichua reference, right away.")),
+      ('chat', t("Ask before you book"), t("Message your host on WhatsApp.")),
+      ('lock', t("Secure payment"), t("Handled by Fichua, with clear refund rules.")),
+      ('eye', t("Nothing hidden"), t("See what your host gets, and our fee."))] %}
+    <li class="promise-list__item"><span class="promise-list__icon">{{ i.icon(icon, 18) }}</span>
+      <span class="promise-list__text"><strong>{{ title }}</strong><span>{{ line }}</span></span></li>
     {% endfor %}
   </ul>
   {% else %}
   <p class="small">{% if proven %}{{ t("We vet the host, handle the booking, secure your payment and show where the money goes.") }}{% else %}{{ t("We review the place, handle the booking, secure your payment and show where the money goes.") }}{% endif %}</p>
   {% endif %}
-  <p class="trust-band__close">{{ t("Fichua is built on trust, and rewards it: verified hosts come first, and no one can pay to rank higher.") }}</p>
+  <p class="trust-band__close">{{ t("Built on trust: verified hosts rank first, and no one can pay to rank higher.") }}</p>
 </section>
 {% endmacro %}

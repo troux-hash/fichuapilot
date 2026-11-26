@@ -439,7 +439,24 @@ _FR: dict[str, str] = {
     "Not sure? Ask us on WhatsApp": "Vous hésitez ? Demandez-nous sur WhatsApp",
     "Not sure? See every kind": "Vous hésitez ? Voir tous les types",
     "Compare the places you ticked (up to three)": "Comparer les lieux cochés (jusqu’à trois)",
-    # Five promises under the question on the home page (26 Nov 2026).
+    # The home page, top to bottom (26 Nov 2026): the mission, then the five promises under "We take care of the rest".
+    "Fichua is Swahili for “to reveal, to uncover”.": "Fichua signifie « révéler, dévoiler » en swahili.",
+    "We put small, independent hotels and lodges on the map, connect them with conscious travellers, bring them more bookings and champion sustainable, responsible tourism.":
+        "Nous mettons en lumière les petits hôtels et lodges indépendants, les relions à des voyageurs engagés, "
+        "leur apportons plus de réservations et défendons un tourisme durable et responsable.",
+    "Book in minutes": "Réservez en quelques minutes",
+    "One page. No account.": "Une page. Aucun compte.",
+    "Confirmed instantly": "Confirmation immédiate",
+    "Your Fichua reference, right away.": "Votre référence Fichua, tout de suite.",
+    "Ask before you book": "Demandez avant de réserver",
+    "Message your host on WhatsApp.": "Écrivez à votre hôte sur WhatsApp.",
+    "Secure payment": "Paiement sécurisé",
+    "Handled by Fichua, with clear refund rules.": "Géré par Fichua, avec des règles de remboursement claires.",
+    "Nothing hidden": "Rien de caché",
+    "See what your host gets, and our fee.": "Voyez ce que reçoit votre hôte, et notre commission.",
+    "Built on trust: verified hosts rank first, and no one can pay to rank higher.":
+        "Fondé sur la confiance : les hôtes vérifiés passent en premier, et personne ne peut payer pour être mieux classé.",
+    # Five promises under the question on the home page (26 Nov 2026, replaced the same day by the list above).
     "Book in a few taps": "Réservez en quelques clics",
     "One page, no account needed.": "Une seule page, aucun compte nécessaire.",
     "Confirmed on the spot": "Confirmé sur-le-champ",

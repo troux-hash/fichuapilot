@@ -65,13 +65,18 @@ def test_header_menu_keeps_list_your_place_in_reach():
 def test_home_shows_five_kinds_and_a_way_to_ask():
     home = guest.get("/").text
     assert home.count('class="kind-tile__input"') == 5
-    # Five promises with icons under the question (26 Nov 2026), in English and French.
-    assert home.count('class="promise-row__item"') == 5
-    for promise in ("Book in a few taps", "Confirmed on the spot", "Talk to your host directly",
-                    "Payment secured by Fichua", "See where your money goes"):
+    # Top to bottom (26 Nov 2026): the mission, the question, the five kinds with a short line each, then the five
+    # promises under "We take care of the rest", in English and French.
+    main = home.split("<main", 1)[1]  # the head repeats some lines for link previews
+    order = [main.index(text) for text in ("Fichua is Swahili for", "What kind of stay are you looking for?",
+                                           'class="kind-tile__input"', "We take care of the rest.")]
+    assert order == sorted(order)
+    assert home.count('class="kind-tile__line"') == 5 and "Small, calm hotels in the city" in home
+    assert home.count('class="promise-list__item"') == 5
+    for promise in ("Book in minutes", "Confirmed instantly", "Ask before you book", "Secure payment", "Nothing hidden"):
         assert promise in home, promise
     french = TestClient(app).get("/", headers={"Accept-Language": "fr-FR,fr;q=0.9"}).text
-    assert "Réservez en quelques clics" in french and "Paiement sécurisé par Fichua" in french
+    assert "Fichua signifie" in french and "Petits hôtels calmes en ville" in french and "Rien de caché" in french
     assert "data-kind-submit" not in home  # the button always works: no pick means every kind
     with db.connect() as conn:
         app_settings.put(conn, "admin_whatsapp", "+250788000999")
@@ -188,18 +193,16 @@ def test_vetting_promise_and_dated_seal_need_five_dated_checks():
     hotel = _live()[0]
     with db.connect() as conn:
         conn.run("DELETE FROM hotel_checks WHERE hotel_id = :h", {"h": hotel["id"]})
-    home = guest.get("/").text
-    if "We vet every host" not in home:  # no other place in the test data is fully checked
-        assert "We review every place" in home
+    place = f"/hotels/{hotel['id']}"
+    assert "We review the place, handle the booking" in guest.get(place, params=STAY).text  # no dated checks yet
     seen = date.today() - timedelta(days=2)
     with db.connect() as conn:
         for check in ("identity", "licence", "location", "photos", "whatsapp"):
             conn.run("INSERT INTO hotel_checks (hotel_id, check_id, done_on, note) VALUES (:h, :c, :d, '')",
                      {"h": hotel["id"], "c": check, "d": seen})
     try:
-        home = guest.get("/").text
-        assert "We vet every host" in home
-        page = guest.get(f"/hotels/{hotel['id']}", params=STAY).text
+        page = guest.get(place, params=STAY).text
+        assert "We vet the host, handle the booking" in page
         seal = page.split('class="seal seal--full"', 1)[1].split("</a>", 1)[0]
         assert "Fichua Verified · 5/5 · " in seal and str(seen.year) in seal
         assert re.search(r'<a class="seal seal--full" href="#checks"', page)
