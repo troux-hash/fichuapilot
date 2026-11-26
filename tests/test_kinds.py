@@ -123,7 +123,7 @@ def test_english_and_french_with_a_remembered_choice():
 
 def test_countries_line_and_mit_line_on_the_home_page():
     home = guest.get("/").text
-    assert "Starting in Rwanda, Benin and Côte d’Ivoire" in home and "Built at MIT, for Africa and the World" in home
+    assert "Starting in Rwanda, Benin and Côte d’Ivoire" in home and "Built at MIT, for Africa first and the World" in home
 
 
 def test_owners_pick_a_kind_and_see_their_home(admin):

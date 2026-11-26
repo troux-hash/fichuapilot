@@ -114,7 +114,7 @@ def test_home_starts_with_the_five_kinds_of_place():  # Brief 3 v3
     assert "What kind of stay are you looking for?" in home
     for k in kinds.KINDS:
         assert f'name="kind" value="{k["id"]}"' in home
-    assert "Starting in Rwanda, Benin and Côte d’Ivoire" in home and "Built at MIT, for Africa and the World" in home
+    assert "Starting in Rwanda, Benin and Côte d’Ivoire" in home and "Built at MIT, for Africa first and the World" in home
     where = guest.get("/where", params={"kind": ["urban", "water"]}).text
     assert 'value="all"' in where and "Show me without dates" in where
     results = guest.get("/search", params={"kind": "urban", "dates": "any"}).text

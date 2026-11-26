@@ -25,7 +25,7 @@ Markets: Rwanda, Benin, Côte d'Ivoire. Master currency USD (RWF / CFA shown alo
 | Guest site | Each place shows the five checks with their dates, its host, price and terms, where the money goes (host's share, Fichua's fee paid by the host) and how it runs (people, place, money) |
 | Guest site | "Ask your host" page before WhatsApp: the message, the traveller's question, and the rule that booking and payment stay on Fichua |
 | Guest site | Every traveller page in English and French (EN/FR switch, remembered; the browser's language on a first visit) |
-| Guest site | "Starting in Rwanda, Benin and Côte d'Ivoire", with "Built at MIT, for Africa and the World" in small type below |
+| Guest site | "Starting in Rwanda, Benin and Côte d'Ivoire", with "Built at MIT, for Africa first and the World" in small type below |
 | Partners | Kind of place and "good for" tags on the hotel details step; a home page with this month's questions, bookings, money, next arrivals and a share kit |
 | Admin | The kind of place, the five checks with dates and how the place runs, recorded on the review page; catalogue depth by kind and country on the dashboard |
 
@@ -114,7 +114,7 @@ the demo catalogue). Waiting on WhatsApp: the build-first "reveal" flow for owne
 
 The traveller, operator and admin prototypes were built into the sites, with three decisions taken the same day:
 
-- **Countries:** say only "Starting in Rwanda, Benin and Côte d'Ivoire", with "Built at MIT, for Africa and the World"
+- **Countries:** say only "Starting in Rwanda, Benin and Côte d'Ivoire", with "Built at MIT, for Africa first and the World"
   in small type below (home page, footer, video end cards).
 - **Payment:** Fichua secures the payment (today's card checkout; the money panel says the fee is paid by the host).
 - **Ranking by reply speed:** removed for good, not a feature to build. Results rank by fit, then verification.

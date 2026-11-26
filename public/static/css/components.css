@@ -563,7 +563,7 @@ input[type="range"] { width: 100%; accent-color: var(--color-primary); }
 @media (max-width: 520px) { .site-header .nav a + a { display: none; } }
 @media (max-width: 480px) { .site-header .nav { display: none; } }  /* both links are in the footer too */
 
-/* Where Fichua starts, with "Built at MIT, for Africa and the World" below in small type */
+/* Where Fichua starts, with "Built at MIT, for Africa first and the World" below in small type */
 .where-from { display: flex; flex-direction: column; gap: 2px; margin: 0; }
 .where-from__line { margin: 0; font-weight: var(--weight-bold); color: var(--color-ink); }
 .where-from__mit { margin: 0; font-size: var(--text-xs); letter-spacing: .02em; color: var(--color-muted); }

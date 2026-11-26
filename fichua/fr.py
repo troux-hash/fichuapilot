@@ -17,7 +17,7 @@ _FR: dict[str, str] = {
     "For hosts": "Pour les hôtes",
     "Language": "Langue",
     "Starting in Rwanda, Benin and Côte d’Ivoire": "D’abord au Rwanda, au Bénin et en Côte d’Ivoire",
-    "Built at MIT, for Africa and the World": "Conçu au MIT, pour l’Afrique et le monde",
+    "Built at MIT, for Africa first and the World": "Conçu au MIT, pour l’Afrique d’abord et pour le monde",
     "Prices in US dollars, the total for your stay.": "Prix en dollars américains, le total de votre séjour.",
     "Manage a booking": "Gérer une réservation",
     "List your place": "Inscrire votre établissement",
