@@ -292,6 +292,9 @@ founder decisions above, and real photos and host stories for the founding prope
 
 ## Tech debt / ops
 
+- OPS-01 (P1): right after the 26 Nov deploy the first place page took 193 s; later ones took 0.3 to 0.8 s.
+  Schema changes run on every cold start and can wait on database locks: run them once per deploy instead,
+  and time the first request after each deploy until then.
 - Rate-limit login, join and booking endpoints.
 - Automated database backups (Supabase free tier has none): nightly `pg_dump` via GitHub Actions.
 - Browser end-to-end tests (Playwright) for the booking and onboarding funnels.
