@@ -29,6 +29,8 @@ Markets: Rwanda, Benin, Côte d'Ivoire. Master currency USD (RWF / CFA shown alo
 | Partners | Kind of place and "good for" tags on the hotel details step; a home page with this month's questions, bookings, money, next arrivals and a share kit |
 | Admin | The kind of place, the five checks with dates and how the place runs, recorded on the review page; catalogue depth by kind and country on the dashboard |
 | Guest site | Design review, ten changes: "Demo place" labels, a pilot notice while payments are tests, the dated Verified seal, compact host-first cards with a money bar, local money first for local visitors, laptop layouts with compare |
+| Trust | The MIT, MIT Sandbox and MIT Kuo Sharper Center logos, with MIT's written OK (26 Nov 2026), in the guest footer, the owners' page and the portal |
+| Guest site | Five promises with icons under the home question, in English and French: book in a few taps, confirmed on the spot, talk to your host directly, payment secured by Fichua, see where your money goes |
 | Partners | "List your place" in the phone menu, the 7% on the owners' page, "No code? Ask on WhatsApp", hotel details in three short parts |
 | Admin | No place goes live without a phone and the dated "WhatsApp tested" check; a "Demo place" switch on the review page |
 
@@ -123,7 +125,7 @@ check, booking, compare on a laptop) found no errors, failed requests or sideway
 | # | Change | What is live | Findings | Status |
 |---|---|---|---|---|
 | 1 | Only real, checked places in public | The 24 synthetic places are flagged and say "Demo place" on the photo, the card, the page and at checkout; "Fichua Verified" only with five dated checks; "We check each place" only once a real place has them, else "Reviewed by our team". When payments go live, demo places can't be booked | F01, F04 | ✅ Live 26 Nov |
-| 2 | Honest pilot signals | "Pilot · Bookings are tests for now" under the header while payments are tests, and in full at checkout, payment and confirmation; MIT shown in words until the written OK (`MIT_LOGOS_APPROVED`) | F02, F03 | ✅ Live 26 Nov |
+| 2 | Honest pilot signals | "Pilot · Bookings are tests for now" under the header while payments are tests, and in full at checkout, payment and confirmation; MIT shown in words until the written OK, which arrived the same day: the three logos are on | F02, F03 | ✅ Live 26 Nov |
 | 3 | WhatsApp on every card | No place goes live without a phone and the dated "WhatsApp tested" check; "Ask on WhatsApp" on cards and in the booking box | F18 | ✅ Live 26 Nov |
 | 4 | A home page that shows | The question, one proof line, then a 2 × 3 grid: five kind tiles (a real photo from the best-checked real place of that kind, else its colour) and "Not sure? Ask us on WhatsApp"; all within 760 px on a phone; the button always works | F05, F06, F07 | ✅ Live 26 Nov |
 | 5 | Compact, host-first card | 4:3 photo with the seal, serif name, kind and town on one line, host face, total, cancellation, dated check, a 4 px money bar ("Host gets $215.76 of $232"); 530 to 580 px on a phone instead of 653 | F12, F14, F21, F25 | ✅ Live 26 Nov |
@@ -306,7 +308,7 @@ founder decisions above, and real photos and host stories for the founding prope
 | 4 | Automatic payouts to hotel bank accounts (Stripe Global Payouts: Benin + CI; Rwanda on request) | Stripe access |
 | 5 | Map view on the guest results page (hotels already have pins) | — |
 | 6 | Email confirmations (needs a verified domain) | Domain |
-| 7 | Get written OK from MIT for the logos, then set `MIT_LOGOS_APPROVED=1` on Vercel (the names show as words until then) and swap in official SVG files when they arrive | ioc-useofname@mit.edu, sandbox@mit.edu, kuosharper@mit.edu ([guide](BRAND_ASSETS.md)) |
+| 7 | ✅ Done 26 Nov 2026: MIT's written OK arrived and the three logos show (mit.png rebuilt from MIT's official black lock-up; `MIT_LOGOS_APPROVED=0` turns them off). Swap in official SVG files if MIT sends them | ([guide](BRAND_ASSETS.md)) |
 
 ## 💡 P2 — later
 
