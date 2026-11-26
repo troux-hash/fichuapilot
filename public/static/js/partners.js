@@ -69,7 +69,7 @@
     return Promise.race([work, new Promise((resolve) => setTimeout(() => resolve(none), 20000))]);
   }
   // Submit a form the way its own button would. form.requestSubmit() is missing on older phones (iPhones before
-  // iOS 16): calling it there threw, so choosing photos did nothing at all (fixed 27 Nov 2026).
+  // iOS 16): calling it there threw, so choosing photos did nothing at all (fixed 26 Nov 2026).
   function submitForm(form) {
     if (typeof form.requestSubmit === "function") { form.requestSubmit(); return; }
     const button = document.createElement("button");

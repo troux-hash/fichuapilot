@@ -166,6 +166,29 @@ and admin follow-up): no JavaScript errors, no failed requests, no sideways scro
 Local runs can't send WhatsApp messages: `scripts/dev.py` blanks the token, and the local health check says
 "whatsapp: not connected" while the live one says "connected". No new bugs.
 
+## 🐛 QA findings — round 7, owner photo upload and older phones (26 Nov 2026)
+
+An owner reported that choosing photos did nothing. Reproduced on the real page: on browsers without
+`form.requestSubmit()` (iPhones before iOS 16, older Android browsers) the page threw as soon as photos were chosen,
+showed no message, and the Upload button was hidden. The fix went live the same day; then the owner side was tested
+again: 58 end-to-end steps, a 130-page crawl at phone and laptop sizes, and the real upload path (the page's own
+script, not a direct post) for hotel, room and host photos as an older phone. 108 automated tests pass (7 new in
+`tests/test_photos.py`).
+
+| ID | Priority | Bug | Fix | Status |
+|---|---|---|---|---|
+| R7-B1 | P0 | Choosing photos did nothing on older phones: no upload, no message, and the Upload button was hidden | Submits through a hidden button where `requestSubmit` is missing; the Upload button stays visible; any error is shown | ✅ Live 26 Nov |
+| R7-B2 | P1 | Real photos labelled "image/jpg", empty or "octet-stream" by the phone were refused | The server reads the file's first bytes: a real JPEG, PNG or WebP is accepted whatever its label | ✅ Live 26 Nov |
+| R7-B3 | P2 | An iPhone HEIC photo was refused only after uploading, with a generic message | Stopped before sending, saying how to fix it (Safari, or Camera › Formats › Most Compatible) | ✅ Live 26 Nov |
+| R7-B4 | P1 | On iPhones before iOS 15.4 (no CSS `:has()`), chosen chips, cards and tiles didn't look chosen, and rules mixing `:has()` with plain selectors were dropped whole | `:has()` rules stand alone; app.js marks checked labels `.is-checked`, styled the same | ✅ Live 26 Nov |
+| R7-B5 | P2 | The site scripts used `?.` and `??`, which very old phones can't read, so they skipped the whole file | Plain checks instead | ✅ Live 26 Nov |
+| R7-B6 | P2 | "Save and finish later" promised to carry on from there, but logging in reopened part 1 | Hotel details open on the first part still missing something | ✅ Live 26 Nov |
+| R7-B7 | P3 | Host page: uploading greyed out "Remove photo" instead of "Save profile" | The form's own button | ✅ Live 26 Nov |
+
+QA tooling: e2e.py still posts photos directly (headless Edge can freeze resizing photos in long runs); the real
+click-to-upload path is now checked by `photo_check.py` and `room_host_check.py`, and chips without `:has()` by
+`has_check.py` (in `qa/2026-11-26-round7/tools/`).
+
 ## 🧭 Brief 3 v3 build and decisions (25 Nov 2026)
 
 The traveller, operator and admin prototypes were built into the sites, with three decisions taken the same day:

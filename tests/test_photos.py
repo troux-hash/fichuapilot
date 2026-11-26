@@ -1,4 +1,4 @@
-"""Photo uploads from owners' real phones (27 Nov 2026). On iPhones before iOS 16, choosing photos did nothing
+"""Photo uploads from owners' real phones (26 Nov 2026). On iPhones before iOS 16, choosing photos did nothing
 (form.requestSubmit is missing there); phones also label files inconsistently. What a file is decides, not its label."""
 import base64
 from pathlib import Path
