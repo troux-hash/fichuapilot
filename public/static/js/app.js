@@ -9,6 +9,20 @@
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* private mode */ } },
   };
 
+  // Older phones without CSS :has() (iPhones before iOS 15.4) can't show which chip, card or tile is chosen:
+  // there, the label of each checked box or radio gets .is-checked, which the stylesheets style the same way.
+  if (!(window.CSS && CSS.supports && CSS.supports("selector(:has(*))"))) {
+    const markChecked = () => $$("label input[type=checkbox], label input[type=radio]").forEach((input) => {
+      const label = input.closest("label");
+      if (!label) return;
+      label.classList.toggle("is-checked", input.checked);
+      label.classList.toggle("is-disabled", input.disabled);
+    });
+    document.addEventListener("change", markChecked);
+    window.addEventListener("pageshow", markChecked);
+    markChecked();
+  }
+
   // Broken image → placeholder (works for images added later too).
   document.addEventListener("error", (e) => {
     const img = e.target;

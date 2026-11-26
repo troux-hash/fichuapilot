@@ -197,6 +197,14 @@ def _identity_errors(form: dict) -> list[tuple[int, str]]:
     return errors
 
 
+def resume_part(conn: Connection, hotel_id: str) -> int:
+    """Where an owner who stopped carries on: part 1 until a kind of place is saved (its form requires one),
+    then the first part with something missing, else part 1."""
+    if not conn.scalar("SELECT category FROM hotels WHERE id = :id", {"id": hotel_id}):
+        return 1
+    return next((p for p in IDENTITY_PARTS if identity_part_errors(conn, hotel_id, p)), 1)
+
+
 def identity_part_errors(conn: Connection, hotel_id: str, part: int) -> list[str]:
     """What is still missing in one part of step 1, from what is stored."""
     row = conn.one("SELECT * FROM hotels WHERE id = :id", {"id": hotel_id}) or {}

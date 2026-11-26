@@ -90,11 +90,13 @@
 .choice { position: relative; display: inline-flex; align-items: center; gap: var(--space-2); min-height: 40px; padding: 0 var(--space-4);
   border: 1px solid var(--color-border-strong); border-radius: var(--radius-pill); background: var(--color-surface); font-size: var(--text-sm); font-weight: 600; cursor: pointer; }
 .choice input { position: absolute; opacity: 0; pointer-events: none; }
-.choice:has(input:checked) { background: var(--color-ink); color: #FFFFFF; border-color: var(--color-ink); }
+.choice:has(input:checked) { background: var(--chip-active-bg); color: var(--chip-active-fg); border-color: var(--chip-active-bg); }
+.choice.is-checked { background: var(--chip-active-bg); color: var(--chip-active-fg); border-color: var(--chip-active-bg); }
 .choice:has(input:focus-visible) { box-shadow: var(--focus-ring); }
 .radio-cards { display: grid; gap: var(--space-3); }
 .radio-card { display: flex; gap: var(--space-3); padding: var(--space-4); border: 2px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); cursor: pointer; }
 .radio-card:has(input:checked) { border-color: var(--color-primary); background: var(--color-primary-soft); }
+.radio-card.is-checked { border-color: var(--color-primary); background: var(--color-primary-soft); }
 .radio-card input { margin-top: 3px; accent-color: var(--color-primary); }
 .toggle-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); min-height: 52px; border-bottom: 1px solid var(--color-border); font-size: var(--text-sm); font-weight: 600; }
 .toggle-row:last-child { border-bottom: 0; }
@@ -244,6 +246,7 @@
 .kind-pick { display: flex; align-items: flex-start; gap: var(--space-3); padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); text-align: left; white-space: normal; }
 .kind-pick > span { display: grid; gap: 2px; }
 .kind-pick:has(input:checked) .muted { color: inherit; opacity: 0.85; }
+.kind-pick.is-checked .muted { color: inherit; opacity: 0.85; }
 .arrival { display: grid; gap: 2px; padding-bottom: var(--space-3); border-bottom: 1px solid var(--color-border); }
 .source-list { margin: 0; padding: 0; list-style: none; display: grid; gap: var(--space-2); }
 .source-list li { display: flex; justify-content: space-between; gap: var(--space-3); }

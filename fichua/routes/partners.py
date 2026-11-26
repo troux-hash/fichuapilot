@@ -149,7 +149,11 @@ def identity_form(request: Request):
         user, hotel = _current(conn, request)
         if not hotel:
             return _login_redirect()
-        return _identity_page(request, conn, user, hotel, _part(request.query_params.get("part")) or 1, [])
+        part = _part(request.query_params.get("part"))
+        if part is None and hotel["status"] in ("draft", "changes"):
+            # "Save and finish later" promises to carry on from there: open the first part still missing something.
+            part = partners.resume_part(conn, hotel["id"])
+        return _identity_page(request, conn, user, hotel, part or 1, [])
 
 
 @router.post("/hotel")

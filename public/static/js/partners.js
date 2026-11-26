@@ -90,7 +90,8 @@
     if (!inputs.length || !window.fetch) return;
     e.preventDefault();
     const status = $("[data-upload-status]", form) || $("[data-upload-status]");
-    const button = $("button[type=submit]", form);
+    // This form's own button: on the host page, "Remove photo" sits inside the form but submits another one.
+    const button = Array.prototype.find.call(form.elements, (el) => el.type === "submit");
     const say = (text) => { if (status) status.textContent = text; };
     const stop = (text) => { say(text); if (button) button.disabled = false; };
     if (button) { button.disabled = true; }

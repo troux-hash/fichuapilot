@@ -50,3 +50,20 @@ def test_choosing_photos_works_on_older_phones():
     for name in ("app.js", "partners.js"):  # older phones can't read ?. or ?? and would skip the whole file
         text = (ROOT / "public/static/js" / name).read_text(encoding="utf-8")
         assert "?." not in text and "??" not in text, name
+
+
+def test_owner_who_finished_later_carries_on_where_they_stopped(admin):
+    from fastapi.testclient import TestClient
+
+    from fichua.main import app
+    assert admin.post("/admin/codes", data={"code": "later-pilot", "plan": "manager", "max_uses": "1",
+                                            "free_until": "2027-06-30"}, follow_redirects=False).status_code == 303
+    p = TestClient(app)
+    p.post("/partners/join", data={"code": "later-pilot", "name": "Later", "hotel_name": "Later Lodge",
+                                   "email": "later@example.com", "phone": "+250788000666", "password": "secret123"})
+    assert "Part 1 of 3" in p.get("/partners/hotel").text  # nothing saved yet: the first part
+    r = p.post("/partners/hotel", data={"part": "1", "name": "Later Lodge", "property_type": "Lodge", "category": "eco",
+                                        "description": "Hills.", "later": "1"}, follow_redirects=False)
+    assert r.headers["location"] == "/partners/hotel?part=1&saved=1"
+    assert "Part 2 of 3" in p.get("/partners/hotel").text  # back later: straight to the part still missing
+    assert "Part 1 of 3" in p.get("/partners/hotel?part=1").text  # the tabs still open any part
