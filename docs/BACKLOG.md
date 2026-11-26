@@ -156,6 +156,16 @@ Logged from the review, not built yet:
 
 French for the owner pages (F30) stays B3-07; mobile money (F20) stays B3-04.
 
+## 🧪 QA findings — round 6, after the design review and WhatsApp (26 Nov 2026)
+
+The first full run with everything from the review in place, including what came after round 5 (the dated seal,
+"reviewed" wording until a real place has five dated checks, demo places unbookable once payments are live, 48 × 44 px
+header targets and 48 px footer rows, the seal on compare). 58 steps in headless Edge on the local copy (owner sign-up
+in three parts, approval only after the dated "WhatsApp tested" check, booking and payment, compare on a laptop, owner
+and admin follow-up): no JavaScript errors, no failed requests, no sideways scrolling. 101 automated tests pass.
+Local runs can't send WhatsApp messages: `scripts/dev.py` blanks the token, and the local health check says
+"whatsapp: not connected" while the live one says "connected". No new bugs.
+
 ## 🧭 Brief 3 v3 build and decisions (25 Nov 2026)
 
 The traveller, operator and admin prototypes were built into the sites, with three decisions taken the same day:
@@ -268,7 +278,7 @@ founder decisions above, and real photos and host stories for the founding prope
 | # | Feature | Needs |
 |---|---|---|
 | 1 | Switch Stripe from test mode to live (test mode is connected and working) | US company, Stripe account activation, `sk_live_` key |
-| 2 | Connect WhatsApp: connected 26 Nov 2026 on Meta's test number, 19 template versions waiting for Meta's approval; next, verify +1 201-435-6758 ("Fichua Travel") and switch to it | Number verification on Meta |
+| 2 | Connect WhatsApp: connected 26 Nov 2026 on Meta's test number (a first test message reached the founder's phone); 19 template versions sent to Meta for approval. Next: add Fichua's real number, verify it and switch to it (+1 201-435-6758 was added by mistake and removed) | A real number for Fichua |
 | 3 | French for the partner portal and guest site (Benin, Côte d'Ivoire) | — |
 | 4 | Automatic payouts to hotel bank accounts (Stripe Global Payouts: Benin + CI; Rwanda on request) | Stripe access |
 | 5 | Map view on the guest results page (hotels already have pins) | — |
