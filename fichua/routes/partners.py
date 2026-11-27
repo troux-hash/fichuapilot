@@ -54,7 +54,7 @@ def _form_dict(form) -> dict:
 def _landing(request: Request, conn, status_code: int = 200, **ctx):
     """The owners' front door: the price in one line and a way in without a code (design review F28)."""
     rates = app_settings.all_settings(conn)
-    wa = enquiries.fichua_link(conn, "Hello Fichua, I run a place to stay and would like an invitation code.")
+    wa = enquiries.fichua_link(conn, "Hello Fichua, I run a hotel or lodge and would like an invitation code.")
     ctx.setdefault("form", {})
     return render(request, "partners/landing.html", status_code=status_code, commission=rates["commission_pct"],
                   fichua_wa=wa, **{"join_error": None, "login_error": None, **ctx})

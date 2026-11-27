@@ -8,7 +8,7 @@
 {% set pencil %}<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4l10-10-4-4L4 16v4z"/></svg>{% endset %}
 <div class="container results-page">
   <header class="page-head">
-    <h1 class="results-title">{{ tn(count, "1 place", "{n} places") }} · {{ ui.kinds_summary(picked)|lower if picked else t("all kinds of place") }} · {{ ui.where_label(where) }}{% if dated %} · {{ frange(stay.check_in, stay.check_out) }}{% endif %}</h1>
+    <h1 class="results-title">{{ tn(count, "1 place", "{n} places") }} · {{ ui.kinds_summary(picked)|lower if picked else t("all types of stay") }} · {{ ui.where_label(where) }}{% if dated %} · {{ frange(stay.check_in, stay.check_out) }}{% endif %}</h1>
     {% if date_note %}<div class="alert alert-info date-note" role="status">{{ date_note }}</div>{% endif %}
     <div class="chips" role="group" aria-label="{{ t('Your search') }}">
       <a class="chip" href="/?{{ qs({'kind': picked}) }}">{{ ui.kinds_summary(picked) }}{{ pencil }}</a>
@@ -16,7 +16,7 @@
       <a class="chip" href="{{ edit_where }}">{% if dated %}{{ frange(stay.check_in, stay.check_out) }}{% else %}{{ t("Any dates") }}{% endif %}{{ pencil }}</a>
       <a class="chip" href="{{ edit_where }}">{{ tn(stay.guests, "1 guest", "{n} guests") }}{% if stay.rooms > 1 %}, {{ tn(stay.rooms, "1 room", "{n} rooms") }}{% endif %}{{ pencil }}</a>
     </div>
-    <p class="muted small rank-line">{{ t("Ordered by fit and verification. Places cannot pay to rank higher.") }}</p>
+    <p class="muted small rank-line">{{ t("Best match first, then the most checked. No one can pay to rank higher.") }}</p>
   </header>
 
   {# Tick up to three places, then compare them side by side (works without JavaScript: the button submits the ticks). #}
@@ -49,17 +49,17 @@
 
   {% if count < 2 %}
   <div class="card card-pad few">
-    <strong>{{ t("No place matches yet.") if count == 0 else t("Only one place matches so far.") }}</strong>
-    <p class="muted small">{{ t("Fichua lists only places our team has checked, so there are fewer of them. Try one of these:") }}</p>
+    <strong>{{ t("Nothing matches yet.") if count == 0 else t("Only one place matches so far.") }}</strong>
+    <p class="muted small">{{ t("We only list places our team has checked, so the choice is smaller. Try:") }}</p>
     <div class="options">
       {% for w in widen %}
-        {% if w.kind == 'all_kinds' %}{% set href = '/search?' ~ qs(base, kind=none) %}{% set label = t("Every kind of place, {where}", where=ui.where_label(where)) %}
-        {% elif w.kind == 'everywhere' %}{% set href = '/search?' ~ qs(base, where=none) %}{% set label = t("{kinds}, everywhere", kinds=ui.kinds_summary(picked)) %}
+        {% if w.kind == 'all_kinds' %}{% set href = '/search?' ~ qs(base, kind=none) %}{% set label = t("Every type of stay, {where}", where=ui.where_label(where)) %}
+        {% elif w.kind == 'everywhere' %}{% set href = '/search?' ~ qs(base, where=none) %}{% set label = t("{kinds}, anywhere", kinds=ui.kinds_summary(picked)) %}
         {% else %}{% set href = '/search?' ~ qs(base, dates='any', check_in=none, check_out=none) %}{% set label = t("The same search without dates") %}{% endif %}
         <a class="option" href="{{ href }}"><span>{{ label }}</span><span class="option__count">{{ w.count }}</span></a>
       {% endfor %}
     </div>
-    {% if fichua_wa %}<a class="btn btn-whatsapp-outline btn-block" href="{{ fichua_wa }}" target="_blank" rel="noopener">{{ i.icon('chat', 18) }}<span>{{ t("Ask a person on WhatsApp") }}</span></a>{% endif %}
+    {% if fichua_wa %}<a class="btn btn-whatsapp-outline btn-block" href="{{ fichua_wa }}" target="_blank" rel="noopener">{{ i.icon('chat', 18) }}<span>{{ t("Ask our team on WhatsApp") }}</span></a>{% endif %}
   </div>
   {% endif %}
 </div>

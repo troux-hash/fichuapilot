@@ -18,10 +18,10 @@
       <textarea id="question" name="question" maxlength="500" rows="3" placeholder="{{ t('Can you arrange an airport pickup?') }}"></textarea>
     </div>
     <div class="trust-note">{{ i.icon('shield', 20) }}
-      <span>{{ t("When you want to book, it happens here: Fichua handles the booking, your payment and your confirmation. Hosts never take payment outside Fichua; if anyone asks you to, tell us.") }}</span></div>
+      <span>{{ t("Ready to book? Book here: Fichua handles the booking, your payment and your confirmation. Hosts never take payment outside Fichua. If anyone asks you to, tell us.") }}</span></div>
     <button class="btn btn-whatsapp btn-block" type="submit">{{ i.icon('chat', 18) }}<span>{{ t("Open WhatsApp") }}</span></button>
     <p class="muted small" style="text-align:center;margin:0">{{ t("Nothing is booked yet.") }}</p>
   </form>
-  <a class="btn btn-secondary btn-block" href="{{ hotel.path }}?{{ qs(stay.as_params()) }}#rooms">{{ t("Check dates and book") }}</a>
+  <a class="btn btn-secondary btn-block" href="{{ hotel.path }}?{{ qs(stay.as_params()) }}#rooms">{{ t("See rooms and book") }}</a>
 </div>
 {% endblock %}

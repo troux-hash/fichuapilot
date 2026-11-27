@@ -13,9 +13,9 @@
   <div class="confirm-hero">
     <div class="confirm-check is-pending" aria-hidden="true"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
     <h1>{{ t("Waiting for your payment") }}</h1>
-    <p class="muted">{{ t("Your room is held for a few minutes. Complete the payment to confirm it.") }}</p>
+    <p class="muted">{{ t("We’re holding your room for a few minutes. Pay now to confirm it.") }}</p>
     {% if pay_url %}<a class="btn btn-primary btn-lg" href="{{ pay_url }}">{{ t("Pay {amount}", amount=price(booking.total_price)) }}</a>
-    {% else %}<p class="muted small">{{ t("If you have just paid, this page updates in a moment.") }} <a href="">{{ t("Refresh") }}</a></p>{% endif %}
+    {% else %}<p class="muted small">{{ t("Just paid? This page updates in a moment.") }} <a href="">{{ t("Refresh") }}</a></p>{% endif %}
   </div>
   {% elif booking.is_expired %}
   <div class="confirm-hero">
@@ -26,9 +26,9 @@
   {% elif is_new and booking.status == 'confirmed' %}
   <div class="confirm-hero">
     <div class="confirm-check" aria-hidden="true"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></div>
-    <h1>{{ t("You’re booked through Fichua.") }}</h1>
+    <h1>{{ t("You’re booked.") }}</h1>
     <p class="confirm-hero__lead">{{ t("{name} is expecting you on {date}.", name=host, date=fdate(booking.check_in, 'full')) }}</p>
-    <p class="muted">{{ t("Paid and confirmed.") }}{% if whatsapp_ready %} {{ t("We’ve sent the details to your WhatsApp.") }}{% endif %} {{ t("Keep this page: it’s your booking.") }}</p>
+    <p class="muted">{{ t("Paid and confirmed.") }}{% if whatsapp_ready %} {{ t("We’ve sent the details to your WhatsApp.") }}{% endif %} {{ t("Bookmark this page: it’s your booking.") }}</p>
   </div>
   {% else %}
   <h1 class="page-title" style="margin-top:var(--space-7)">{{ t("Your booking") }}</h1>
@@ -49,7 +49,7 @@
         {% elif booking.status == 'pending' %}<span class="badge badge--warning">{{ t("Awaiting payment") }}</span>
         {% else %}<span class="badge badge--danger">{{ t("Cancelled") }}{% if booking.payment_status == 'refunded' %} · {{ t("refunded") }}{% endif %}</span>{% endif %}
       </div>
-      <p class="muted small" style="margin:var(--space-2) 0 0">{{ t("Your host sees the same reference. There is nothing to arrange on the side.") }}</p>
+      <p class="muted small" style="margin:var(--space-2) 0 0">{{ t("Your host has the same reference, so there’s nothing to arrange on the side.") }}</p>
       <h2 style="font-size:var(--text-2xl);margin-top:var(--space-5)">{{ booking.hotel_name }}</h2>
       <p class="muted">{{ booking.room_name }}{% if (booking.rooms or 1) > 1 %} × {{ booking.rooms }}{% endif %} · {{ booking.full_address or booking.city }}</p>
       <dl class="detail-grid">
@@ -65,7 +65,7 @@
       {% if booking.status == 'confirmed' %}
       {# What guests need on arrival day (IMP-02). Travellers talk to their host directly; the booking stays on Fichua. #}
       <div class="stay-actions" aria-label="{{ t('Before you go') }}">
-        {% if booking.hotel_wa %}<a class="stay-action" href="{{ booking.hotel_wa }}" target="_blank" rel="noopener">{{ i.icon('chat', 20) }}<span><strong>{{ t("Talk to {name} on WhatsApp", name=host) }}</strong><small>{{ booking.hotel_whatsapp or booking.hotel_phone }}</small></span></a>{% endif %}
+        {% if booking.hotel_wa %}<a class="stay-action" href="{{ booking.hotel_wa }}" target="_blank" rel="noopener">{{ i.icon('chat', 20) }}<span><strong>{{ t("Message {name} on WhatsApp", name=host) }}</strong><small>{{ booking.hotel_whatsapp or booking.hotel_phone }}</small></span></a>{% endif %}
         {% if booking.map_url %}<a class="stay-action" href="{{ booking.map_url }}" target="_blank" rel="noopener">{{ i.icon('pin', 20) }}<span><strong>{{ t("Directions") }}</strong><small>{{ t("Opens Google Maps") }}</small></span></a>{% endif %}
         {% if booking.hotel_tel %}<a class="stay-action" href="tel:{{ booking.hotel_tel }}">{{ i.icon('phone', 20) }}<span><strong>{{ t("Call reception") }}</strong><small>{{ booking.hotel_phone }}</small></span></a>{% endif %}
         {% if calendar %}<a class="stay-action" href="{{ calendar.ics }}">{{ i.icon('calendar', 20) }}<span><strong>{{ t("Add to calendar") }}</strong><small>{{ t("iPhone, Outlook and more") }}</small></span></a>{% endif %}
@@ -92,7 +92,7 @@
       </div>
     </div>
   </article>
-  {% if booking.status == 'confirmed' %}<p class="trust-band__close" style="margin-top:var(--space-6)">{{ t("Fichua is built on trust, and rewards it: verified hosts come first, and no one can pay to rank higher.") }}</p>{% endif %}
+  {% if booking.status == 'confirmed' %}<p class="trust-band__close" style="margin-top:var(--space-6)">{{ t("Built on trust: verified hosts rank first, and no one can pay to rank higher.") }}</p>{% endif %}
   {% endif %}
 </div>
 {% endblock %}

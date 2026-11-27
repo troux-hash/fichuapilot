@@ -199,7 +199,7 @@
     sync();
   }
 
-  // Where and when: "Show me without dates" greys out the dates (disabled fields are not sent).
+  // Where and when: "I don’t have dates yet" greys out the dates (disabled fields are not sent).
   const noDates = $("[data-no-dates]");
   if (noDates) {
     const dateInputs = $$("[data-dates] input");

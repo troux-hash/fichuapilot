@@ -14,13 +14,13 @@
   <section class="partner-landing__pitch">
     <a class="logo" href="/"><span class="logo-mark" aria-hidden="true">F</span>Fichua <span class="sidebar__tag" style="margin-left:6px">Partners</span></a>
     <h1>Be seen as a place, not a bed in a grid.</h1>
-    <p>Fichua gives independent hotels and lodges a page that tells their story, with their photos and their words. Guests book at one honest price, and you keep your agents, tour operators and other channels.</p>
+    <p>Get a page that tells your story, in your words and with your photos. Guests book at one honest price, and you keep your agents, tour operators and other channels.</p>
     {# The owner's price in one line (design review F28, decision of 25 Nov 2026: the commission only). #}
     <p class="price-line"><strong>{{ pct(commission) }}</strong> of the bookings Fichua brings. Nothing else.</p>
     <ul>
-      <li>{{ tick }}Nothing goes live until you submit it and our team has reviewed it.</li>
+      <li>{{ tick }}Nothing goes live until you submit it and our team reviews it.</li>
       <li>{{ tick }}You set your prices, rooms, closed dates and cancellation rules.</li>
-      <li>{{ tick }}Your agents and tour operators stay as they are: Fichua adds a direct channel.</li>
+      <li>{{ tick }}Guests can message you on WhatsApp before they book. Fichua takes the booking and the payment.</li>
       <li>{{ tick }}Guests pay in full when they book, so a no-show never costs you the room.</li>
     </ul>
   </section>
@@ -32,7 +32,7 @@
       </div>
       {% if fichua_wa %}<p class="no-code"><a class="btn btn-whatsapp-outline btn-sm" href="{{ fichua_wa }}" target="_blank" rel="noopener">No code? Ask on WhatsApp</a></p>{% endif %}
       {% if join_error %}<div class="alert alert-error" role="alert" tabindex="-1"{% if not join_field %} data-error-focus{% endif %}>{{ join_error }}</div>{% endif %}
-      <div class="field"><label for="code">Access code</label><input id="code" name="code" value="{{ form.get('code', request.query_params.get('code', '')) }}" placeholder="FICHUA-XXXXXX" autocapitalize="characters" required{{ to_fix(join_field, 'code') }}></div>
+      <div class="field"><label for="code">Invitation code</label><input id="code" name="code" value="{{ form.get('code', request.query_params.get('code', '')) }}" placeholder="FICHUA-XXXXXX" autocapitalize="characters" required{{ to_fix(join_field, 'code') }}></div>
       <div class="form-grid-2">
         <div class="field"><label for="name">Your name</label><input id="name" name="name" value="{{ form.get('name', '') }}" autocomplete="name" required{{ to_fix(join_field, 'name') }}></div>
         <div class="field"><label for="hotel_name">Hotel name</label><input id="hotel_name" name="hotel_name" value="{{ form.get('hotel_name', '') }}" required{{ to_fix(join_field, 'hotel_name') }}></div>

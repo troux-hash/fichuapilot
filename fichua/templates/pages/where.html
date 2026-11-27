@@ -14,12 +14,12 @@
 
   <section class="form-section" aria-labelledby="where-label">
     <h2 class="label-caps" id="where-label">{{ t("Where") }}</h2>
-    <p class="muted small">{{ t("Only places that match your choice, with how many there are.") }}</p>
+    <p class="muted small">{{ t("Destinations with a match, and how many places each has.") }}</p>
     <div class="options" role="radiogroup" aria-labelledby="where-label">
       {% for o in options %}
       <label class="option option--level{{ o.level }}">
         <input type="radio" name="where" value="{{ o.value }}" {% if o.value == chosen %}checked{% endif %}>
-        <span>{% if o.level == 0 %}{{ t("Everywhere") }}{% elif o.level == 1 %}{{ t(o.country) }}{% else %}{{ o.city }}{% endif %}</span>
+        <span>{% if o.level == 0 %}{{ t("Anywhere") }}{% elif o.level == 1 %}{{ t(o.country) }}{% else %}{{ o.city }}{% endif %}</span>
         <span class="option__count">{{ o.count }}</span>
       </label>
       {% endfor %}
@@ -34,12 +34,12 @@
       <div class="field"><label for="co">{{ t("Check-out") }}</label>
         <input class="input" id="co" type="date" name="check_out" value="{{ stay.check_out }}" {% if no_dates %}disabled{% endif %} data-check-out></div>
     </div>
-    <label class="check"><input type="checkbox" name="dates" value="any" {% if no_dates %}checked{% endif %} data-no-dates> {{ t("Show me without dates") }}</label>
-    <p class="muted small">{{ t("Dates are optional. Without them you see prices from.") }}</p>
+    <label class="check"><input type="checkbox" name="dates" value="any" {% if no_dates %}checked{% endif %} data-no-dates> {{ t("I don’t have dates yet") }}</label>
+    <p class="muted small">{{ t("Dates are optional. Without them, you’ll see starting prices.") }}</p>
   </section>
 
   <section class="form-section" aria-labelledby="who-label">
-    <h2 class="label-caps" id="who-label">{{ t("Who is coming") }}</h2>
+    <h2 class="label-caps" id="who-label">{{ t("Who’s coming") }}</h2>
     <div class="who-row">
       <span id="guests-label">{{ t("Guests") }}</span>
       <div class="stepper" data-stepper>
@@ -59,7 +59,7 @@
   </section>
 
   <div class="sticky-cta sticky-cta--stack">
-    <button class="btn btn-primary btn-block" type="submit">{{ t("See places") }}</button>
+    <button class="btn btn-primary btn-block" type="submit">{{ t("Search") }}</button>
   </div>
 </form>
 {% endblock %}

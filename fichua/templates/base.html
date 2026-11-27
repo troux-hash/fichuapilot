@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>{% block title %}{{ app_name }} · {{ t("Independent places, reviewed by our team") }}{% endblock %}</title>
+  <title>{% block title %}{{ t("Independent hotels & lodges in Rwanda, Benin and Côte d’Ivoire") }} · {{ app_name }}{% endblock %}</title>
   {# Link previews (WhatsApp, social) and search snippets. Hotel pages add a canonical address and schema.org data. #}
   {% block meta %}
-  <meta name="description" content="{{ t('Independent places to stay, each run by people you can talk to and reviewed by our team. Starting in Rwanda, Benin and Côte d’Ivoire.') }}">
+  <meta name="description" content="{{ t('Book small, independent hotels and lodges in Rwanda, Benin and Côte d’Ivoire. Talk to your host on WhatsApp, pay securely, see every fee.') }}">
   <meta property="og:site_name" content="{{ app_name }}">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="{{ app_name }}: {{ t('Independent places, reviewed by our team') }}">
+  <meta property="og:title" content="{{ app_name }}: {{ t('Independent hotels & lodges in Rwanda, Benin and Côte d’Ivoire') }}">
   <meta property="og:description" content="{{ t('Talk to your host directly. We take care of the rest.') }}">
   {% endblock %}
   <meta name="theme-color" content="{% block theme_color %}#FFFFFF{% endblock %}">
@@ -39,15 +39,15 @@
       <details class="menu">
         <summary>{{ t("Menu") }}</summary>
         <div class="menu__panel">
-          <a href="/manage">{{ t("Manage booking") }}<small>{{ t("Find, change or cancel a stay") }}</small></a>
-          <a href="/partners">{{ t("List your place") }}<small>{{ t("For owners of independent places") }}</small></a>
+          <a href="/manage">{{ t("Manage booking") }}<small>{{ t("Find, change or cancel it") }}</small></a>
+          <a href="/partners">{{ t("List your place") }}<small>{{ t("For independent hotels and lodges") }}</small></a>
         </div>
       </details>
     </div>
   </header>
   {% endblock %}
   {# While payments are tests, every traveller page says so (design review F03). Pages with their own notice override this. #}
-  {% block pilot %}{% if is_pilot() %}<div class="pilot-strip" role="note"><div class="container"><strong>{{ t("Pilot") }}</strong><span>{{ t("Bookings are tests for now: no real money is taken.") }}</span></div></div>{% endif %}{% endblock %}
+  {% block pilot %}{% if is_pilot() %}<div class="pilot-strip" role="note"><div class="container"><strong>{{ t("Test mode") }}</strong><span>{{ t("Bookings aren’t real yet, and no money is taken.") }}</span></div></div>{% endif %}{% endblock %}
   <main id="main">{% block content %}{% endblock %}</main>
   {% block footer %}
   {% import "components/trust.html" as trust with context %}
@@ -59,8 +59,8 @@
       </div>
       {{ trust.band('guest') }}
       <div class="row-between site-footer__bar">
-        <span>© {{ app_name }} · {{ t("Prices in US dollars, the total for your stay.") }}</span>
-        <span class="row" style="flex-wrap:wrap"><a href="/manage">{{ t("Manage a booking") }}</a><a href="/partners">{{ t("List your place") }}</a><a href="/terms">{{ t("Terms") }}</a><a href="/privacy">{{ t("Privacy") }}</a></span>
+        <span>© {{ app_name }} · {{ t("All-in prices, in US dollars.") }}</span>
+        <span class="row" style="flex-wrap:wrap"><a href="/manage">{{ t("Manage booking") }}</a><a href="/partners">{{ t("List your place") }}</a><a href="/terms">{{ t("Terms") }}</a><a href="/privacy">{{ t("Privacy") }}</a></span>
       </div>
     </div>
   </footer>

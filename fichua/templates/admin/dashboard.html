@@ -20,7 +20,7 @@
   <div><h2 id="depth-title">Catalogue depth: live places by kind of place</h2>
     <p class="muted small" style="margin:4px 0 0">Where to look for the next places. Kinds come from the owner and are confirmed on each place's review page.</p></div>
   <div class="table-wrap"><table class="table">
-    <thead><tr><th scope="col">Kind of place</th>{% for c in stats.depth.countries %}<th scope="col" class="num">{{ c }}</th>{% endfor %}<th scope="col" class="num">Total</th></tr></thead>
+    <thead><tr><th scope="col">Type of stay</th>{% for c in stats.depth.countries %}<th scope="col" class="num">{{ c }}</th>{% endfor %}<th scope="col" class="num">Total</th></tr></thead>
     <tbody>{% for r in stats.depth.rows %}<tr><th scope="row">{{ r.kind.name.en }}</th>{% for c in stats.depth.countries %}<td class="num">{{ r.counts[c] or '–' }}</td>{% endfor %}<td class="num"><strong>{{ r.total }}</strong></td></tr>{% endfor %}</tbody>
   </table></div>
 </section>

@@ -51,7 +51,7 @@ def _dated(request: Request) -> bool:
 def home(request: Request):
     i18n.use(i18n.lang_of(request))
     with db.connect() as conn:
-        fichua_wa = enquiries.fichua_link(conn, i18n.t("Hello Fichua, I'm not sure which kind of place suits my trip."))
+        fichua_wa = enquiries.fichua_link(conn, i18n.t("Hello Fichua, I’m not sure which type of stay suits my trip. Can you help?"))
         hotels = catalog.live_hotels(conn)
         checks = kinds.checks_by_hotel(conn, [h["id"] for h in hotels])
     # Each kind's tile shows a real photo from a fully checked real place of that kind (design review F05, F06; the
@@ -123,7 +123,7 @@ def results(request: Request):
                 n = discover(conn, picked, where_value, stay, False)["count"]
                 if n > data["count"]:
                     widen.append({"kind": "any_dates", "count": n})
-        fichua_wa = enquiries.fichua_link(conn, i18n.t("Hello Fichua, I'm looking for a place to stay and found nothing yet."))
+        fichua_wa = enquiries.fichua_link(conn, i18n.t("Hello Fichua, I’m looking for a place to stay and haven’t found one yet. Can you help?"))
         commission = app_settings.get_float(conn, "commission_pct")
         # A big group with nothing found: say no single room fits, and offer the search with enough rooms.
         largest = largest_room(conn, picked, where_value) if not data["count"] else 0

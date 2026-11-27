@@ -1,6 +1,6 @@
 """English and French for the traveller pages (Brief 3 v3: both complete and written by people, not machines).
 
-Templates write the English sentence and wrap it: {{ t("Kind of place") }}, or with values,
+Templates write the English sentence and wrap it: {{ t("Type of stay") }}, or with values,
 {{ t("Ask {name}", name=host.name) }}. French comes from FR below; a sentence missing there shows in English.
 The language is the visitor's choice (the EN/FR switch sets a cookie), else ?lang=, else the browser's first
 language. The partner portal and admin stay in English for now.
@@ -70,8 +70,10 @@ def t(text: str, **values) -> str:
 
 
 def tn(n: int, one: str, many: str, **values) -> str:
-    """'1 night' / '3 nights', translated: t(one or many) with n filled in."""
-    return t(one if n == 1 else many, n=n, **values)
+    """'1 night' / '3 nights', translated: t(one or many) with n filled in. French counts 0 as singular
+    ('0 lieu', English '0 places') wherever its singular has an {n} to fill."""
+    singular = n == 1 or (n == 0 and current() == "fr" and "{n}" in FR.get(one, ""))
+    return t(one if singular else many, n=n, **values)
 
 
 def pick(value: dict) -> str:

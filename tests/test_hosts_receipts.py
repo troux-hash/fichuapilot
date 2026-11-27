@@ -71,7 +71,7 @@ def test_guests_meet_the_host_only_with_consent():
         page = guest.get(offer["hotel"]["path"], params={**STAY, "guests": 2}).text
         assert "Your host" in page and "Divine" in page and "The art in the lobby changes every month." in page
         results = guest.get("/search", params={"destination": "Kigali", **STAY, "guests": 2}).text
-        assert "With Divine · English, French" in results
+        assert "Hosted by Divine · English, French" in results
         with db.connect() as conn:
             conn.run("UPDATE hotels SET host_consent_at = NULL WHERE id = :id", {"id": hotel_id})
         hidden = guest.get(offer["hotel"]["path"], params={**STAY, "guests": 2}).text

@@ -85,7 +85,7 @@ def test_the_money_panel_shows_the_split_travellers_and_hosts_see():
     offer = guest.get("/api/search", params={"destination": "Kigali", **STAY}).json()["results"][0]
     page = guest.get(offer["hotel"]["path"], params=STAY).text
     assert "Where your money goes" in page and "Your host receives" in page and "Fichua’s fee" in page
-    assert "It is not added to your price" in page
+    assert "It’s never added to your price" in page
 
 
 def test_ask_the_host_first_then_whatsapp_with_the_question_in_their_language():
@@ -114,7 +114,8 @@ def test_english_and_french_with_a_remembered_choice():
     assert r.status_code == 303 and r.headers["location"] == "/where?kind=water" and "lang=fr" in r.headers["set-cookie"]
     browser.cookies.set("lang", "fr")
     assert "Où et quand" in browser.get("/where", params={"kind": "water"}).text
-    assert "Voir les lieux correspondants" in browser.get("/").text
+    home_fr = browser.get("/").text
+    assert "Suivant" in home_fr and "où et quand" in home_fr
     assert browser.get("/lang/fr", params={"next": "https://evil.example"}, follow_redirects=False).headers["location"] == "/"
     # Accept-Language decides for a first visit; the partner portal stays in English for now.
     assert "Quel type de séjour" in TestClient(app, headers={"Accept-Language": "fr-FR,fr;q=0.9"}).get("/").text

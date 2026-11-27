@@ -69,11 +69,11 @@
 {%- if picked -%}
 {%- set names = [] %}{% for k in picked %}{% set _ = names.append(pick(kinds.kind(k).plural)) %}{% endfor -%}
 {{ join_words(names)|capitalize }}
-{%- else -%}{{ t("All kinds of place") }}{%- endif -%}
+{%- else -%}{{ t("All types of stay") }}{%- endif -%}
 {%- endmacro %}
 
 {% macro where_label(value) -%}
-{%- if not value or value == 'all' %}{{ t("Everywhere") }}{% elif value.startswith('country:') %}{{ t(value[8:]) }}{% elif value.startswith('city:') %}{{ value[5:] }}{% else %}{{ value }}{% endif -%}
+{%- if not value or value == 'all' %}{{ t("Anywhere") }}{% elif value.startswith('country:') %}{{ t(value[8:]) }}{% elif value.startswith('city:') %}{{ value[5:] }}{% else %}{{ value }}{% endif -%}
 {%- endmacro %}
 
 {% macro place_where(h) -%}
@@ -100,13 +100,13 @@
 {% endmacro %}
 
 {# How travellers pay. Visa works today; mobile money is shown as coming, never as available (decision of 25 Nov 2026). #}
-{% macro pay_methods() -%}
-{{ t("Pay by Visa or card. Mobile money is coming soon.") }}
+{% macro pay_methods(sentence=false) -%}
+{% if sentence %}{{ t("Pay by Visa card. Mobile money is coming soon.") }}{% else %}{{ t("Visa card. Mobile money is coming soon.") }}{% endif %}
 {%- endmacro %}
 
 {# Payments are tests until Stripe's live keys are in: every page that takes or confirms a booking says so (F03). #}
 {% macro pilot_banner() %}
-{% if is_pilot() %}<div class="pilot-banner" role="note"><strong>{{ t("Pilot") }}</strong> <span>{{ t("Bookings are tests for now: no real money is taken and no stay is booked.") }}</span></div>{% endif %}
+{% if is_pilot() %}<div class="pilot-banner" role="note"><strong>{{ t("Test mode") }}</strong> <span>{{ t("No money is taken and no stay is booked.") }}</span></div>{% endif %}
 {% endmacro %}
 
 {# Price lines for a place: the total for dated stays, "from" a night without dates; the traveller's currency first
@@ -150,7 +150,7 @@
     <div><dt>{{ t("Fichua’s fee") }}</dt><dd>{{ pct(split.pct) }}</dd></div>
     {% endif %}
   </dl>
-  <p class="muted small">{{ t("Fichua’s fee is paid by the host. It is not added to your price.") }} {{ t("Fichua secures your payment.") }}</p>
+  <p class="muted small">{{ t("Your host pays Fichua’s fee. It’s never added to your price.") }} {{ t("Fichua secures your payment.") }}</p>
 </section>
 {% endmacro %}
 
@@ -171,7 +171,7 @@
       <h3 class="place-card__name"><a href="{{ link }}">{{ h.name }}</a></h3>
       <p class="small place-card__where"><span class="kind-label">{{ kind_name(h.kind) }}</span> <span class="muted">· {{ [h.city, t(h.country) if h.country else none]|select|join(', ') }}</span></p>
     </div>
-    {% if h.host %}{% set langs = h.host.languages or [] %}<p class="place-card__host">{% if h.host.photo %}<img class="face" src="{{ h.host.photo }}?size=card" alt="" width="36" height="36" loading="lazy">{% endif %}<span>{{ t("With {name}", name=h.host.name) }}{% if langs %} · {{ langs[:2]|join(', ') }}{% if langs|length > 2 %} +{{ langs|length - 2 }}{% endif %}{% endif %}</span></p>{% endif %}
+    {% if h.host %}{% set langs = h.host.languages or [] %}<p class="place-card__host">{% if h.host.photo %}<img class="face" src="{{ h.host.photo }}?size=card" alt="" width="36" height="36" loading="lazy">{% endif %}<span>{{ t("Hosted by {name}", name=h.host.name) }}{% if langs %} · {{ langs[:2]|join(', ') }}{% if langs|length > 2 %} +{{ langs|length - 2 }}{% endif %}{% endif %}</span></p>{% endif %}
     <div class="place-price">{{ place_price(item, stay, dated, h.country) }}</div>
     {% if dated and item.offer %}<p class="small place-card__terms">{% if item.offer.free_until %}{{ t("Free cancellation until {date}", date=fdate(item.offer.free_until, 'short')) }}{% else %}{{ t("Non-refundable") }}{% endif %}</p>{% endif %}
     <p class="place-card__trust{% if h.demo %} is-demo{% endif %}">{{ verified_line(v, h) }}</p>
@@ -198,10 +198,10 @@
     <p class="price-box__main">{{ t("Not available for these dates") }}</p>
     <p class="muted small">{{ stay_summary(stay) }}</p>
   {% endif %}
-  <p class="small"><strong>{{ t("Payment:") }}</strong> {{ pay_methods() }}</p>
+  <p class="small">{{ pay_methods(sentence=true) }}</p>
   {% if rules %}<p class="rules__title">{{ t("If you cancel") }} <span class="muted">({{ cheapest.name }})</span></p>{{ rules_bar(rules) }}{% endif %}
   <div class="booking-box-v2__actions">
-    <a class="btn btn-primary btn-block" href="#rooms">{{ t("Check dates and book") }}</a>
+    <a class="btn btn-primary btn-block" href="#rooms">{{ t("See rooms and book") }}</a>
     {% if can_ask %}{{ ask_link(hotel, stay, t("Ask on WhatsApp"), cls='btn-whatsapp-outline btn-block', query=ask_query) }}{% endif %}
   </div>
   {{ money_panel(cheapest.total_price if cheapest else none, commission, compact=true, suffix=suffix) }}

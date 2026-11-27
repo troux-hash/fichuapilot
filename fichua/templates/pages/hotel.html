@@ -23,7 +23,7 @@
 {% set ask_query = dict(stay.as_params(), kind=picked) %}
 {% set ask_label = t("Ask on WhatsApp") %}
 <div class="container place-page">
-  <a class="back-link" href="/search?{{ back_qs }}">← {{ t("All places") }}</a>
+  <a class="back-link" href="/search?{{ back_qs }}">← {{ t("Back to results") }}</a>
   {% if date_note %}<div class="alert alert-info date-note" role="status">{{ date_note }}</div>{% endif %}
   {% if hotel.demo %}<div class="alert alert-warning" role="note"><strong>{{ t("Demo place") }}.</strong> {{ t("Shown to explain how Fichua works. It is not a real listing, and nothing here has been checked.") }}</div>{% endif %}
 
@@ -173,6 +173,6 @@
 
 <div class="sticky-cta sticky-cta--two">
   {% if can_ask %}{{ ui.ask_link(hotel, stay, ask_label, query=ask_query) }}{% endif %}
-  <a class="btn btn-primary" href="#rooms">{{ t("Check dates and book") }}</a>
+  <a class="btn btn-primary" href="#rooms">{{ t("See rooms and book") }}</a>
 </div>
 {% endblock %}

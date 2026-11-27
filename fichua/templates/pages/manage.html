@@ -2,7 +2,7 @@
 {% block title %}{{ t("Manage booking") }} · {{ app_name }}{% endblock %}
 {% block content %}
 <div class="container narrow" style="padding:var(--space-8) var(--space-4)">
-  <h1 class="page-title">{{ t("Manage your booking") }}</h1>
+  <h1 class="page-title">{{ t("Find your booking") }}</h1>
   <p class="muted">{{ t("Enter your Fichua reference and the email you booked with.") }}</p>
   <form class="card card-pad stack" method="post" action="/manage" style="margin-top:var(--space-5)">
     {% if error %}<div class="alert alert-error" role="alert">{{ t(error) }}</div>{% endif %}

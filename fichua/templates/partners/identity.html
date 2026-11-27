@@ -33,8 +33,8 @@
 
     {# Brief 3 v3: travellers search by kind of place first. Fichua confirms the kind when it reviews the page. #}
     <section class="panel panel-pad" style="display:grid;gap:var(--space-4)" aria-labelledby="kind-label">
-      <h2 id="kind-label">Kind of place</h2>
-      <p class="muted small" style="margin:0">Travellers choose from five kinds of stay before anything else. Pick the one that says why guests come to you; Fichua confirms it when we review your page.</p>
+      <h2 id="kind-label">Type of stay</h2>
+      <p class="muted small" style="margin:0">Travellers choose from five types of stay before anything else. Pick the one that says why guests come to you; Fichua confirms it when we review your page.</p>
       <div class="kind-picks" role="radiogroup" aria-labelledby="kind-label">
         {% for k in KINDS %}
         <label class="choice kind-pick"><input type="radio" name="category" value="{{ k.id }}" {% if hotel.kind == k.id %}checked{% endif %} required>

@@ -43,7 +43,7 @@ def test_sticky_bar_on_phones_puts_two_actions_under_the_price():  # R2-B1
         conn.run("UPDATE hotels SET phone = '0788 123 456' WHERE id = :id", {"id": offer["hotel"]["id"]})
     try:
         page = guest.get(offer["hotel"]["path"]).text
-        assert 'class="sticky-cta sticky-cta--two"' in page and "Check dates and book" in page
+        assert 'class="sticky-cta sticky-cta--two"' in page and "See rooms and book" in page
     finally:
         with db.connect() as conn:
             conn.run("UPDATE hotels SET phone = :p WHERE id = :id", {"p": before, "id": offer["hotel"]["id"]})

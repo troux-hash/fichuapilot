@@ -39,10 +39,10 @@
         {{ field('guest_name', t('Full name'), autocomplete='name') }}
         <div class="form-grid form-grid--2">
           {{ field('guest_email', t('Email'), 'email', 'email', t("To find your booking later.")) }}
-          {{ field('guest_phone', t('WhatsApp number'), 'tel', 'tel', t('Your confirmation arrives here. Include the country code.')) }}
+          {{ field('guest_phone', t('WhatsApp number'), 'tel', 'tel', t('We send your confirmation here. Include the country code.')) }}
         </div>
         <div class="field">
-          <label for="guest_language">{{ t("Messages in") }}</label>
+          <label for="guest_language">{{ t("Message language") }}</label>
           <select id="guest_language" name="guest_language">
             {% set chosen = form.get('guest_language') or lang %}
             <option value="en" {% if chosen != 'fr' %}selected{% endif %}>English</option>
@@ -67,9 +67,9 @@
 
       {# Mobile money and Visa (decision of 25 Nov 2026): Visa works today; mobile money waits for a provider and says so. #}
       <fieldset class="pay-methods">
-        <legend class="label-caps">{{ t("How you pay") }}</legend>
+        <legend class="label-caps">{{ t("Payment method") }}</legend>
         <label class="option pay-method"><input type="radio" name="pay_method" value="card" checked>
-          <span class="option__stack"><span>{{ t("Visa or card") }}</span><span class="muted small">{{ t("Through Fichua’s secure checkout, charged in US dollars") }}</span></span></label>
+          <span class="option__stack"><span>{{ t("Visa card") }}</span><span class="muted small">{{ t("Secure checkout, charged in US dollars") }}</span></span></label>
         <div class="option pay-method is-soon" aria-disabled="true">
           <span class="option__stack"><span>{{ t("Mobile money") }}</span><span class="muted small">{{ t("From your phone, in your own currency") }}</span></span>
           <span class="badge badge--muted">{{ t("Coming soon") }}</span></div>
@@ -77,7 +77,7 @@
 
       <div class="pay-box">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
-        <div><strong>{{ t("Your payment goes through Fichua’s secure checkout.") }}</strong> {{ t("You pay the full amount now, by card, and nothing more on arrival. You get your Fichua reference straight away.") }}
+        <div><strong>{{ t("Your payment goes through Fichua’s secure checkout.") }}</strong> {{ t("Pay in full now by card, with nothing to pay on arrival. You get your Fichua reference straight away.") }}
           {% if free_until %}{{ t("Free cancellation until {date}: cancel by then from your booking page and you’re refunded in full.", date=fdate(free_until)) }}
           {% elif room.free_cancellation %}{{ t("Check-in is too close for free cancellation, so this booking can’t be refunded.") }}
           {% else %}{{ t("This rate is non-refundable.") }}{% endif %}</div>

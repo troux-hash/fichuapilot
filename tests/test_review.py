@@ -46,7 +46,7 @@ def test_demo_place_is_labelled_and_never_called_verified():
 
 def test_pilot_notice_while_payments_are_tests():
     home = guest.get("/").text
-    assert "pilot-strip" in home and "Bookings are tests for now" in home
+    assert "pilot-strip" in home and "Test mode" in home and "Bookings aren’t real yet" in home
     hotel = _live()[0]
     page = guest.get(f"/hotels/{hotel['id']}", params=STAY).text
     rooms = re.findall(r'href="/book\?([^"]+)"', page)

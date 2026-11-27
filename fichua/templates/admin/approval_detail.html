@@ -14,7 +14,7 @@
 {% elif decided == 'show' %}<div class="alert alert-success" role="status">{{ hotel.name }} is back on Fichua. Guests can book it again.</div>
 {% elif decided == 'bad-commission' %}<div class="alert alert-error" role="alert">Commission must be between 0% and 50%. Nothing was changed.</div>
 {% elif decided == 'no-whatsapp' %}<div class="alert alert-error" role="alert"><strong>Not approved yet.</strong> A place goes live only with a reception number travellers can message and the WhatsApp check dated below. Test the number, record the check, then approve.</div>
-{% elif decided == 'trust' %}<div class="alert alert-success" role="status">Saved. Travellers see the kind of place, each check with its date and how the place runs on its page.</div>
+{% elif decided == 'trust' %}<div class="alert alert-success" role="status">Saved. Travellers see the type of stay, each check with its date and how the place runs on its page.</div>
 {% elif decided == 'trust-errors' %}<div class="alert alert-error" role="alert">Saved, except: {{ request.query_params.get('why', '') }}</div>{% endif %}
 <div class="split">
   <div style="display:grid;gap:var(--space-5)">
@@ -29,10 +29,10 @@
 
     {# Brief 3 v3: what travellers search by and what they are shown as checked. Only what Fichua saw, with dates. #}
     <form id="trust" class="panel panel-pad" method="post" action="/admin/approvals/{{ hotel.id }}/trust" style="display:grid;gap:var(--space-4)">
-      <div><h2>Kind of place and the five checks</h2>
-        <p class="muted small" style="margin:4px 0 0">Travellers pick a kind of place first, and see each check with its date on the page. {{ verification.count }} of 5 checks recorded.</p></div>
+      <div><h2>Type of stay and the five checks</h2>
+        <p class="muted small" style="margin:4px 0 0">Travellers pick a type of stay first, and see each check with its date on the page. {{ verification.count }} of 5 checks recorded.</p></div>
       <div class="form-grid-2">
-        <div class="field"><label for="category">Kind of place</label>
+        <div class="field"><label for="category">Type of stay</label>
           <select id="category" name="category">{% for k in KINDS %}<option value="{{ k.id }}" {% if hotel.kind == k.id %}selected{% endif %}>{{ k.name.en }}</option>{% endfor %}</select>
           <span class="hint">{{ 'The owner picked this.' if hotel.category else 'Suggested from the type and name: confirm or change it.' }}</span></div>
         <div class="field"><label for="category_also">Also fits</label>

@@ -31,7 +31,8 @@ Markets: Rwanda, Benin, Côte d'Ivoire. Master currency USD (RWF / CFA shown alo
 | Guest site | Design review, ten changes: "Demo place" labels, a pilot notice while payments are tests, the dated Verified seal, compact host-first cards with a money bar, local money first for local visitors, laptop layouts with compare |
 | Trust | The MIT, MIT Sandbox and MIT Kuo Sharper Center logos, with MIT's written OK (26 Nov 2026), in the guest footer, the owners' page and the portal |
 | Guest site | Home page, top to bottom: what "Fichua" means (Swahili for "to reveal, to uncover") and the mission; "What kind of stay are you looking for?"; the five kinds, each with a very short line; then "Talk to your host directly. We take care of the rest." with five icon points (book in minutes, confirmed instantly, ask before you book, secure payment, nothing hidden). English and French |
-| Guest site | A picture on each kind's tile: free Unsplash photos from the three countries (Abidjan, Rwandan farmland, Ouidah, a mountain gorilla, Lake Kivu), credited under the tiles, until a fully checked real place of that kind has its own photo (design review F06) |
+| Guest site | A picture on each kind's tile, credited under the tiles, until a fully checked real place of that kind has its own photo (design review F06). Since 27 Nov 2026, from the founder's brief: a small hotel courtyard full of plants (urban), Rwandan farmland (eco), Hôtel Chez Monique in Abomey, Benin (heritage, Wikimedia Commons, CC BY-SA 4.0), palms on the beach at Jacqueville, Côte d'Ivoire (wild, public domain), Lake Kivu (water) |
+| Guest site | Site-wide copy rewrite, 27 Nov 2026 ([voice guide](VOICE.md)): one word for one thing ("type of stay", "Manage booking", "Test mode"), buttons that say what happens next ("Next: where and when", "Search", "See rooms and book"), page titles and description written for search engines, shorter money, payment and refund lines, natural WhatsApp openers, French that counts 0 as singular ("0 lieu"). The owners' page now speaks to the owner and says "invitation code" throughout |
 | Partners | "List your place" in the phone menu, the 7% on the owners' page, "No code? Ask on WhatsApp", hotel details in three short parts |
 | Admin | No place goes live without a phone and the dated "WhatsApp tested" check; a "Demo place" switch on the review page |
 
@@ -310,6 +311,8 @@ founder decisions above, and real photos and host stories for the founding prope
 | 5 | Map view on the guest results page (hotels already have pins) | — |
 | 6 | Email confirmations (needs a verified domain) | Domain |
 | 7 | ✅ Done 26 Nov 2026: MIT's written OK arrived and the three logos show (mit.png rebuilt from MIT's official black lock-up; `MIT_LOGOS_APPROVED=0` turns them off). Swap in official SVG files if MIT sends them | ([guide](BRAND_ASSETS.md)) |
+| 18 | Paradise Camp (Jacqueville) photos for the "Wild, nature & community" tile: its photos online are copyrighted, so ask the owner for written permission, or invite Paradise Camp to join (a fully checked place's own photo replaces the tile picture automatically) | The owner's OK |
+| 19 | WhatsApp messages in the voice of [VOICE.md](VOICE.md): the next template version can shorten them; keep "Manage booking" (the menu says it too) | Meta re-approval |
 
 ## 💡 P2 — later
 

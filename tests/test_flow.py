@@ -98,7 +98,7 @@ def test_checkout_requires_whatsapp_number():
 def test_full_payment_commission_payout_and_messages():
     offer, ref, token, location = _book_and_pay("Kigali")
     page = guest.get(location)
-    assert "Paid · confirmed" in page.text and "You’re booked through Fichua." in page.text and "is expecting you on" in page.text
+    assert "Paid · confirmed" in page.text and "You’re booked." in page.text and "is expecting you on" in page.text
     with db.connect() as conn:
         b = conn.one("SELECT * FROM bookings WHERE reference = :r", {"r": ref})
         payout = conn.one("SELECT * FROM payouts WHERE booking_id = :b", {"b": b["id"]})

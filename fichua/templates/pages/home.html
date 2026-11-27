@@ -17,7 +17,7 @@
     </header>
 
     <fieldset class="kinds kinds--grid">
-      <legend class="kinds__head"><span class="label-caps">{{ t("Kind of place") }}</span><span class="muted small">{{ t("Pick one or two") }}</span></legend>
+      <legend class="kinds__head"><span class="label-caps">{{ t("Type of stay") }}</span><span class="muted small">{{ t("Pick one or two") }}</span></legend>
       <div class="kind-grid">
         {% for k in KINDS %}
         <label class="kind-tile kind-tile--{{ k.id }}">
@@ -38,7 +38,7 @@
         {% else %}
         <button class="kind-tile kind-tile--help" type="submit">
           <span class="kind-tile__media" aria-hidden="true"><span class="kind-tile__mark">5</span></span>
-          <span class="kind-tile__text"><span class="kind-tile__name">{{ t("Not sure? See every kind") }}</span></span>
+          <span class="kind-tile__text"><span class="kind-tile__name">{{ t("Not sure? See them all") }}</span></span>
         </button>
         {% endif %}
       </div>
@@ -54,7 +54,7 @@
   </div>
 
   <div class="sticky-cta sticky-cta--stack">
-    <button class="btn btn-primary btn-block" type="submit">{{ t("Show matching places") }}</button>
+    <button class="btn btn-primary btn-block" type="submit">{{ t("Next: where and when") }}</button>
   </div>
 </form>
 {% endblock %}
