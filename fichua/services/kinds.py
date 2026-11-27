@@ -11,12 +11,13 @@ from datetime import date
 
 from ..db import Connection
 
-# Each kind's "photo" is a free Unsplash picture from Rwanda, Benin or Côte d'Ivoire (27 Nov 2026), shown on the
-# home tile until a fully checked real place of that kind has its own photo (routes/public.py: home).
+# Each kind's "photo" is a free picture (Unsplash or Wikimedia Commons, chosen with the founder on 27 Nov 2026),
+# credited under the tiles and shown until a fully checked real place of that kind has its own photo
+# (routes/public.py: home).
 KINDS = [
     {"id": "urban",
-     "photo": "https://images.unsplash.com/photo-1785095617583-e408f4b451ca?auto=format&fit=crop&w=1200&q=70",
-     "photo_credit": {"by": "Ryan H.", "url": "https://unsplash.com/photos/ir5PK5Itae0", "where": "Abidjan, Côte d’Ivoire"},
+     "photo": "https://images.unsplash.com/photo-1522798514-97ceb8c4f1c8?auto=format&fit=crop&w=1200&q=70",
+     "photo_credit": {"by": "Eddi Aguirre", "url": "https://unsplash.com/photos/ZAVHbpOn4Jk", "source": "Unsplash", "license": ""},
      "short": {"en": "Small, calm hotels in the city", "fr": "Petits hôtels calmes en ville"},
      "name": {"en": "Urban oasis & city boutique", "fr": "Oasis urbaine et boutique-hôtel"},
      "line": {"en": "A small, design-led hotel in the city, calm and local.",
@@ -26,7 +27,7 @@ KINDS = [
      "plural": {"en": "city boutiques", "fr": "boutiques-hôtels en ville"}},
     {"id": "eco",
      "photo": "https://images.unsplash.com/photo-1692019007242-36158877ec96?auto=format&fit=crop&w=1200&q=70",
-     "photo_credit": {"by": "Mad Knoxx Deluxe", "url": "https://unsplash.com/photos/ZD6EipK6iOY", "where": "Rwanda"},
+     "photo_credit": {"by": "Mad Knoxx Deluxe", "url": "https://unsplash.com/photos/ZD6EipK6iOY", "source": "Unsplash", "license": ""},
      "short": {"en": "Farms, gardens and green lodges", "fr": "Fermes, jardins et lodges verts"},
      "name": {"en": "Ecolodges & agro-tourism", "fr": "Écolodges et agrotourisme"},
      "line": {"en": "A stay on working land, run with care for people, place and money.",
@@ -35,8 +36,8 @@ KINDS = [
                 "fr": "On y vient pour la terre, la table et la façon de faire."},
      "plural": {"en": "ecolodges and farm stays", "fr": "écolodges et séjours à la ferme"}},
     {"id": "heritage",
-     "photo": "https://images.unsplash.com/photo-1638427067705-457b6480ed2f?auto=format&fit=crop&w=1200&q=70",
-     "photo_credit": {"by": "Ifeoluwa B.", "url": "https://unsplash.com/photos/pam8f6ATIgI", "where": "Ouidah, Benin"},
+     "photo": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/Abomey-H%C3%B4tel_Chez_Monique_%281%29.jpg/960px-Abomey-H%C3%B4tel_Chez_Monique_%281%29.jpg",
+     "photo_credit": {"by": "Ji-Elle", "url": "https://commons.wikimedia.org/wiki/File:Abomey-H%C3%B4tel_Chez_Monique_(1).jpg", "source": "Wikimedia Commons", "license": "CC BY-SA 4.0"},
      "short": {"en": "Historic buildings with a story", "fr": "Des lieux chargés d’histoire"},
      "name": {"en": "History & heritage", "fr": "Histoire et patrimoine"},
      "line": {"en": "A small hotel in a historic building, where the owner tells its story.",
@@ -45,8 +46,8 @@ KINDS = [
                 "fr": "On y vient pour le bâtiment et son histoire."},
      "plural": {"en": "heritage stays", "fr": "séjours patrimoine"}},
     {"id": "wild",
-     "photo": "https://images.unsplash.com/photo-1722291731448-3afe029611a6?auto=format&fit=crop&w=1200&q=70",
-     "photo_credit": {"by": "Magdalena Kula Manchee", "url": "https://unsplash.com/photos/-FezT2WMZr4", "where": "Rwanda"},
+     "photo": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d2/Cocotiers_sur_la_plage_de_Jacqueville%2C_C%C3%B4te_d%27Ivoire%2C_en_1973.jpg/960px-Cocotiers_sur_la_plage_de_Jacqueville%2C_C%C3%B4te_d%27Ivoire%2C_en_1973.jpg",
+     "photo_credit": {"by": "Gilles Mairet", "url": "https://commons.wikimedia.org/wiki/File:Cocotiers_sur_la_plage_de_Jacqueville,_C%C3%B4te_d%27Ivoire,_en_1973.jpg", "source": "Wikimedia Commons", "license": "public domain"},
      "short": {"en": "Parks, forests and local communities", "fr": "Parcs, forêts et communautés locales"},
      "name": {"en": "Wild, nature & community", "fr": "Nature sauvage et communauté"},
      "line": {"en": "A lodge beside a park or forest, or run with the local community.",
@@ -56,7 +57,7 @@ KINDS = [
      "plural": {"en": "nature and community lodges", "fr": "lodges nature et communauté"}},
     {"id": "water",
      "photo": "https://images.unsplash.com/photo-1514548383638-cef9251a73ec?auto=format&fit=crop&w=1200&q=70",
-     "photo_credit": {"by": "Serrah Galos", "url": "https://unsplash.com/photos/bVMnhNOfFCo", "where": "Lake Kivu, Rwanda"},
+     "photo_credit": {"by": "Serrah Galos", "url": "https://unsplash.com/photos/bVMnhNOfFCo", "source": "Unsplash", "license": ""},
      "short": {"en": "By the water, at a slow pace", "fr": "Au bord de l’eau, sans se presser"},
      "name": {"en": "Beach, lakes & lagoons", "fr": "Plages, lacs et lagunes"},
      "line": {"en": "A stay on a shore, where the water and a slow pace lead.",

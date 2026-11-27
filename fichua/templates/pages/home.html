@@ -49,7 +49,7 @@
     <p class="where-from where-from--intro"><span class="where-from__line">{{ t("Starting in Rwanda, Benin and Côte d’Ivoire") }}</span>
       <span class="where-from__mit">{{ t("Built at MIT, for Africa first and the World") }}</span></p>
     {% if photo_credits %}
-    <p class="photo-credits">{{ t("Photos on Unsplash:") }} {% for c in photo_credits %}<a href="{{ c.url }}" target="_blank" rel="noopener">{{ c.by }}</a> ({{ t(c.where) }}){{ ", " if not loop.last }}{% endfor %}</p>
+    <p class="photo-credits">{{ t("Photos:") }} {% for c in photo_credits %}<a href="{{ c.url }}" target="_blank" rel="noopener">{{ c.by }}</a> ({{ c.source }}{% if c.license %}, {{ t(c.license) }}{% endif %}){{ ", " if not loop.last }}{% endfor %}</p>
     {% endif %}
   </div>
 
