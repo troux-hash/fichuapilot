@@ -236,3 +236,29 @@ def test_demo_places_never_take_real_money(monkeypatch):
     finally:
         with db.connect() as conn:
             conn.run("UPDATE hotels SET is_demo = FALSE WHERE id = :id", {"id": hotel["id"]})
+
+
+def test_each_kind_has_a_picture_and_a_checked_place_replaces_it():
+    from fichua.services import catalog, kinds
+    home = guest.get("/").text
+    tiles = home.split('<div class="kind-grid">', 1)[1].split("</fieldset>", 1)[0]
+    assert tiles.count("<img ") >= 5 and 'class="kind-tile__mark"' not in tiles.split("kind-tile--help")[0]
+    for k in kinds.KINDS:
+        assert k["photo"].split("?")[0] in tiles, k["id"]  # no place in the test data has five dated checks
+    assert "Photos on Unsplash:" in home and "Serrah Galos" in home
+    # Once a real place of a kind has all five checks, its own photo takes that tile, and the credit goes.
+    with db.connect() as conn:
+        hotel = next(h for h in catalog.live_hotels(conn)
+                     if h["kind"] == "water" and not h["demo"] and h["images"][0] != catalog.PLACEHOLDER_IMAGE)
+        for check in ("identity", "licence", "location", "photos", "whatsapp"):
+            conn.run("INSERT INTO hotel_checks (hotel_id, check_id, done_on, note) VALUES (:h, :c, :d, '')",
+                     {"h": hotel["id"], "c": check, "d": date.today() - timedelta(days=1)})
+    try:
+        home = guest.get("/").text
+        tiles = home.split('<div class="kind-grid">', 1)[1].split("</fieldset>", 1)[0]
+        water = kinds.kind("water")
+        assert water["photo"].split("?")[0] not in tiles and hotel["images"][0].split("?")[0] in tiles
+        assert "Serrah Galos" not in home and "Ryan H." in home
+    finally:
+        with db.connect() as conn:
+            conn.run("DELETE FROM hotel_checks WHERE hotel_id = :h", {"h": hotel["id"]})

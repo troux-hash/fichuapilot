@@ -885,3 +885,5 @@ a.seal:hover { text-decoration: none; filter: var(--btn-hover-filter); }
 .pay-methods legend { margin-bottom: var(--space-2); }
 .pay-method { cursor: pointer; }
 .pay-method.is-soon { border-style: dashed; color: var(--color-muted); cursor: default; }
+.photo-credits { margin: var(--space-2) 0 0; font-size: var(--text-xs); color: var(--color-muted); }
+.photo-credits a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }

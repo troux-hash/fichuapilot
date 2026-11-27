@@ -456,6 +456,11 @@ _FR: dict[str, str] = {
     "See what your host gets, and our fee.": "Voyez ce que reçoit votre hôte, et notre commission.",
     "Built on trust: verified hosts rank first, and no one can pay to rank higher.":
         "Fondé sur la confiance : les hôtes vérifiés passent en premier, et personne ne peut payer pour être mieux classé.",
+    # Credits for the kinds' own photos on the home tiles (27 Nov 2026).
+    "Photos on Unsplash:": "Photos sur Unsplash :",
+    "Abidjan, Côte d’Ivoire": "Abidjan, Côte d’Ivoire",
+    "Ouidah, Benin": "Ouidah, Bénin",
+    "Lake Kivu, Rwanda": "Lac Kivu, Rwanda",
     # Five promises under the question on the home page (26 Nov 2026, replaced the same day by the list above).
     "Book in a few taps": "Réservez en quelques clics",
     "One page, no account needed.": "Une seule page, aucun compte nécessaire.",

@@ -54,17 +54,23 @@ def home(request: Request):
         fichua_wa = enquiries.fichua_link(conn, i18n.t("Hello Fichua, I'm not sure which kind of place suits my trip."))
         hotels = catalog.live_hotels(conn)
         checks = kinds.checks_by_hotel(conn, [h["id"] for h in hotels])
-    # Each kind's tile shows a real photo from a real place of that kind, the most verified first (design
-    # review F05, F06). Demo places and placeholders never stand in: without a real photo the tile is a designed tone.
-    kind_photos = {}
-    for h in sorted(hotels, key=lambda h: -len(checks.get(h["id"], {}))):
+    # Each kind's tile shows a real photo from a fully checked real place of that kind (design review F05, F06; the
+    # five checks include the photos). Until one exists, the kind's own free photo from the region (kinds.py), credited
+    # under the tiles. Demo places never stand in.
+    kind_photos, credits = {}, []
+    for h in hotels:
         photo = next((img for img in h["images"] if img != catalog.PLACEHOLDER_IMAGE), None)
-        if photo and not h["demo"] and h["kind"] not in kind_photos:
+        full = len(checks.get(h["id"], {})) >= len(kinds.CHECKS)
+        if photo and full and not h["demo"] and h["kind"] not in kind_photos:
             kind_photos[h["kind"]] = photo
+    for k in kinds.KINDS:
+        if k["id"] not in kind_photos and k.get("photo"):
+            kind_photos[k["id"]] = k["photo"]
+            credits.append(k["photo_credit"])
     # "We check each place" only once a real place shows five dated checks; until then "Reviewed by our team" (F04).
     proven = any(not h["demo"] and len(checks.get(h["id"], {})) >= len(kinds.CHECKS) for h in hotels)
     return render(request, "pages/home.html", picked=_picked(request), fichua_wa=fichua_wa, kind_photos=kind_photos,
-                  proven=proven)
+                  photo_credits=credits, proven=proven)
 
 
 @router.get("/lang/{code}")
